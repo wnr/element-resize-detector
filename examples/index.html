@@ -48,14 +48,13 @@
     <script>
         $(function() {
             function updateDimensions(element) {
-                var style = getComputedStyle(element);
-                var width = parseInt(style.width.replace(/px/g, ""));
-                var height = parseInt(style.height.replace(/px/g, ""));
-                document.getElementById("dim-x").innerHTML = width;
-                document.getElementById("dim-y").innerHTML = height;
+                var width = $(element).width();
+                var height = $(element).height();
+                $("#dim-x").html(width);
+                $("#dim-y").html(height);
             }
 
-            var container = document.getElementById("container");
+            var container = $("#container");
             updateDimensions(container);
 
             var erd = elementResizeDetectorMaker();
