@@ -18,9 +18,6 @@
     "jquery": "^2.1.3",
     "load-grunt-tasks": "^3.0.0"
   },
-  "dependencies": {
-    "lodash.partialright": "^2.4.1"
-  },
   "scripts": {
     "build": "grunt build",
     "dist": "grunt dist",
