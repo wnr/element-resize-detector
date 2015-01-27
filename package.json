@@ -1,0 +1,29 @@
+{
+  "name": "element-resize-detector",
+  "version": "0.1.0",
+  "description": "resize event emitter for elements.",
+  "homepage": "https://github.com/wnr/element-resize-detector",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/wnr/element-resize-detector.git"
+  },
+  "private": false,
+  "license": "MIT",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-banner": "^0.3.1",
+    "grunt-browserify": "^3.3.0",
+    "grunt-contrib-jshint": "^0.11.0",
+    "grunt-contrib-uglify": "^0.7.0",
+    "jquery": "^2.1.3",
+    "load-grunt-tasks": "^3.0.0"
+  },
+  "dependencies": {
+    "lodash.partialright": "^2.4.1"
+  },
+  "scripts": {
+    "build": "grunt build",
+    "dist": "grunt dist",
+    "test": "grunt test"
+  }
+}

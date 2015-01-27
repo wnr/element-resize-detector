@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        #aligner {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #container {
+            position: relative;
+            width: 50%;
+            height: 50%;
+            background: #FF9800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #dimensions {
+            font-size: 3em;
+            color: #FFF;
+        }
+
+        #dim-x, #dim-y {
+            color: #263248;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="aligner">
+        <div id="container">
+            <div id="dimensions">
+                <span id="dim-x"></span>x<span id="dim-y"></span>
+            </div>
+        </div>
+    </div>
+
+    <script src="../node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="../build/element-resize-detector.js"></script>
+    <script>
+        $(function() {
+            function updateDimensions(element) {
+                var style = getComputedStyle(element);
+                var width = parseInt(style.width.replace(/px/g, ""));
+                var height = parseInt(style.height.replace(/px/g, ""));
+                document.getElementById("dim-x").innerHTML = width;
+                document.getElementById("dim-y").innerHTML = height;
+            }
+
+            var container = document.getElementById("container");
+            updateDimensions(container);
+
+            var erd = elementResizeDetectorMaker();
+            erd.listenTo(container, updateDimensions);
+        });
+    </script>
+</body>
+</html>
