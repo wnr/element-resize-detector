@@ -71,6 +71,11 @@ utils.makeDetectable = function(element, id, callback) {
     //Create an unique elq-target-id for the target element, so that event listeners can be identified to this element.
     element.setAttribute("elq-target-id", id);
 
+    //The target element needs to be positioned (everything except static) so the absolute positioned object will be positioned relative to the target element.
+    if(getComputedStyle(element).position === "static") {
+        element.style.position = "relative";
+    }
+
     //Add an object element as a child to the target element that will be listened to for resize events.
     var object = document.createElement("object");
     object.type = "text/html";
