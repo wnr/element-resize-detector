@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.1.2 (2015-02-02, 11:04)
+ * element-resize-detector 0.1.2 (2015-02-02, 11:53)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -37,7 +37,7 @@ var listenerHandlerMaker = require("./listener-handler");
 
 module.exports = function(options) {
     options = options || {};
-    var allowMultipleListeners = !!options.allowMultipleListeners;
+    var allowMultipleListeners = options.allowMultipleListeners === undefined ? true : false;
 
     var eventListenerHandler = listenerHandlerMaker();
     var idGenerator = idGeneratorMaker();
@@ -50,7 +50,7 @@ module.exports = function(options) {
      */
     function listenTo(elements, listener) {
         function isListenedTo(element) {
-            return elementUtils.isDetectable() && eventListenerHandler.get(element).length;
+            return elementUtils.isDetectable(element) && eventListenerHandler.get(element).length;
         }
 
         function addListener(element, listener) {
