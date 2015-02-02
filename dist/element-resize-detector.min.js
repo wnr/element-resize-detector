@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.1.2 (2015-02-02, 11:53)
+ * element-resize-detector 0.1.3 (2015-02-02, 11:55)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
