@@ -7,9 +7,7 @@ var elementUtils = require("./element-utils");
 var idGeneratorMaker = require("./id-generator");
 var listenerHandlerMaker = require("./listener-handler");
 
-module.exports = function(dependencies, options) {
-    dependencies = dependencies || {};
-
+module.exports = function(options) {
     options = options || {};
     var allowMultipleListeners = !!options.allowMultipleListeners;
 
