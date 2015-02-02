@@ -28,7 +28,7 @@ module.exports = function() {
             eventListeners[id] = [];
         }
 
-        eventListeners[id].push(element, listener);
+        eventListeners[id].push(listener);
     }
 
     return {

@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.1.1 (2015-02-02, 10:15)
+ * element-resize-detector 0.1.1 (2015-02-02, 11:02)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -236,7 +236,7 @@ module.exports = function() {
             eventListeners[id] = [];
         }
 
-        eventListeners[id].push(element, listener);
+        eventListeners[id].push(listener);
     }
 
     return {
