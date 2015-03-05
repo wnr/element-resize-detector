@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.1.4 (2015-02-02, 12:04)
+ * element-resize-detector 0.1.5 (2015-03-05, 23:23)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -58,6 +58,14 @@ module.exports = function(options) {
             eventListenerHandler.add(element, listener);
         }
 
+        if(!elements) {
+            throw new Error("At least one element required.");
+        }
+
+        if(!listener) {
+            throw new Error("Listener required.");
+        }
+
         if(elements.length === undefined) {
             elements = [elements];
         }
@@ -112,7 +120,7 @@ utils.getId = function(element) {
  * @returns {boolean} True or false depending on if the element is detectable or not.
  */
 utils.isDetectable = function(element) {
-    return getObject(element);
+    return !!getObject(element);
 };
 
 /**

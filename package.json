@@ -1,6 +1,6 @@
 {
   "name": "element-resize-detector",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "resize event emitter for elements.",
   "homepage": "https://github.com/wnr/element-resize-detector",
   "repository": {
@@ -16,6 +16,8 @@
     "grunt-browserify": "^3.3.0",
     "grunt-contrib-jshint": "^0.11.0",
     "grunt-contrib-uglify": "^0.7.0",
+    "jasmine-expect": "^2.0.0-beta1",
+    "jasmine-jquery": "^2.0.6",
     "jquery": "^2.1.3",
     "load-grunt-tasks": "^3.0.0"
   },

@@ -30,6 +30,14 @@ module.exports = function(options) {
             eventListenerHandler.add(element, listener);
         }
 
+        if(!elements) {
+            throw new Error("At least one element required.");
+        }
+
+        if(!listener) {
+            throw new Error("Listener required.");
+        }
+
         if(elements.length === undefined) {
             elements = [elements];
         }

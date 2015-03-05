@@ -21,7 +21,7 @@ utils.getId = function(element) {
  * @returns {boolean} True or false depending on if the element is detectable or not.
  */
 utils.isDetectable = function(element) {
-    return getObject(element);
+    return !!getObject(element);
 };
 
 /**
