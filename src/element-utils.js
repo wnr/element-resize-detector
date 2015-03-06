@@ -49,6 +49,8 @@ utils.addListener = function(element, listener) {
  * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
  */
 utils.makeDetectable = function(element, id, callback) {
+    var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
+
     function onObjectLoad() {
         /*jshint validthis:true */
 
@@ -62,7 +64,8 @@ utils.makeDetectable = function(element, id, callback) {
         //Append the style to the object.
         objectDocument.head.appendChild(style);
 
-        this.style.cssText = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
+        //TODO: Is this needed here?
+        //this.style.cssText = OBJECT_STYLE;
 
         //Notify that the element is ready to be listened to.
         callback(element);
@@ -80,6 +83,7 @@ utils.makeDetectable = function(element, id, callback) {
     var object = document.createElement("object");
     object.type = "text/html";
     object.data = "about:blank";
+    object.style.cssText = OBJECT_STYLE;
     object.onload = onObjectLoad;
     object.setAttribute("elq-object-id", id);
     element.appendChild(object);

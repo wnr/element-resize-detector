@@ -1,5 +1,53 @@
 jasmine.getFixtures().fixturesPath = "/base/test/";
 
+function getStyle(element) {
+    function clone(styleObject) {
+        var clonedTarget = {};
+        _.forEach(styleObject.cssText.split(';').slice(0, -1), function(declaration){
+            var colonPos = declaration.indexOf(':');
+            var attr = declaration.slice(0, colonPos).trim();
+            if(attr.indexOf('-') === -1){ // Remove attributes like "background-image", leaving "backgroundImage"
+                clonedTarget[attr] = declaration.slice(colonPos+2);
+            }
+        });
+        return clonedTarget;
+    }
+
+    var style = getComputedStyle(element);
+    return clone(style);
+}
+
+function ensureStyle(before, after, ignore) {
+    var beforeKeys = _.keys(before);
+    var afterKeys = _.keys(after);
+
+    var diffKeys = _.difference(beforeKeys, afterKeys);
+
+    expect(diffKeys).toEqual([]);
+
+    var diffValueKeys = _.filter(beforeKeys, function(key) {
+        var beforeValue = before[key];
+        var afterValue = after[key];
+        return !ignore(key, beforeValue, afterValue) && beforeValue !== afterValue;
+    });
+
+    if(diffValueKeys.length) {
+        var beforeDiffObject = {};
+        var afterDiffObject = {};
+
+        _.forEach(diffValueKeys, function(key) {
+            beforeDiffObject[key] = before[key];
+            afterDiffObject[key] = after[key];
+        });
+
+        expect(afterDiffObject).toEqual(beforeDiffObject);
+    }
+}
+
+function positonFromStaticToRelative(key, before, after) {
+    return key === "position" && before === "static" && after === "relative";
+}
+
 describe("element-resize-detector", function() {
     beforeEach(function() {
         loadFixtures("element-resize-detector_fixture.html");
@@ -62,6 +110,22 @@ describe("element-resize-detector", function() {
                 expect(listener2).toHaveBeenCalledWith($("#test")[0]);
                 done();
             }, 200);
+        });
+
+        it("should keep the style of the element intact", function(done) {
+            var erd = elementResizeDetectorMaker();
+
+            var before = getStyle($("#test")[0]);
+            erd.listenTo($("#test")[0], _.noop);
+            var after = getStyle($("#test")[0]);
+            ensureStyle(before, after, positonFromStaticToRelative);
+
+            //Test styles async since making an element listenable is async.
+            setTimeout(function() {
+                var afterAsync = getStyle($("#test")[0]);
+                ensureStyle(before, afterAsync, positonFromStaticToRelative);
+                done();
+            }, 100);
         });
     });
 });

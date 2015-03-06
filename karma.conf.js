@@ -15,10 +15,12 @@ module.exports = function(config) {
         // list of files / patterns to load in the browser
         files: [
             "node_modules/jquery/dist/jquery.min.js",
+            { pattern: "node_modules/jquery/dist/jquery.min.map", watched: false, included: false, served: true },
+            "node_modules/lodash/index.js",
             "node_modules/jasmine-jquery/lib/jasmine-jquery.js",
             "node_modules/jasmine-expect/dist/jasmine-matchers.js",
             "build/element-resize-detector.js",
-            {pattern: 'test/*_fixture.html', watched: true, included: false, served: true},
+            { pattern: 'test/*_fixture.html', watched: true, included: false, served: true },
             "js/*_test.js",
             "test/*_test.js"
         ],
