@@ -25,9 +25,12 @@ module.exports = function(options) {
             return elementUtils.isDetectable(element) && eventListenerHandler.get(element).length;
         }
 
-        function addListener(element, listener) {
-            elementUtils.addListener(element, listener);
-            eventListenerHandler.add(element, listener);
+        function onResizeCallback(element) {
+            var listeners = eventListenerHandler.get(element);
+
+            forEach(listeners, function(listener) {
+                listener(element);
+            });
         }
 
         if(!elements) {
@@ -47,7 +50,8 @@ module.exports = function(options) {
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
                 var id = idGenerator.newId();
                 return elementUtils.makeDetectable(element, id, function(element) {
-                    addListener(element, listener);
+                    elementUtils.addListener(element, onResizeCallback);
+                    eventListenerHandler.add(element, listener);
                 });
             }
             
@@ -59,7 +63,7 @@ module.exports = function(options) {
             }
 
             //Since multiple listeners is allowed, another listener is added to the element.
-            return addListener(element, listener);
+            return eventListenerHandler.add(element, listener);
         });
     }
 

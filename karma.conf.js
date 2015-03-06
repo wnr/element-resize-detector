@@ -17,7 +17,7 @@ module.exports = function(config) {
             "node_modules/jquery/dist/jquery.min.js",
             "node_modules/jasmine-jquery/lib/jasmine-jquery.js",
             "node_modules/jasmine-expect/dist/jasmine-matchers.js",
-            "dist/element-resize-detector.js",
+            "build/element-resize-detector.js",
             {pattern: 'test/*_fixture.html', watched: true, included: false, served: true},
             "js/*_test.js",
             "test/*_test.js"
