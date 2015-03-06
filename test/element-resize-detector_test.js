@@ -50,12 +50,8 @@ describe("element-resize-detector", function() {
             var listener1 = jasmine.createSpy("listener1");
             var listener2 = jasmine.createSpy("listener2");
 
-            erd.listenTo($("#test")[0], function() {
-                debugger;
-            });
-            erd.listenTo($("#test")[0], function() {
-                debugger;
-            });
+            erd.listenTo($("#test")[0], listener1);
+            erd.listenTo($("#test")[0], listener2);
 
             setTimeout(function() {
                 $("#test").width(300);
