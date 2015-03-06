@@ -59,6 +59,15 @@ module.exports = function(grunt) {
                     "dist/element-resize-detector.min.js": "dist/element-resize-detector.js"
                 }
             }
+        },
+        karma: {
+            local: {
+                configFile: "karma.conf.js",
+                options: {
+                    browsers: ["Chrome"],
+                    singleRun: true
+                }
+            }
         }
     };
 
@@ -71,7 +80,7 @@ module.exports = function(grunt) {
     grunt.registerTask("dist", ["build:dist", "uglify:dist", "usebanner:dist"]);
 
     grunt.registerTask("test:style", ["jshint"]);
-    grunt.registerTask("test", ["test:style", "build:dev"]); //TODO
+    grunt.registerTask("test", ["test:style", "build:dev", "karma:local"]);
 
     grunt.registerTask("default", ["test"]);
 };
