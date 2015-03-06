@@ -9,8 +9,6 @@ var listenerHandlerMaker = require("./listener-handler");
 
 module.exports = function(options) {
     options = options || {};
-    var allowMultipleListeners = options.allowMultipleListeners === undefined ? true : false;
-
     var eventListenerHandler = listenerHandlerMaker();
     var idGenerator = idGeneratorMaker();
 
@@ -56,13 +54,6 @@ module.exports = function(options) {
             }
             
             //The element has been prepared to be detectable and is ready to be listened to.
-            
-            if(isListenedTo(element) && !allowMultipleListeners) {
-                //Since there is a listener and we disallow multiple listeners no listener should be added.
-                return;
-            }
-
-            //Since multiple listeners is allowed, another listener is added to the element.
             return eventListenerHandler.add(element, listener);
         });
     }

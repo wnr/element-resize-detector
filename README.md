@@ -25,11 +25,6 @@ var elementResizeDetectorMaker = require("element-resize-detector");
 ```js
 //With default options.
 var erdDefault = elementResizeDetectorMaker();
-
-//With custom options.
-var erdCustom = elementResizeDetectorMaker({
-  allowMultipleListeners: true //Default is false, which only allows one listener function per element.
-});
 ```
 
 ### API
