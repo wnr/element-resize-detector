@@ -1,5 +1,3 @@
-/* global process:false */
-
 "use strict";
 
 var sharedConfig = require("./karma.conf.js");

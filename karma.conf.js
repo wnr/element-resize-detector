@@ -1,3 +1,5 @@
+"use strict";
+
 // Karma configuration
 
 module.exports = function(config) {
@@ -20,7 +22,7 @@ module.exports = function(config) {
             "node_modules/jasmine-jquery/lib/jasmine-jquery.js",
             "node_modules/jasmine-expect/dist/jasmine-matchers.js",
             "build/element-resize-detector.js",
-            { pattern: 'test/*_fixture.html', watched: true, included: false, served: true },
+            { pattern: "test/*_fixture.html", watched: true, included: false, served: true },
             "js/*_test.js",
             "test/*_test.js"
         ],

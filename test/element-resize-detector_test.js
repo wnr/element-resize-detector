@@ -1,12 +1,16 @@
+/* global describe:false, it:false, beforeEach:false, loadFixtures:false, expect:false, elementResizeDetectorMaker:false, _:false, $:false, jasmine:false */
+
+"use strict";
+
 jasmine.getFixtures().fixturesPath = "/base/test/";
 
 function getStyle(element) {
     function clone(styleObject) {
         var clonedTarget = {};
-        _.forEach(styleObject.cssText.split(';').slice(0, -1), function(declaration){
-            var colonPos = declaration.indexOf(':');
+        _.forEach(styleObject.cssText.split(";").slice(0, -1), function(declaration){
+            var colonPos = declaration.indexOf(":");
             var attr = declaration.slice(0, colonPos).trim();
-            if(attr.indexOf('-') === -1){ // Remove attributes like "background-image", leaving "backgroundImage"
+            if(attr.indexOf("-") === -1){ // Remove attributes like "background-image", leaving "backgroundImage"
                 clonedTarget[attr] = declaration.slice(colonPos+2);
             }
         });

@@ -19,10 +19,6 @@ module.exports = function(options) {
      * @param {function} listener The callback to be executed for each resize event for each element.
      */
     function listenTo(elements, listener) {
-        function isListenedTo(element) {
-            return elementUtils.isDetectable(element) && eventListenerHandler.get(element).length;
-        }
-
         function onResizeCallback(element) {
             var listeners = eventListenerHandler.get(element);
 

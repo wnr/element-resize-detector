@@ -1,3 +1,5 @@
+/* global process:false */
+
 "use strict";
 
 var _ = require("lodash");
@@ -15,12 +17,14 @@ function registerSauceBrowsers(config, sauceBrowsers, configFile) {
 
     var tasks = [];
 
+    var formatName = function(result, part) {
+        return result + capitalize(part);
+    };
+
     for(var key in sauceBrowsers) {
         if(sauceBrowsers.hasOwnProperty(key)) {
             var parts = key.toLowerCase().split("_");
-            var name = _.reduce(parts, function(result, part) {
-                return result + capitalize(part);
-            }, "sauce");
+            var name = _.reduce(parts, formatName, "sauce");
 
             var configObject = {
                 configFile: configFile,
