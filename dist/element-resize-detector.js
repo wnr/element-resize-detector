@@ -1,10 +1,19 @@
 /*!
- * element-resize-detector 0.1.5 (2015-03-05, 23:23)
+ * element-resize-detector 0.1.5 (2015-03-08, 15:10)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
 
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.elementResizeDetectorMaker=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+"use strict";
+
+var detector = module.exports = {};
+
+detector.isIE = function() {
+    var agent = navigator.userAgent.toLowerCase();
+    return agent.indexOf("msie") !== -1 || agent.indexOf("trident") !== -1;
+}
+},{}],2:[function(require,module,exports){
 "use strict";
 
 var utils = module.exports = {};
@@ -25,7 +34,7 @@ utils.forEach = function(collection, callback) {
     }
 };
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 //Heavily inspired by http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/
 
 "use strict";
@@ -37,8 +46,6 @@ var listenerHandlerMaker = require("./listener-handler");
 
 module.exports = function(options) {
     options = options || {};
-    var allowMultipleListeners = options.allowMultipleListeners === undefined ? true : false;
-
     var eventListenerHandler = listenerHandlerMaker();
     var idGenerator = idGeneratorMaker();
 
@@ -53,9 +60,12 @@ module.exports = function(options) {
             return elementUtils.isDetectable(element) && eventListenerHandler.get(element).length;
         }
 
-        function addListener(element, listener) {
-            elementUtils.addListener(element, listener);
-            eventListenerHandler.add(element, listener);
+        function onResizeCallback(element) {
+            var listeners = eventListenerHandler.get(element);
+
+            forEach(listeners, function(listener) {
+                listener(element);
+            });
         }
 
         if(!elements) {
@@ -75,19 +85,13 @@ module.exports = function(options) {
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
                 var id = idGenerator.newId();
                 return elementUtils.makeDetectable(element, id, function(element) {
-                    addListener(element, listener);
+                    elementUtils.addListener(element, onResizeCallback);
+                    eventListenerHandler.add(element, listener);
                 });
             }
             
             //The element has been prepared to be detectable and is ready to be listened to.
-            
-            if(isListenedTo(element) && !allowMultipleListeners) {
-                //Since there is a listener and we disallow multiple listeners no listener should be added.
-                return;
-            }
-
-            //Since multiple listeners is allowed, another listener is added to the element.
-            return addListener(element, listener);
+            return eventListenerHandler.add(element, listener);
         });
     }
 
@@ -96,10 +100,11 @@ module.exports = function(options) {
     };
 };
 
-},{"./collection-utils":1,"./element-utils":3,"./id-generator":4,"./listener-handler":5}],3:[function(require,module,exports){
+},{"./collection-utils":2,"./element-utils":4,"./id-generator":5,"./listener-handler":6}],4:[function(require,module,exports){
 "use strict";
 
 var forEach = require("./collection-utils").forEach;
+var browserDetector = require("./browser-detector");
 
 var utils = module.exports = {};
 
@@ -148,6 +153,8 @@ utils.addListener = function(element, listener) {
  * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
  */
 utils.makeDetectable = function(element, id, callback) {
+    var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
+
     function onObjectLoad() {
         /*jshint validthis:true */
 
@@ -161,7 +168,8 @@ utils.makeDetectable = function(element, id, callback) {
         //Append the style to the object.
         objectDocument.head.appendChild(style);
 
-        this.style.cssText = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
+        //TODO: Is this needed here?
+        //this.style.cssText = OBJECT_STYLE;
 
         //Notify that the element is ready to be listened to.
         callback(element);
@@ -178,10 +186,22 @@ utils.makeDetectable = function(element, id, callback) {
     //Add an object element as a child to the target element that will be listened to for resize events.
     var object = document.createElement("object");
     object.type = "text/html";
-    object.data = "about:blank";
+    object.style.cssText = OBJECT_STYLE;
     object.onload = onObjectLoad;
     object.setAttribute("elq-object-id", id);
+
+    //Safari: This must occur before adding the object to the DOM.
+    //IE: Does not like that this happens before, even if it is also added after.
+    if(!browserDetector.isIE()) {
+        object.data = "about:blank";
+    }
+
     element.appendChild(object);
+
+    //IE: This must occur after adding the object to the DOM.
+    if(browserDetector.isIE()) {
+        object.data = "about:blank";
+    }
 };
 
 /**
@@ -198,7 +218,7 @@ function getObject(element) {
     });
 }
 
-},{"./collection-utils":1}],4:[function(require,module,exports){
+},{"./browser-detector":1,"./collection-utils":2}],5:[function(require,module,exports){
 "use strict";
 
 module.exports = function() {
@@ -218,7 +238,7 @@ module.exports = function() {
     };
 };
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 
 var elementUtils = require("./element-utils");
@@ -258,5 +278,5 @@ module.exports = function() {
     };
 };
 
-},{"./element-utils":3}]},{},[2])(2)
+},{"./element-utils":4}]},{},[3])(3)
 });
