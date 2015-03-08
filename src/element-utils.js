@@ -82,11 +82,13 @@ utils.makeDetectable = function(element, id, callback) {
     //Add an object element as a child to the target element that will be listened to for resize events.
     var object = document.createElement("object");
     object.type = "text/html";
-    object.data = "about:blank";
     object.style.cssText = OBJECT_STYLE;
     object.onload = onObjectLoad;
     object.setAttribute("elq-object-id", id);
     element.appendChild(object);
+
+    //This must occur after that the object has been added to the DOM in order for IE to work.
+    object.data = "about:blank";
 };
 
 /**

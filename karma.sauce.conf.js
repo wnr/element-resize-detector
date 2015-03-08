@@ -1,0 +1,96 @@
+/* global process:false */
+
+"use strict";
+
+var sharedConfig = require("./karma.conf.js");
+
+module.exports = function(config) {
+    sharedConfig(config);
+
+    // define SL browsers
+    var customLaunchers = {
+
+        //Chrome
+        "SL_CHROME_LATEST_OSX": {
+            base: "SauceLabs",
+            platform: "Mac 10.9",
+            browserName: "chrome"
+        },
+        "SL_CHROME_LATEST_WINDOWS": {
+            base: "SauceLabs",
+            platform: "Windows 8.1",
+            browserName: "chrome"
+        },
+        "SL_CHROME_LATEST_LINUX": {
+            base: "SauceLabs",
+            platform: "Linux",
+            browserName: "chrome"
+        },
+
+        //Firefox
+        "SL_FIREFOX_LATEST_OSX": {
+            base: "SauceLabs",
+            platform: "Mac 10.9",
+            browserName: "firefox"
+        },
+        "SL_FIREFOX_LATEST_WINDOWS": {
+            base: "SauceLabs",
+            platform: "Windows 8.1",
+            browserName: "firefox"
+        },
+        "SL_FIREFOX_LATEST_LINUX": {
+            base: "SauceLabs",
+            platform: "Linux",
+            browserName: "firefox"
+        },
+
+        //Safari
+        "SL_SAFARI_LATEST_OSX": {
+            base: "SauceLabs",
+            platform: "Mac 10.9",
+            browserName: "safari"
+        },
+        "SL_SAFARI_LATEST_WINDOWS": {
+            base: "SauceLabs",
+            platform: "Windows 7",
+            browserName: "safari"
+        },
+
+        //IE
+        "SL_IE_LATEST_WINDOWS": {
+            base: "SauceLabs",
+            platform: "Windows 8.1",
+            browserName: "internet explorer"
+        },
+
+        //Opera
+        "SL_OPERA_LATEST_WINDOWS": {
+            base: "SauceLabs",
+            platform: "Windows 7",
+            browserName: "opera"
+        },
+        "SL_OPERA_LATEST_LINUX": {
+            base: "SauceLabs",
+            platform: "Linux",
+            browserName: "opera"
+        }
+    };
+
+    config.set({
+        autoWatch: false,
+
+        reporters: ["dots", "saucelabs"],
+
+        // If browser does not capture in given timeout [ms], kill it
+        captureTimeout: 120000,
+
+        sauceLabs: {
+            testName: "element-resize-detector",
+            recordScreenshots: false,
+            startConnect: false
+        },
+
+        customLaunchers: customLaunchers,
+        singleRun: true
+    });
+};

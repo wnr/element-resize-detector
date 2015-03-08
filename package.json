@@ -17,6 +17,8 @@
     "grunt-contrib-jshint": "^0.11.0",
     "grunt-contrib-uglify": "^0.7.0",
     "grunt-karma": "^0.10.1",
+    "grunt-sauce-connect-launcher": "^0.3.0",
+    "grunt-sauce-tunnel": "^0.2.1",
     "jasmine-core": "^2.2.0",
     "jasmine-expect": "^2.0.0-beta1",
     "jasmine-jquery": "^2.0.6",
@@ -24,6 +26,7 @@
     "karma": "^0.12.31",
     "karma-chrome-launcher": "^0.1.7",
     "karma-jasmine": "^0.3.5",
+    "karma-sauce-launcher": "^0.2.10",
     "load-grunt-tasks": "^3.0.0",
     "lodash": "^3.3.1"
   },

@@ -112,6 +112,31 @@ describe("element-resize-detector", function() {
             }, 200);
         });
 
+        it("should be able to attach listeners to multiple elements", function(done) {
+            var erd = elementResizeDetectorMaker();
+
+            var listener1 = jasmine.createSpy("listener1");
+
+            erd.listenTo($("#test, #test2"), listener1);
+
+            setTimeout(function() {
+                $("#test").width(200);
+            }, 100);
+
+            setTimeout(function() {
+                expect(listener1).toHaveBeenCalledWith($("#test")[0]);
+            }, 200);
+
+            setTimeout(function() {
+                $("#test2").width(500);
+            }, 300);
+
+            setTimeout(function() {
+               expect(listener1).toHaveBeenCalledWith($("#test2")[0]);
+               done();
+            }, 400);
+        });
+
         it("should keep the style of the element intact", function(done) {
             var erd = elementResizeDetectorMaker();
 
