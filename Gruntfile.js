@@ -102,7 +102,7 @@ module.exports = function(grunt) {
             local: {
                 configFile: "karma.conf.js",
                 options: {
-                    browsers: ["Chrome"],
+                    browsers: ["Chrome", "Safari", "Firefox"],
                     singleRun: true
                 }
             }
@@ -120,9 +120,9 @@ module.exports = function(grunt) {
 
     var sauceBrowsers = {
         "CHROME_LATEST_1": ["SL_CHROME_LATEST_OSX", "SL_CHROME_LATEST_WINDOWS"],
-        "CHROME_LATEST_2": ["SL_CHROME_LATEST_LINUX"],
+        //"CHROME_LATEST_2": ["SL_CHROME_LATEST_LINUX"],
         "FIREFOX_LATEST_1": ["SL_FIREFOX_LATEST_OSX", "SL_FIREFOX_LATEST_WINDOWS"],
-        "FIREFOX_LATEST_2": ["SL_FIREFOX_LATEST_LINUX"],
+        //"FIREFOX_LATEST_2": ["SL_FIREFOX_LATEST_LINUX"],
         "SAFARI_LATEST": ["SL_SAFARI_LATEST_OSX", "SL_SAFARI_LATEST_WINDOWS"],
         "OPERA_LATEST": ["SL_OPERA_LATEST_WINDOWS", "SL_OPERA_LATEST_LINUX"],
         "IE_LATEST": ["SL_IE_LATEST_WINDOWS"]
