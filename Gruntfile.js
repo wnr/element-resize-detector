@@ -125,7 +125,10 @@ module.exports = function(grunt) {
         //"FIREFOX_LATEST_2": ["SL_FIREFOX_LATEST_LINUX"],
         "SAFARI_LATEST": ["SL_SAFARI_LATEST_OSX", "SL_SAFARI_LATEST_WINDOWS"],
         "OPERA_LATEST": ["SL_OPERA_LATEST_WINDOWS", "SL_OPERA_LATEST_LINUX"],
-        "IE_LATEST": ["SL_IE_LATEST_WINDOWS"]
+        "IE_LATEST": ["SL_IE_LATEST_WINDOWS"],
+        "IE_10": ["SL_IE_10_WINDOWS"],
+        "IE_9": ["SL_IE_9_WINDOWS"],
+        "IE_8": ["SL_IE_8_WINDOWS"]
     };
 
     var sauceBrowserTasks = registerSauceBrowsers(config, sauceBrowsers, "karma.sauce.conf.js");

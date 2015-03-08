@@ -62,6 +62,24 @@ module.exports = function(config) {
             platform: "Windows 8.1",
             browserName: "internet explorer"
         },
+        "SL_IE_10_WINDOWS": {
+            base: "SauceLabs",
+            platform: "Windows 7",
+            browserName: "internet explorer",
+            version: "10"
+        },
+        "SL_IE_9_WINDOWS": {
+            base: "SauceLabs",
+            platform: "Windows 7",
+            browserName: "internet explorer",
+            version: "9"
+        },
+        "SL_IE_8_WINDOWS": {
+            base: "SauceLabs",
+            platform: "Windows xp",
+            browserName: "internet explorer",
+            version: "8"
+        },
 
         //Opera
         "SL_OPERA_LATEST_WINDOWS": {

@@ -125,16 +125,16 @@ describe("element-resize-detector", function() {
 
             setTimeout(function() {
                 expect(listener1).toHaveBeenCalledWith($("#test")[0]);
-            }, 200);
+            }, 300);
 
             setTimeout(function() {
                 $("#test2").width(500);
-            }, 300);
+            }, 400);
 
             setTimeout(function() {
                expect(listener1).toHaveBeenCalledWith($("#test2")[0]);
                done();
-            }, 400);
+            }, 600);
         });
 
         it("should keep the style of the element intact", function(done) {
