@@ -1,6 +1,7 @@
 "use strict";
 
 var forEach = require("./collection-utils").forEach;
+var browserDetector = require("./browser-detector");
 
 var utils = module.exports = {};
 
@@ -85,10 +86,19 @@ utils.makeDetectable = function(element, id, callback) {
     object.style.cssText = OBJECT_STYLE;
     object.onload = onObjectLoad;
     object.setAttribute("elq-object-id", id);
+
+    //Safari: This must occur before adding the object to the DOM.
+    //IE: Does not like that this happens before, even if it is also added after.
+    if(!browserDetector.isIE()) {
+        object.data = "about:blank";
+    }
+
     element.appendChild(object);
 
-    //This must occur after that the object has been added to the DOM in order for IE to work.
-    object.data = "about:blank";
+    //IE: This must occur after adding the object to the DOM.
+    if(browserDetector.isIE()) {
+        object.data = "about:blank";
+    }
 };
 
 /**
