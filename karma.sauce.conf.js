@@ -89,6 +89,34 @@ module.exports = function(config) {
             base: "SauceLabs",
             platform: "Linux",
             browserName: "opera"
+        },
+
+        //iPhone,
+        "SL_IOS_LATEST_IPHONE": {
+            base: "SauceLabs",
+            platform: "OS X 10.9",
+            browserName: "iphone",
+            version: "8" //Sauce defaults to 5 if this is omitted.
+        },
+        "SL_IOS_7_IPHONE": {
+            base: "SauceLabs",
+            platform: "OS X 10.9",
+            browserName: "iphone",
+            version: "7"
+        },
+
+        //iPad,
+        "SL_IOS_LATEST_IPAD": {
+            base: "SauceLabs",
+            platform: "OS X 10.9",
+            browserName: "ipad",
+            version: "8" //Sauce defaults to 5 if this is omitted.
+        },
+        "SL_IOS_7_IPAD": {
+            base: "SauceLabs",
+            platform: "OS X 10.9",
+            browserName: "ipad",
+            version: "7"
         }
     };
 

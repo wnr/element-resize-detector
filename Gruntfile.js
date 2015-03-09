@@ -132,7 +132,9 @@ module.exports = function(grunt) {
         "IE_LATEST": ["SL_IE_LATEST_WINDOWS"],
         "IE_10": ["SL_IE_10_WINDOWS"],
         "IE_9": ["SL_IE_9_WINDOWS"],
-        "IE_8": ["SL_IE_8_WINDOWS"]
+        "IE_8": ["SL_IE_8_WINDOWS"],
+        "IOS_LATEST": ["SL_IOS_LATEST_IPHONE", "SL_IOS_LATEST_IPAD"],
+        "IOS_7": ["SL_IOS_7_IPHONE", "SL_IOS_7_IPAD"]
     };
 
     var sauceBrowserTasks = registerSauceBrowsers(config, sauceBrowsers, "karma.sauce.conf.js");
