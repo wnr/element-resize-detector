@@ -115,7 +115,6 @@ module.exports = function(grunt) {
            options: {
                username: process.env.SAUCE_USERNAME,
                accessKey: process.env.SAUCE_ACCESS_KEY,
-               identifier: process.env.SAUCE_TUNNEL_ID,
                verbose: true
            },
            tunnel: {}
