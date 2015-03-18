@@ -137,7 +137,7 @@ module.exports = function(grunt) {
     function batchSauceBrowsers(browsers, batchSize) {
         var number = 1;
         var batchMap = {};
-        return _.forEach(_.chunk(browsers, batchSize), function(chunk) {
+        _.forEach(_.chunk(browsers, batchSize), function(chunk) {
             batchMap["sauceBrowserChunk" + number++] = chunk;
         });
         return batchMap;
