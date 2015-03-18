@@ -1,8 +1,9 @@
-/* global describe:false, it:false, beforeEach:false, loadFixtures:false, expect:false, elementResizeDetectorMaker:false, _:false, $:false, jasmine:false */
+/* global describe:false, it:false, beforeEach:false, expect:false, elementResizeDetectorMaker:false, _:false, $:false, jasmine:false */
 
 "use strict";
 
-jasmine.getFixtures().fixturesPath = "/base/test/";
+//This messed with tests in IE8.
+//jasmine.getFixtures().fixturesPath = "/base/test/";
 
 function getStyle(element) {
     function clone(styleObject) {
@@ -52,9 +53,14 @@ function positonFromStaticToRelative(key, before, after) {
     return key === "position" && before === "static" && after === "relative";
 }
 
+$("body").prepend("<div id=fixtures></div>");
+
 describe("element-resize-detector", function() {
     beforeEach(function() {
-        loadFixtures("element-resize-detector_fixture.html");
+        //This messed with tests in IE8.
+        //TODO: Investigate why, because it would be nice to have instead of the current solution.
+        //loadFixtures("element-resize-detector_fixture.html");
+        $("#fixtures").html("<div id=test></div><div id=test2></div>");
     });
 
     describe("elementResizeDetectorMaker", function() {
@@ -93,7 +99,7 @@ describe("element-resize-detector", function() {
 
             expect(erd.listenTo).toThrow();
 
-            expect(erd.listenTo.bind(null, $("#test")[0])).toThrow();
+            expect(_.partial(erd.listenTo, $("#test")[0])).toThrow();
         });
 
         it("should be able to attach multiple listeners to an element", function(done) {
@@ -141,20 +147,24 @@ describe("element-resize-detector", function() {
             }, 600);
         });
 
-        it("should keep the style of the element intact", function(done) {
-            var erd = elementResizeDetectorMaker();
+        //Only run this test if the browser actually is able to get the computed style of an element.
+        //Only IE8 is lacking the getComputedStyle method.
+        if(window.getComputedStyle) {
+            it("should keep the style of the element intact", function(done) {
+                var erd = elementResizeDetectorMaker();
 
-            var before = getStyle($("#test")[0]);
-            erd.listenTo($("#test")[0], _.noop);
-            var after = getStyle($("#test")[0]);
-            ensureStyle(before, after, positonFromStaticToRelative);
+                var before = getStyle($("#test")[0]);
+                erd.listenTo($("#test")[0], _.noop);
+                var after = getStyle($("#test")[0]);
+                ensureStyle(before, after, positonFromStaticToRelative);
 
-            //Test styles async since making an element listenable is async.
-            setTimeout(function() {
-                var afterAsync = getStyle($("#test")[0]);
-                ensureStyle(before, afterAsync, positonFromStaticToRelative);
-                done();
-            }, 100);
-        });
+                //Test styles async since making an element listenable is async.
+                setTimeout(function() {
+                    var afterAsync = getStyle($("#test")[0]);
+                    ensureStyle(before, afterAsync, positonFromStaticToRelative);
+                    done();
+                }, 100);
+            });
+        }
     });
 });
