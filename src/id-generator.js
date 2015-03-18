@@ -8,11 +8,11 @@ module.exports = function() {
      * @public
      * @returns {number} A unique id in the context.
      */
-    function newId() {
+    function generate() {
         return idCount++;
     }
 
     return {
-        newId: newId
+        generate: generate
     };
 };

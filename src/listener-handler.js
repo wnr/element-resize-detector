@@ -1,8 +1,6 @@
 "use strict";
 
-var elementUtils = require("./element-utils");
-
-module.exports = function() {
+module.exports = function(idHandler) {
     var eventListeners = {};
 
     /**
@@ -12,7 +10,7 @@ module.exports = function() {
      * @returns All listeners for the given element.
      */
     function getListeners(element) {
-        return eventListeners[elementUtils.getId(element)];
+        return eventListeners[idHandler.get(element)];
     }
 
     /**
@@ -22,7 +20,7 @@ module.exports = function() {
      * @param {function} listener The callback that the element has added.
      */
     function addListener(element, listener) {
-        var id = elementUtils.getId(element);
+        var id = idHandler.get(element);
 
         if(!eventListeners[id]) {
             eventListeners[id] = [];

@@ -3,14 +3,24 @@
 "use strict";
 
 var forEach = require("./collection-utils").forEach;
-var elementUtils = require("./element-utils");
-var idGeneratorMaker = require("./id-generator");
+var elementUtilsMaker = require("./element-utils");
 var listenerHandlerMaker = require("./listener-handler");
+var idGeneratorMaker = require("./id-generator");
+var idHandlerMaker = require("./id-handler");
 
 module.exports = function(options) {
     options = options || {};
-    var eventListenerHandler = listenerHandlerMaker();
-    var idGenerator = idGeneratorMaker();
+
+    var idHandler = options.idHandler;
+
+    if(!idHandler) {
+        var idGenerator = idGeneratorMaker();
+        var defaultIdHandler = idHandlerMaker(idGenerator);
+        idHandler = defaultIdHandler;
+    }
+
+    var eventListenerHandler = listenerHandlerMaker(idHandler);
+    var elementUtils = elementUtilsMaker(idHandler);
 
     /**
      * Makes the given elements resize-detectable and starts listening to resize events on the elements. Calls the event callback for each event for each element.
@@ -42,8 +52,7 @@ module.exports = function(options) {
         forEach(elements, function(element) {
             if(!elementUtils.isDetectable(element)) {
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
-                var id = idGenerator.newId();
-                return elementUtils.makeDetectable(element, id, function(element) {
+                return elementUtils.makeDetectable(element, function(element) {
                     elementUtils.addListener(element, onResizeCallback);
                     eventListenerHandler.add(element, listener);
                 });

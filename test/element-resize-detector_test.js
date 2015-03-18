@@ -5,32 +5,13 @@
 //This messed with tests in IE8.
 //jasmine.getFixtures().fixturesPath = "/base/test/";
 
-function getStyle(element) {
-    function clone(styleObject) {
-        var clonedTarget = {};
-        _.forEach(styleObject.cssText.split(";").slice(0, -1), function(declaration){
-            var colonPos = declaration.indexOf(":");
-            var attr = declaration.slice(0, colonPos).trim();
-            if(attr.indexOf("-") === -1){ // Remove attributes like "background-image", leaving "backgroundImage"
-                clonedTarget[attr] = declaration.slice(colonPos+2);
-            }
-        });
-        return clonedTarget;
-    }
-
-    var style = getComputedStyle(element);
-    return clone(style);
-}
-
-function ensureStyle(before, after, ignore) {
+function ensureMapEqual(before, after, ignore) {
     var beforeKeys = _.keys(before);
     var afterKeys = _.keys(after);
 
-    var diffKeys = _.difference(beforeKeys, afterKeys);
+    var unionKeys = _.union(beforeKeys, afterKeys);
 
-    expect(diffKeys).toEqual([]);
-
-    var diffValueKeys = _.filter(beforeKeys, function(key) {
+    var diffValueKeys = _.filter(unionKeys, function(key) {
         var beforeValue = before[key];
         var afterValue = after[key];
         return !ignore(key, beforeValue, afterValue) && beforeValue !== afterValue;
@@ -49,9 +30,38 @@ function ensureStyle(before, after, ignore) {
     }
 }
 
+function getStyle(element) {
+    function clone(styleObject) {
+        var clonedTarget = {};
+        _.forEach(styleObject.cssText.split(";").slice(0, -1), function(declaration){
+            var colonPos = declaration.indexOf(":");
+            var attr = declaration.slice(0, colonPos).trim();
+            if(attr.indexOf("-") === -1){ // Remove attributes like "background-image", leaving "backgroundImage"
+                clonedTarget[attr] = declaration.slice(colonPos+2);
+            }
+        });
+        return clonedTarget;
+    }
+
+    var style = getComputedStyle(element);
+    return clone(style);
+}
+
+var ensureStyle = ensureMapEqual;
+
 function positonFromStaticToRelative(key, before, after) {
     return key === "position" && before === "static" && after === "relative";
 }
+
+function getAttributes(element) {
+    var attrs = {};
+    _.forEach(element.attributes, function(attr) {
+        attrs[attr.nodeName] = attr.nodeValue;
+    });
+    return attrs;
+}
+
+var ensureAttributes = ensureMapEqual;
 
 $("body").prepend("<div id=fixtures></div>");
 
@@ -166,5 +176,65 @@ describe("element-resize-detector", function() {
                 }, 100);
             });
         }
+
+        it("should use the option.idHandler if present", function(done) {
+            var ID_ATTR = "some-fancy-id-attr";
+
+            var idHandler = {
+                get: function(element) {
+                    return $(element).attr(ID_ATTR);
+                },
+                set: function(element) {
+                    var id;
+
+                    if($(element).attr("id") === "test") {
+                        id = "test+1";
+                    } else if($(element).attr("id") === "test2") {
+                        id = "test2+2";
+                    }
+
+                    $(element).attr(ID_ATTR, id);
+                    return id;
+                }
+            };
+
+            var erd = elementResizeDetectorMaker({
+                idHandler: idHandler
+            });
+
+            var listener1 = jasmine.createSpy("listener1");
+            var listener2 = jasmine.createSpy("listener1");
+
+            var attrsBeforeTest = getAttributes($("#test")[0]);
+            var attrsBeforeTest2 = getAttributes($("#test2")[0]);
+
+            erd.listenTo($("#test"), listener1);
+            erd.listenTo($("#test, #test2"), listener2);
+
+            var attrsAfterTest = getAttributes($("#test")[0]);
+            var attrsAfterTest2 = getAttributes($("#test2")[0]);
+
+            var ignoreValidIdAttrAndStyle = function(key) {
+                return key === ID_ATTR || key === "style";
+            };
+
+            ensureAttributes(attrsBeforeTest, attrsAfterTest, ignoreValidIdAttrAndStyle);
+            ensureAttributes(attrsBeforeTest2, attrsAfterTest2, ignoreValidIdAttrAndStyle);
+
+            expect($("#test").attr(ID_ATTR)).toEqual("test+1");
+            expect($("#test2").attr(ID_ATTR)).toEqual("test2+2");
+
+            setTimeout(function() {
+                $("#test").width(300);
+                $("#test2").width(500);
+            }, 100);
+
+            setTimeout(function() {
+               expect(listener1).toHaveBeenCalledWith($("#test")[0]);
+               expect(listener2).toHaveBeenCalledWith($("#test")[0]);
+               expect(listener2).toHaveBeenCalledWith($("#test2")[0]);
+               done();
+            }, 600);
+        });
     });
 });
