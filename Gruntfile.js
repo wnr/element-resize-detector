@@ -202,6 +202,7 @@ module.exports = function(grunt) {
                     stop();
                 });
             } else {
+                grunt.log.writeln("Closing tunnel since the :keepAlive argument is not present...");
                 done();
             }
         });
