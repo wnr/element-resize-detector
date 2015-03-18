@@ -126,7 +126,7 @@ module.exports = function(config) {
         reporters: ["dots", "saucelabs"],
 
         // If browser does not capture in given timeout [ms], kill it
-        captureTimeout: 120000,
+        captureTimeout: 5*60*1000,
 
         sauceLabs: {
             testName: "element-resize-detector",

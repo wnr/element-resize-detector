@@ -3,6 +3,7 @@
 "use strict";
 
 var _ = require("lodash");
+var sauceConnectLauncher = require("sauce-connect-launcher");
 
 function registerSauceBrowsers(config, sauceBrowsers, configFile) {
     function capitalize(string) {
@@ -140,9 +141,6 @@ module.exports = function(grunt) {
 
     grunt.initConfig(config);
 
-    grunt.registerTask("sauceConnect:start", ["checkSauceConnectEnv", "sauce_connect"]);
-    grunt.registerTask("sauceConnect:stop", ["sauce-connect-close"]);
-
     grunt.registerTask("build:dev", ["browserify:dev"]);
     grunt.registerTask("build:dist", ["browserify:dist"]);
 
@@ -153,9 +151,13 @@ module.exports = function(grunt) {
     grunt.registerTask("test:sauce", ["build"].concat(sauceBrowserTasks));
     grunt.registerTask("test", ["test:style", "build:dev", "karma:local"]);
 
+    grunt.registerTask("ci", ["test:style", "sauceConnectTunnel", "test:sauce"]);
+
     grunt.registerTask("default", ["test"]);
 
-    grunt.registerTask("checkSauceConnectEnv", "Checks so all env variables are set for sauce connect.", function() {
+    var sauceConnectTunnel = {};
+
+    grunt.registerTask("sauceConnectTunnel", "Starts a sauce connect tunnel", function(keepAlive) {
         if(!process.env.SAUCE_USERNAME) {
             grunt.log.error("env SAUCE_USERNAME needs to be set.");
             return false;
@@ -166,9 +168,42 @@ module.exports = function(grunt) {
             return false;
         }
 
-        if(!process.env.SAUCE_TUNNEL_ID) {
-            grunt.log.writeln("env SAUCE_TUNNEL_ID needs to be set.");
-            return false;
-        }
+        var done = this.async();
+
+        sauceConnectLauncher({
+            username: process.env.SAUCE_USERNAME,
+            accessKey: process.env.SAUCE_ACCESS_KEY,
+            logger: grunt.log.writeln,
+            verbose: true,
+            logfile: "sauce-connect.log"
+        }, function (err, sauceConnectProcess) {
+            function stop() {
+                grunt.log.writeln("Stopping...");
+                sauceConnectTunnel.process.close(function() {
+                    grunt.log.writeln("Closed Sauce Connect process");
+                    done();
+                });
+            }
+
+            if (err) {
+                grunt.log.error(err.message);
+                done(false);
+            }
+
+            sauceConnectTunnel.process = sauceConnectProcess;
+
+            grunt.log.success("Sauce Connect ready!");
+
+            if(keepAlive) {
+                grunt.log.writeln("The tunnel will be kept alive. Stop it by terminating this process with SIGINT (Ctrl-C).");
+
+                process.on("SIGINT", function() {
+                    grunt.log.writeln();
+                    stop();
+                });
+            } else {
+                done();
+            }
+        });
     });
 };
