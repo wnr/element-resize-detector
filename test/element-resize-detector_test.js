@@ -91,7 +91,7 @@ describe("element-resize-detector", function() {
             setTimeout(function() {
                 expect(listener).toHaveBeenCalledWith($("#test")[0]);
                 done();
-            }, 200);
+            }, 400);
         });
 
         it("should throw on invalid parameters", function() {
@@ -144,7 +144,7 @@ describe("element-resize-detector", function() {
             setTimeout(function() {
                expect(listener1).toHaveBeenCalledWith($("#test2")[0]);
                done();
-            }, 600);
+            }, 800);
         });
 
         //Only run this test if the browser actually is able to get the computed style of an element.

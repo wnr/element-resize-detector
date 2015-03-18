@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.1.5 (2015-03-18, 19:35)
+ * element-resize-detector 0.1.5 (2015-03-18, 20:09)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -133,13 +133,13 @@ var browserDetector = require("./browser-detector");
 var utils = module.exports = {};
 
 /**
- * Gets the elq id of the element.
+ * Gets the element resize detector id of the element.
  * @public
  * @param {element} The target element to get the id of.
  * @returns {string} The id of the element.
  */
 utils.getId = function(element) {
-    return element.getAttribute("elq-target-id");
+    return element.getAttribute("erd-target-id");
 };
 
 /**
@@ -223,7 +223,7 @@ utils.makeDetectable = function(element, id, callback) {
         object.type = "text/html";
         object.style.cssText = OBJECT_STYLE;
         object.onload = onObjectLoad;
-        object.setAttribute("elq-object-id", id);
+        object.setAttribute("erd-object-id", id);
 
         //Safari: This must occur before adding the object to the DOM.
         //IE: Does not like that this happens before, even if it is also added after.
@@ -239,8 +239,8 @@ utils.makeDetectable = function(element, id, callback) {
         }
     }
 
-    //Create an unique elq-target-id for the target element, so that event listeners can be identified to this element.
-    element.setAttribute("elq-target-id", id);
+    //Create an unique erd-target-id for the target element, so that event listeners can be identified to this element.
+    element.setAttribute("erd-target-id", id);
 
     if(browserDetector.isIE(8)) {
         //IE 8 does not support objects properly. Luckily they do support the resize event.
@@ -260,7 +260,7 @@ utils.makeDetectable = function(element, id, callback) {
  */
 function getObject(element) {
     return forEach(element.children, function(child) {
-        if(child.hasAttribute("elq-object-id")) {
+        if(child.hasAttribute("erd-object-id")) {
             return child;
         }
     });
