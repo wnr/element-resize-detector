@@ -22,12 +22,12 @@ detector.isIE = function(version) {
             v = 3,
             div = document.createElement("div"),
             all = div.getElementsByTagName("i");
-        
+
         do {
             div.innerHTML = "<!--[if gt IE " + (++v) + "]><i></i><![endif]-->";
         }
         while (all[0]);
-        
+
         return v > 4 ? v : undef;
     }());
 
