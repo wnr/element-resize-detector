@@ -116,7 +116,9 @@ module.exports = function(grunt) {
            options: {
                username: process.env.SAUCE_USERNAME,
                accessKey: process.env.SAUCE_ACCESS_KEY,
-               verbose: true
+               verbose: true,
+               build: process.env.TRAVIS_BUILD_NUMBER || process.env.BUILD_NUMBER,
+               testName: "element-resize-detector"
            },
            tunnel: {}
        }
