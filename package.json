@@ -34,6 +34,7 @@
   "scripts": {
     "build": "grunt build",
     "dist": "grunt dist",
-    "test": "grunt test"
+    "test": "grunt test",
+    "test-ci": "grunt ci"
   }
 }
