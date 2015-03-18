@@ -122,22 +122,27 @@ module.exports = function(grunt) {
        }
     };
 
-    var sauceBrowsers = {
-        "CHROME_LATEST_1": ["SL_CHROME_LATEST_OSX", "SL_CHROME_LATEST_WINDOWS"],
-        //"CHROME_LATEST_2": ["SL_CHROME_LATEST_LINUX"],
-        "FIREFOX_LATEST_1": ["SL_FIREFOX_LATEST_OSX", "SL_FIREFOX_LATEST_WINDOWS"],
-        //"FIREFOX_LATEST_2": ["SL_FIREFOX_LATEST_LINUX"],
-        "SAFARI_LATEST": ["SL_SAFARI_LATEST_OSX", "SL_SAFARI_LATEST_WINDOWS"],
-        "OPERA_LATEST": ["SL_OPERA_LATEST_WINDOWS", "SL_OPERA_LATEST_LINUX"],
-        "IE_LATEST": ["SL_IE_LATEST_WINDOWS"],
-        "IE_10": ["SL_IE_10_WINDOWS"],
-        "IE_9": ["SL_IE_9_WINDOWS"],
-        "IE_8": ["SL_IE_8_WINDOWS"],
-        "IOS_LATEST": ["SL_IOS_LATEST_IPHONE", "SL_IOS_LATEST_IPAD"],
-        "IOS_7": ["SL_IOS_7_IPHONE", "SL_IOS_7_IPAD"]
-    };
+    var sauceBrowsers = [
+        "SL_CHROME_LATEST_OSX", "SL_CHROME_LATEST_WINDOWS", "SL_CHROME_LATEST_LINUX",
+        "SL_FIREFOX_LATEST_OSX", "SL_FIREFOX_LATEST_WINDOWS", "SL_FIREFOX_LATEST_LINUX",
+        "SL_SAFARI_LATEST_OSX", "SL_SAFARI_LATEST_WINDOWS",
+        "SL_OPERA_LATEST_WINDOWS", "SL_OPERA_LATEST_LINUX",
+        "SL_IE_LATEST_WINDOWS", "SL_IE_10_WINDOWS", "SL_IE_9_WINDOWS", "SL_IE_8_WINDOWS",
+        "SL_IOS_LATEST_IPHONE", "SL_IOS_LATEST_IPAD",
+        "SL_IOS_7_IPHONE", "SL_IOS_7_IPAD"
+    ];
 
-    var sauceBrowserTasks = registerSauceBrowsers(config, sauceBrowsers, "karma.sauce.conf.js");
+    function batchSauceBrowsers(browsers, batchSize) {
+        var number = 1;
+        var batchMap = {};
+        return _.forEach(_.chunk(browsers, batchSize), function(chunk) {
+            batchMap["sauceBrowserChunk" + number++] = chunk;
+        });
+        return batchMap;
+    }
+
+    var NUM_PARALLEL_BROWSERS = 3;
+    var sauceBrowserTasks = registerSauceBrowsers(config, batchSauceBrowsers(sauceBrowsers, NUM_PARALLEL_BROWSERS), "karma.sauce.conf.js");
 
     grunt.initConfig(config);
 
