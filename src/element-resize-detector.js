@@ -8,9 +8,24 @@ var listenerHandlerMaker = require("./listener-handler");
 var idGeneratorMaker = require("./id-generator");
 var idHandlerMaker = require("./id-handler");
 
+function getOption(options, name, defaultValue) {
+    var value = options[name];
+
+    if((value === undefined || value === null) && defaultValue !== undefined) {
+        return defaultValue;
+    }
+
+    return value;
+}
+
 module.exports = function(options) {
     options = options || {};
 
+    //Options to be used as default for the listenTo function.
+    var globalOptions = {};
+    globalOptions.callOnAdd = !!getOption(options, "callOnAdd", true);
+
+    //idHandler is currently not an option to the listenTo function, so it should not be added to globalOptions.
     var idHandler = options.idHandler;
 
     if(!idHandler) {
@@ -25,16 +40,32 @@ module.exports = function(options) {
     /**
      * Makes the given elements resize-detectable and starts listening to resize events on the elements. Calls the event callback for each event for each element.
      * @public
+     * @param {object?} options Optional options object. These options will override the global options.
      * @param {element[]|element} elements The given array of elements to detect resize events of. Single element is also valid.
      * @param {function} listener The callback to be executed for each resize event for each element.
      */
-    function listenTo(elements, listener) {
+    function listenTo(options, elements, listener) {
         function onResizeCallback(element) {
             var listeners = eventListenerHandler.get(element);
 
             forEach(listeners, function(listener) {
                 listener(element);
             });
+        }
+
+        function onElementReadyToAddListener(callOnAdd, element, listener) {
+            eventListenerHandler.add(element, listener);
+            
+            if(callOnAdd) {
+                listener(element);
+            }
+        }
+
+        //Options object may be omitted.
+        if(!listener) {
+            listener = elements;
+            elements = options;
+            options = {};
         }
 
         if(!elements) {
@@ -49,17 +80,19 @@ module.exports = function(options) {
             elements = [elements];
         }
 
+        var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
+
         forEach(elements, function(element) {
             if(!elementUtils.isDetectable(element)) {
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
                 return elementUtils.makeDetectable(element, function(element) {
                     elementUtils.addListener(element, onResizeCallback);
-                    eventListenerHandler.add(element, listener);
+                    onElementReadyToAddListener(callOnAdd, element, listener);
                 });
             }
             
             //The element has been prepared to be detectable and is ready to be listened to.
-            return eventListenerHandler.add(element, listener);
+            onElementReadyToAddListener(callOnAdd, element, listener);
         });
     }
 

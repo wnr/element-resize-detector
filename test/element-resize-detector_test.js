@@ -88,7 +88,9 @@ describe("element-resize-detector", function() {
 
     describe("listenTo", function() {
         it("should be able to attach an listener to an element", function(done) {
-            var erd = elementResizeDetectorMaker();
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false
+            });
 
             var listener = jasmine.createSpy("listener");
 
@@ -105,7 +107,9 @@ describe("element-resize-detector", function() {
         });
 
         it("should throw on invalid parameters", function() {
-            var erd = elementResizeDetectorMaker();
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false
+            });
 
             expect(erd.listenTo).toThrow();
 
@@ -113,7 +117,9 @@ describe("element-resize-detector", function() {
         });
 
         it("should be able to attach multiple listeners to an element", function(done) {
-            var erd = elementResizeDetectorMaker();
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false
+            });
 
             var listener1 = jasmine.createSpy("listener1");
             var listener2 = jasmine.createSpy("listener2");
@@ -133,7 +139,9 @@ describe("element-resize-detector", function() {
         });
 
         it("should be able to attach listeners to multiple elements", function(done) {
-            var erd = elementResizeDetectorMaker();
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false
+            });
 
             var listener1 = jasmine.createSpy("listener1");
 
@@ -161,7 +169,9 @@ describe("element-resize-detector", function() {
         //Only IE8 is lacking the getComputedStyle method.
         if(window.getComputedStyle) {
             it("should keep the style of the element intact", function(done) {
-                var erd = elementResizeDetectorMaker();
+                var erd = elementResizeDetectorMaker({
+                    callOnAdd: false
+                });
 
                 var before = getStyle($("#test")[0]);
                 erd.listenTo($("#test")[0], _.noop);
@@ -199,7 +209,8 @@ describe("element-resize-detector", function() {
             };
 
             var erd = elementResizeDetectorMaker({
-                idHandler: idHandler
+                idHandler: idHandler,
+                callOnAdd: false
             });
 
             var listener1 = jasmine.createSpy("listener1");
@@ -235,6 +246,51 @@ describe("element-resize-detector", function() {
                expect(listener2).toHaveBeenCalledWith($("#test2")[0]);
                done();
             }, 600);
+        });
+
+        describe("options.callOnAdd", function() {
+            it("should be true default and call all functions when listenTo succeeds", function(done) {
+                var erd = elementResizeDetectorMaker();
+
+                var listener = jasmine.createSpy("listener");
+                var listener2 = jasmine.createSpy("listener2");
+
+                erd.listenTo($("#test")[0], listener);
+                erd.listenTo($("#test")[0], listener2);
+
+                setTimeout(function() {
+                    expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                    expect(listener2).toHaveBeenCalledWith($("#test")[0]);
+                    listener.calls.reset();
+                    listener2.calls.reset();
+                    $("#test").width(300);
+                }, 100);
+
+                setTimeout(function() {
+                    expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                    expect(listener2).toHaveBeenCalledWith($("#test")[0]);
+                    done();
+                }, 400);
+            });
+
+            it("should not call listeners on add if set to false", function(done) {
+                var erd = elementResizeDetectorMaker({
+                    callOnAdd: false
+                });
+
+                var listener = jasmine.createSpy("listener");
+                erd.listenTo($("#test")[0], listener);
+
+                setTimeout(function() {
+                    expect(listener).not.toHaveBeenCalled();
+                    $("#test").width(300);
+                }, 100);
+
+                setTimeout(function() {
+                    expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                    done();
+                }, 400);
+            });
         });
     });
 });
