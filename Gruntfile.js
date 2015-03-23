@@ -107,7 +107,14 @@ module.exports = function(grunt) {
             local: {
                 configFile: "karma.conf.js",
                 options: {
-                    browsers: ["Chrome", "Safari", "Firefox"],
+                    browsers: [
+                        "Chrome",
+                        "Safari",
+                        "Firefox",
+                        //"IE8 - Win7",
+                        //"IE10 - Win7",
+                        //"IE11 - Win8.1"
+                    ],
                     singleRun: true
                 }
             }

@@ -8,16 +8,28 @@ var listenerHandlerMaker = require("./listener-handler");
 var idGeneratorMaker = require("./id-generator");
 var idHandlerMaker = require("./id-handler");
 
-function getOption(options, name, defaultValue) {
-    var value = options[name];
+/**
+ * @typedef idHandler
+ * @type {object}
+ * @property {function} get Gets the resize detector id of the element.
+ * @property {function} set Generate and sets the resize detector id of the element.
+ */
 
-    if((value === undefined || value === null) && defaultValue !== undefined) {
-        return defaultValue;
-    }
+/**
+ * @typedef Options
+ * @type {object}
+ * @property {boolean}      callOnAdd Determines if listeners should be called when they are getting added. 
+                            Default is true. If true, the listener is guaranteed to be called when it has been added. 
+                            If false, the listener will not be guarenteed to be called when it has been added (does not prevent it from being called).
+ * @property {idHandler}    A custom id handler that is responsible for generating, setting and retrieving id's for elements.
+                            If not provided, a default id handler will be used.
+ */
 
-    return value;
-}
-
+/**
+ * Creates an element resize detector instance.
+ * @public
+ * @param {Options?} options Optional global options object that will decide how this instance will work.
+ */
 module.exports = function(options) {
     options = options || {};
 
@@ -40,7 +52,7 @@ module.exports = function(options) {
     /**
      * Makes the given elements resize-detectable and starts listening to resize events on the elements. Calls the event callback for each event for each element.
      * @public
-     * @param {object?} options Optional options object. These options will override the global options.
+     * @param {Options?} options Optional options object. These options will override the global options. Some options may not be overriden, such as idHandler.
      * @param {element[]|element} elements The given array of elements to detect resize events of. Single element is also valid.
      * @param {function} listener The callback to be executed for each resize event for each element.
      */
@@ -117,3 +129,13 @@ module.exports = function(options) {
         listenTo: listenTo
     };
 };
+
+function getOption(options, name, defaultValue) {
+    var value = options[name];
+
+    if((value === undefined || value === null) && defaultValue !== undefined) {
+        return defaultValue;
+    }
+
+    return value;
+}

@@ -288,25 +288,6 @@ describe("element-resize-detector", function() {
                     done();
                 }, 400);
             });
-
-            it("should not call listeners on add if set to false", function(done) {
-                var erd = elementResizeDetectorMaker({
-                    callOnAdd: false
-                });
-
-                var listener = jasmine.createSpy("listener");
-                erd.listenTo($("#test")[0], listener);
-
-                setTimeout(function() {
-                    expect(listener).not.toHaveBeenCalled();
-                    $("#test").width(300);
-                }, 100);
-
-                setTimeout(function() {
-                    expect(listener).toHaveBeenCalledWith($("#test")[0]);
-                    done();
-                }, 400);
-            });
         });
     });
 });
