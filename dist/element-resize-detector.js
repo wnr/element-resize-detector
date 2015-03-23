@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.2.0 (2015-03-19, 11:59)
+ * element-resize-detector 0.2.1 (2015-03-23, 17:42)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -73,16 +73,28 @@ var listenerHandlerMaker = require("./listener-handler");
 var idGeneratorMaker = require("./id-generator");
 var idHandlerMaker = require("./id-handler");
 
-function getOption(options, name, defaultValue) {
-    var value = options[name];
+/**
+ * @typedef idHandler
+ * @type {object}
+ * @property {function} get Gets the resize detector id of the element.
+ * @property {function} set Generate and sets the resize detector id of the element.
+ */
 
-    if((value === undefined || value === null) && defaultValue !== undefined) {
-        return defaultValue;
-    }
+/**
+ * @typedef Options
+ * @type {object}
+ * @property {boolean}      callOnAdd Determines if listeners should be called when they are getting added. 
+                            Default is true. If true, the listener is guaranteed to be called when it has been added. 
+                            If false, the listener will not be guarenteed to be called when it has been added (does not prevent it from being called).
+ * @property {idHandler}    A custom id handler that is responsible for generating, setting and retrieving id's for elements.
+                            If not provided, a default id handler will be used.
+ */
 
-    return value;
-}
-
+/**
+ * Creates an element resize detector instance.
+ * @public
+ * @param {Options?} options Optional global options object that will decide how this instance will work.
+ */
 module.exports = function(options) {
     options = options || {};
 
@@ -105,7 +117,7 @@ module.exports = function(options) {
     /**
      * Makes the given elements resize-detectable and starts listening to resize events on the elements. Calls the event callback for each event for each element.
      * @public
-     * @param {object?} options Optional options object. These options will override the global options.
+     * @param {Options?} options Optional options object. These options will override the global options. Some options may not be overriden, such as idHandler.
      * @param {element[]|element} elements The given array of elements to detect resize events of. Single element is also valid.
      * @param {function} listener The callback to be executed for each resize event for each element.
      */
@@ -148,11 +160,28 @@ module.exports = function(options) {
         var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
 
         forEach(elements, function(element) {
+            //The element may change size directly after the call to listenTo, which would be unable to detect it because
+            //the async adding of the object. By checking the size before and after, the size change can still be detected
+            //and the listener can be called accordingly.
+            var preWidth = element.offsetWidth;
+            var preHeight = element.offsetHeight;
+
             if(!elementUtils.isDetectable(element)) {
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
                 return elementUtils.makeDetectable(element, function(element) {
                     elementUtils.addListener(element, onResizeCallback);
                     onElementReadyToAddListener(callOnAdd, element, listener);
+
+                    //Only here the uncaught resize may occur (since this code is async).
+                    //Check if the size is the same as when adding the listener.
+                    var postWidth = element.offsetWidth;
+                    var postHeight = element.offsetHeight;
+
+                    //If callOnAdd is true, then the listener will have been called either way, so no need to call the listener manually then.
+                    if(!callOnAdd && (preWidth !== postWidth || preHeight !== postHeight)) {
+                        //The element was changed while the object was being added. Call the listener.
+                        listener(element);
+                    }
                 });
             }
             
@@ -165,6 +194,16 @@ module.exports = function(options) {
         listenTo: listenTo
     };
 };
+
+function getOption(options, name, defaultValue) {
+    var value = options[name];
+
+    if((value === undefined || value === null) && defaultValue !== undefined) {
+        return defaultValue;
+    }
+
+    return value;
+}
 
 },{"./collection-utils":2,"./element-utils":4,"./id-generator":5,"./id-handler":6,"./listener-handler":7}],4:[function(require,module,exports){
 "use strict";
