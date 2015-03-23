@@ -7,6 +7,7 @@ var elementUtilsMaker = require("./element-utils");
 var listenerHandlerMaker = require("./listener-handler");
 var idGeneratorMaker = require("./id-generator");
 var idHandlerMaker = require("./id-handler");
+var reporterMaker = require("./reporter");
 
 /**
  * @typedef idHandler
@@ -18,11 +19,14 @@ var idHandlerMaker = require("./id-handler");
 /**
  * @typedef Options
  * @type {object}
- * @property {boolean}      callOnAdd Determines if listeners should be called when they are getting added. 
-                            Default is true. If true, the listener is guaranteed to be called when it has been added. 
-                            If false, the listener will not be guarenteed to be called when it has been added (does not prevent it from being called).
- * @property {idHandler}    A custom id handler that is responsible for generating, setting and retrieving id's for elements.
-                            If not provided, a default id handler will be used.
+ * @property {boolean} callOnAdd    Determines if listeners should be called when they are getting added. 
+                                    Default is true. If true, the listener is guaranteed to be called when it has been added. 
+                                    If false, the listener will not be guarenteed to be called when it has been added (does not prevent it from being called).
+ * @property {idHandler} idHandler  A custom id handler that is responsible for generating, setting and retrieving id's for elements.
+                                    If not provided, a default id handler will be used.
+ * @property {reporter} reporter    A custom reporter that handles reporting logs, warnings and errors. 
+                                    If not provided, a default id handler will be used.
+                                    If set to false, then nothing will be reported.
  */
 
 /**
@@ -44,6 +48,15 @@ module.exports = function(options) {
         var idGenerator = idGeneratorMaker();
         var defaultIdHandler = idHandlerMaker(idGenerator);
         idHandler = defaultIdHandler;
+    }
+
+    //reporter is currently not an option to the listenTo function, so it should not be added to globalOptions.
+    var reporter = options.reporter;
+
+    if(!reporter) {
+        //If options.reporter is false, then the reporter should be quiet.
+        var quiet = reporter === false;
+        reporter = reporterMaker(quiet);
     }
 
     var eventListenerHandler = listenerHandlerMaker(idHandler);
@@ -103,7 +116,7 @@ module.exports = function(options) {
 
             if(!elementUtils.isDetectable(element)) {
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
-                return elementUtils.makeDetectable(element, function(element) {
+                return elementUtils.makeDetectable(reporter, element, function(element) {
                     elementUtils.addListener(element, onResizeCallback);
                     onElementReadyToAddListener(callOnAdd, element, listener);
 

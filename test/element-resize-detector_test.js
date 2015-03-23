@@ -63,6 +63,18 @@ function getAttributes(element) {
 
 var ensureAttributes = ensureMapEqual;
 
+var reporter = {
+    log: function() {
+        throw new Error("Reporter.log should not be called");
+    },
+    warn: function() {
+        throw new Error("Reporter.warn should not be called");
+    },
+    error: function() {
+        throw new Error("Reporter.error should not be called");
+    }
+};
+
 $("body").prepend("<div id=fixtures></div>");
 
 describe("element-resize-detector", function() {
@@ -89,7 +101,8 @@ describe("element-resize-detector", function() {
     describe("listenTo", function() {
         it("should be able to attach an listener to an element", function(done) {
             var erd = elementResizeDetectorMaker({
-                callOnAdd: false
+                callOnAdd: false,
+                reporter: reporter
             });
 
             var listener = jasmine.createSpy("listener");
@@ -108,7 +121,8 @@ describe("element-resize-detector", function() {
 
         it("should throw on invalid parameters", function() {
             var erd = elementResizeDetectorMaker({
-                callOnAdd: false
+                callOnAdd: false,
+                reporter: reporter
             });
 
             expect(erd.listenTo).toThrow();
@@ -118,7 +132,8 @@ describe("element-resize-detector", function() {
 
         it("should be able to attach multiple listeners to an element", function(done) {
             var erd = elementResizeDetectorMaker({
-                callOnAdd: false
+                callOnAdd: false,
+                reporter: reporter
             });
 
             var listener1 = jasmine.createSpy("listener1");
@@ -140,7 +155,8 @@ describe("element-resize-detector", function() {
 
         it("should be able to attach listeners to multiple elements", function(done) {
             var erd = elementResizeDetectorMaker({
-                callOnAdd: false
+                callOnAdd: false,
+                reporter: reporter
             });
 
             var listener1 = jasmine.createSpy("listener1");
@@ -170,7 +186,8 @@ describe("element-resize-detector", function() {
         if(window.getComputedStyle) {
             it("should keep the style of the element intact", function(done) {
                 var erd = elementResizeDetectorMaker({
-                    callOnAdd: false
+                    callOnAdd: false,
+                    reporter: reporter
                 });
 
                 var before = getStyle($("#test")[0]);
@@ -189,7 +206,8 @@ describe("element-resize-detector", function() {
 
         it("should call listener if the element is changed synchronously after listenTo", function(done) {
             var erd = elementResizeDetectorMaker({
-                callOnAdd: false
+                callOnAdd: false,
+                reporter: reporter
             });
 
             var listener1 = jasmine.createSpy("listener1");
@@ -226,7 +244,8 @@ describe("element-resize-detector", function() {
 
             var erd = elementResizeDetectorMaker({
                 idHandler: idHandler,
-                callOnAdd: false
+                callOnAdd: false,
+                reporter: reporter
             });
 
             var listener1 = jasmine.createSpy("listener1");
@@ -264,30 +283,54 @@ describe("element-resize-detector", function() {
             }, 600);
         });
 
-        describe("options.callOnAdd", function() {
-            it("should be true default and call all functions when listenTo succeeds", function(done) {
-                var erd = elementResizeDetectorMaker();
+        it("should report warnings when top/right/bottom/left is set for an element to be changed to relative", function() {
+            $("#test").css("bottom", "1px");
 
-                var listener = jasmine.createSpy("listener");
-                var listener2 = jasmine.createSpy("listener2");
+            var ownReporter = {
+                warn: jasmine.createSpy(),
+                log: reporter.log,
+                error: reporter.error
+            };
 
-                erd.listenTo($("#test")[0], listener);
-                erd.listenTo($("#test")[0], listener2);
-
-                setTimeout(function() {
-                    expect(listener).toHaveBeenCalledWith($("#test")[0]);
-                    expect(listener2).toHaveBeenCalledWith($("#test")[0]);
-                    listener.calls.reset();
-                    listener2.calls.reset();
-                    $("#test").width(300);
-                }, 100);
-
-                setTimeout(function() {
-                    expect(listener).toHaveBeenCalledWith($("#test")[0]);
-                    expect(listener2).toHaveBeenCalledWith($("#test")[0]);
-                    done();
-                }, 400);
+            var erd = elementResizeDetectorMaker({
+                reporter: ownReporter
             });
+
+            erd.listenTo($("#test"), _.noop);
+
+            expect(ownReporter.warn).toHaveBeenCalled();
         });
     });
+
+    describe("options.callOnAdd", function() {
+        it("should be true default and call all functions when listenTo succeeds", function(done) {
+            var erd = elementResizeDetectorMaker({
+                reporter: reporter
+            });
+
+            var listener = jasmine.createSpy("listener");
+            var listener2 = jasmine.createSpy("listener2");
+
+            erd.listenTo($("#test")[0], listener);
+            erd.listenTo($("#test")[0], listener2);
+
+            setTimeout(function() {
+                expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                expect(listener2).toHaveBeenCalledWith($("#test")[0]);
+                listener.calls.reset();
+                listener2.calls.reset();
+                $("#test").width(300);
+            }, 100);
+
+            setTimeout(function() {
+                expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                expect(listener2).toHaveBeenCalledWith($("#test")[0]);
+                done();
+            }, 400);
+        });
+    });
+
+    // describe("options.reporter", function() {
+    //     it("")
+    // });
 });

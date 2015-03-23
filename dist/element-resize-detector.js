@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.2.1 (2015-03-23, 17:42)
+ * element-resize-detector 0.2.1 (2015-03-23, 19:27)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -72,6 +72,7 @@ var elementUtilsMaker = require("./element-utils");
 var listenerHandlerMaker = require("./listener-handler");
 var idGeneratorMaker = require("./id-generator");
 var idHandlerMaker = require("./id-handler");
+var reporterMaker = require("./reporter");
 
 /**
  * @typedef idHandler
@@ -83,11 +84,14 @@ var idHandlerMaker = require("./id-handler");
 /**
  * @typedef Options
  * @type {object}
- * @property {boolean}      callOnAdd Determines if listeners should be called when they are getting added. 
-                            Default is true. If true, the listener is guaranteed to be called when it has been added. 
-                            If false, the listener will not be guarenteed to be called when it has been added (does not prevent it from being called).
- * @property {idHandler}    A custom id handler that is responsible for generating, setting and retrieving id's for elements.
-                            If not provided, a default id handler will be used.
+ * @property {boolean} callOnAdd    Determines if listeners should be called when they are getting added. 
+                                    Default is true. If true, the listener is guaranteed to be called when it has been added. 
+                                    If false, the listener will not be guarenteed to be called when it has been added (does not prevent it from being called).
+ * @property {idHandler} idHandler  A custom id handler that is responsible for generating, setting and retrieving id's for elements.
+                                    If not provided, a default id handler will be used.
+ * @property {reporter} reporter    A custom reporter that handles reporting logs, warnings and errors. 
+                                    If not provided, a default id handler will be used.
+                                    If set to false, then nothing will be reported.
  */
 
 /**
@@ -109,6 +113,15 @@ module.exports = function(options) {
         var idGenerator = idGeneratorMaker();
         var defaultIdHandler = idHandlerMaker(idGenerator);
         idHandler = defaultIdHandler;
+    }
+
+    //reporter is currently not an option to the listenTo function, so it should not be added to globalOptions.
+    var reporter = options.reporter;
+
+    if(!reporter) {
+        //If options.reporter is false, then the reporter should be quiet.
+        var quiet = reporter === false;
+        reporter = reporterMaker(quiet);
     }
 
     var eventListenerHandler = listenerHandlerMaker(idHandler);
@@ -168,7 +181,7 @@ module.exports = function(options) {
 
             if(!elementUtils.isDetectable(element)) {
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
-                return elementUtils.makeDetectable(element, function(element) {
+                return elementUtils.makeDetectable(reporter, element, function(element) {
                     elementUtils.addListener(element, onResizeCallback);
                     onElementReadyToAddListener(callOnAdd, element, listener);
 
@@ -205,7 +218,7 @@ function getOption(options, name, defaultValue) {
     return value;
 }
 
-},{"./collection-utils":2,"./element-utils":4,"./id-generator":5,"./id-handler":6,"./listener-handler":7}],4:[function(require,module,exports){
+},{"./collection-utils":2,"./element-utils":4,"./id-generator":5,"./id-handler":6,"./listener-handler":7,"./reporter":8}],4:[function(require,module,exports){
 "use strict";
 
 var forEach = require("./collection-utils").forEach;
@@ -258,7 +271,7 @@ module.exports = function(idHandler) {
      * @param {element} element The element to make detectable
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
-    function makeDetectable(element, callback) {
+    function makeDetectable(reporter, element, callback) {
         function injectObject(id, element, callback) {
             var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
 
@@ -283,8 +296,29 @@ module.exports = function(idHandler) {
             }
 
             //The target element needs to be positioned (everything except static) so the absolute positioned object will be positioned relative to the target element.
-            if(getComputedStyle(element).position === "static") {
+            var style = getComputedStyle(element);
+            if(style.position === "static") {
                 element.style.position = "relative";
+
+                var removeRelativeStyles = function(reporter, element, style, property) {
+                    function getNumericalValue(value) {
+                        return value.replace(/[^-\d\.]/g, "");
+                    }
+
+                    var value = style[property];
+
+                    if(value !== "auto" && getNumericalValue(value) !== "0") {
+                        reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relateive, so the style." + property + " will be set to 0. Element: ", element);
+                        element.style[property] = 0;
+                    }
+                };
+
+                //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
+                //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
+                removeRelativeStyles(reporter, element, style, "top");
+                removeRelativeStyles(reporter, element, style, "right");
+                removeRelativeStyles(reporter, element, style, "bottom");
+                removeRelativeStyles(reporter, element, style, "left");
             }
 
             //Add an object element as a child to the target element that will be listened to for resize events.
@@ -439,5 +473,34 @@ module.exports = function(idHandler) {
     };
 };
 
+},{}],8:[function(require,module,exports){
+"use strict";
+
+/* global console: false */
+
+/**
+ * Reporter that handles the reporting of logs, warnings and errors.
+ * @public
+ * @param {boolean} quiet Tells if the reporter should be quiet or not.
+ */
+module.exports = function(quiet) {
+    var noop = function () {
+        //Does nothing.
+    };
+
+    var reporter = {
+        log: noop,
+        warn: noop,
+        error: noop
+    };
+
+    if(!quiet && window.console) {
+        reporter.log = console.log;
+        reporter.warn = console.warn;
+        reporter.error = console.error;
+    }
+
+    return reporter;
+};
 },{}]},{},[3])(3)
 });

@@ -50,7 +50,7 @@ module.exports = function(idHandler) {
      * @param {element} element The element to make detectable
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
-    function makeDetectable(element, callback) {
+    function makeDetectable(reporter, element, callback) {
         function injectObject(id, element, callback) {
             var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
 
@@ -75,8 +75,29 @@ module.exports = function(idHandler) {
             }
 
             //The target element needs to be positioned (everything except static) so the absolute positioned object will be positioned relative to the target element.
-            if(getComputedStyle(element).position === "static") {
+            var style = getComputedStyle(element);
+            if(style.position === "static") {
                 element.style.position = "relative";
+
+                var removeRelativeStyles = function(reporter, element, style, property) {
+                    function getNumericalValue(value) {
+                        return value.replace(/[^-\d\.]/g, "");
+                    }
+
+                    var value = style[property];
+
+                    if(value !== "auto" && getNumericalValue(value) !== "0") {
+                        reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relateive, so the style." + property + " will be set to 0. Element: ", element);
+                        element.style[property] = 0;
+                    }
+                };
+
+                //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
+                //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
+                removeRelativeStyles(reporter, element, style, "top");
+                removeRelativeStyles(reporter, element, style, "right");
+                removeRelativeStyles(reporter, element, style, "bottom");
+                removeRelativeStyles(reporter, element, style, "left");
             }
 
             //Add an object element as a child to the target element that will be listened to for resize events.
