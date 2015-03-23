@@ -19,9 +19,15 @@ module.exports = function(quiet) {
     };
 
     if(!quiet && window.console) {
-        reporter.log = console.log;
-        reporter.warn = console.warn;
-        reporter.error = console.error;
+        var attachFunction = function(reporter, name) {
+            reporter[name] = function() {
+                console[name].apply(console, arguments);
+            };
+        };
+
+        attachFunction(reporter, "log");
+        attachFunction(reporter, "warn");
+        attachFunction(reporter, "error");
     }
 
     return reporter;

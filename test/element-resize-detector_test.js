@@ -286,19 +286,31 @@ describe("element-resize-detector", function() {
         it("should report warnings when top/right/bottom/left is set for an element to be changed to relative", function() {
             $("#test").css("bottom", "1px");
 
-            var ownReporter = {
-                warn: jasmine.createSpy(),
-                log: reporter.log,
-                error: reporter.error
-            };
+            var oldWarn;
 
-            var erd = elementResizeDetectorMaker({
-                reporter: ownReporter
-            });
+            var called = false;
 
+            if(window.console) {
+                /* global console: false */
+                oldWarn = console.warn;
+
+                var warn = function() {
+                    expect(this).toEqual(console);
+                    called = true;
+                };
+
+                console.warn = warn;
+            }
+
+            var erd = elementResizeDetectorMaker();
             erd.listenTo($("#test"), _.noop);
-
-            expect(ownReporter.warn).toHaveBeenCalled();
+            
+            //The test should not fail because the reporter should not be using console.
+            //So succeed the test if this has been reached.
+            if(window.console) {
+                console.warn = oldWarn;
+                expect(called).toEqual(true);
+            }
         });
     });
 
