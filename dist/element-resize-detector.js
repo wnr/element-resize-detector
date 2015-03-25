@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.2.1 (2015-03-23, 19:27)
+ * element-resize-detector 0.2.3 (2015-03-25, 10:58)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -308,7 +308,7 @@ module.exports = function(idHandler) {
                     var value = style[property];
 
                     if(value !== "auto" && getNumericalValue(value) !== "0") {
-                        reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relateive, so the style." + property + " will be set to 0. Element: ", element);
+                        reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
                         element.style[property] = 0;
                     }
                 };
@@ -326,7 +326,7 @@ module.exports = function(idHandler) {
             object.type = "text/html";
             object.style.cssText = OBJECT_STYLE;
             object.onload = onObjectLoad;
-            object.setAttribute("erd-object-id", id);
+            object._erdObjectId = id;
 
             //Safari: This must occur before adding the object to the DOM.
             //IE: Does not like that this happens before, even if it is also added after.
@@ -363,7 +363,7 @@ module.exports = function(idHandler) {
      */
     function getObject(element) {
         return forEach(element.children, function(child) {
-            if(child.hasAttribute("erd-object-id")) {
+            if(child._erdObjectId !== undefined && child._erdObjectId !== null) {
                 return child;
             }
         });
@@ -400,6 +400,7 @@ module.exports = function() {
 "use strict";
 
 module.exports = function(idGenerator) {
+    var ID_PROP_NAME = "_erdTargetId";
 
     /**
      * Gets the resize detector id of the element.
@@ -408,7 +409,7 @@ module.exports = function(idGenerator) {
      * @returns {string|number} The id of the element.
      */
     function getId(element) {
-        return element.getAttribute("erd-target-id");
+        return element[ID_PROP_NAME];
     }
 
     /**
@@ -424,7 +425,7 @@ module.exports = function(idGenerator) {
             id = idGenerator.generate();
         }
 
-        element.setAttribute("erd-target-id", id);
+        element[ID_PROP_NAME] = id;
 
         return id;
     }
@@ -495,9 +496,15 @@ module.exports = function(quiet) {
     };
 
     if(!quiet && window.console) {
-        reporter.log = console.log;
-        reporter.warn = console.warn;
-        reporter.error = console.error;
+        var attachFunction = function(reporter, name) {
+            reporter[name] = function() {
+                console[name].apply(console, arguments);
+            };
+        };
+
+        attachFunction(reporter, "log");
+        attachFunction(reporter, "warn");
+        attachFunction(reporter, "error");
     }
 
     return reporter;

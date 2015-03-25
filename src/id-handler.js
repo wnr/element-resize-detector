@@ -1,6 +1,7 @@
 "use strict";
 
 module.exports = function(idGenerator) {
+    var ID_PROP_NAME = "_erdTargetId";
 
     /**
      * Gets the resize detector id of the element.
@@ -9,7 +10,7 @@ module.exports = function(idGenerator) {
      * @returns {string|number} The id of the element.
      */
     function getId(element) {
-        return element.getAttribute("erd-target-id");
+        return element[ID_PROP_NAME];
     }
 
     /**
@@ -25,7 +26,7 @@ module.exports = function(idGenerator) {
             id = idGenerator.generate();
         }
 
-        element.setAttribute("erd-target-id", id);
+        element[ID_PROP_NAME] = id;
 
         return id;
     }
