@@ -55,23 +55,39 @@ module.exports = function(idHandler) {
             var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
 
             function onObjectLoad() {
-                /*jshint validthis:true */
+                /*jshint validthis: true */
+
+                function getDocument(element, callback) {
+                    //Opera 12 seem to call the object.onload before the actual document has been created.
+                    //So if it is not present, poll it with an timeout until it is present.
+                    //TODO: Could maybe be handled better with object.onreadystatechange or similar.
+                    if(!element.contentDocument) {
+                        setTimeout(function checkForObjectDocument() {
+                            getDocument(element, callback);
+                        }, 100);
+
+                        return;
+                    }
+
+                    callback(element.contentDocument);
+                }
 
                 //Create the style element to be added to the object.
-                var objectDocument = this.contentDocument;
-                var style = objectDocument.createElement("style");
-                style.innerHTML = "html, body { margin: 0; padding: 0 } div { -webkit-transition: opacity 0.01s; -ms-transition: opacity 0.01s; -o-transition: opacity 0.01s; transition: opacity 0.01s; opacity: 0; }";
+                getDocument(this, function onObjectDocumentReady(objectDocument) {
+                    var style = objectDocument.createElement("style");
+                    style.innerHTML = "html, body { margin: 0; padding: 0 } div { -webkit-transition: opacity 0.01s; -ms-transition: opacity 0.01s; -o-transition: opacity 0.01s; transition: opacity 0.01s; opacity: 0; }";
 
-                //TODO: Remove any styles that has been set on the object. Only the style above should be styling the object.
+                    //TODO: Remove any styles that has been set on the object. Only the style above should be styling the object.
 
-                //Append the style to the object.
-                objectDocument.head.appendChild(style);
+                    //Append the style to the object.
+                    objectDocument.head.appendChild(style);
 
-                //TODO: Is this needed here?
-                //this.style.cssText = OBJECT_STYLE;
+                    //TODO: Is this needed here?
+                    //this.style.cssText = OBJECT_STYLE;
 
-                //Notify that the element is ready to be listened to.
-                callback(element);
+                    //Notify that the element is ready to be listened to.
+                    callback(element);
+                });
             }
 
             //The target element needs to be positioned (everything except static) so the absolute positioned object will be positioned relative to the target element.
