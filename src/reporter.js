@@ -8,9 +8,9 @@
  * @param {boolean} quiet Tells if the reporter should be quiet or not.
  */
 module.exports = function(quiet) {
-    var noop = function () {
+    function noop() {
         //Does nothing.
-    };
+    }
 
     var reporter = {
         log: noop,
@@ -20,7 +20,9 @@ module.exports = function(quiet) {
 
     if(!quiet && window.console) {
         var attachFunction = function(reporter, name) {
-            reporter[name] = function() {
+            //The proxy is needed to be able to call the method with the console context,
+            //since we cannot use bind.
+            reporter[name] = function reporterProxy() {
                 console[name].apply(console, arguments);
             };
         };

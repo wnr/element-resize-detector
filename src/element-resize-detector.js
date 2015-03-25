@@ -73,7 +73,7 @@ module.exports = function(options) {
         function onResizeCallback(element) {
             var listeners = eventListenerHandler.get(element);
 
-            forEach(listeners, function(listener) {
+            forEach(listeners, function callListenerProxy(listener) {
                 listener(element);
             });
         }
@@ -107,7 +107,7 @@ module.exports = function(options) {
 
         var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
 
-        forEach(elements, function(element) {
+        forEach(elements, function attachListenerToElement(element) {
             //The element may change size directly after the call to listenTo, which would be unable to detect it because
             //the async adding of the object. By checking the size before and after, the size change can still be detected
             //and the listener can be called accordingly.
@@ -116,7 +116,7 @@ module.exports = function(options) {
 
             if(!elementUtils.isDetectable(element)) {
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
-                return elementUtils.makeDetectable(reporter, element, function(element) {
+                return elementUtils.makeDetectable(reporter, element, function onElementDetectable(element) {
                     elementUtils.addListener(element, onResizeCallback);
                     onElementReadyToAddListener(callOnAdd, element, listener);
 

@@ -46,7 +46,7 @@
     <script src="../node_modules/jquery/dist/jquery.min.js"></script>
     <script src="../build/element-resize-detector.js"></script>
     <script>
-        $(function() {
+        $(function onDomReady() {
             function updateDimensions(element) {
                 var width = $(element).width();
                 var height = $(element).height();
@@ -59,7 +59,7 @@
             var erd = elementResizeDetectorMaker();
             erd.listenTo(container, updateDimensions);
 
-            container.click(function() {
+            container.click(function onContainerClick() {
                 function rand(min, max) {
                     return Math.floor(Math.random() * (max - min + 1)) + min;
                 }

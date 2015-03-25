@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.2.3 (2015-03-25, 10:58)
+ * element-resize-detector 0.2.4 (2015-03-25, 13:00)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -138,7 +138,7 @@ module.exports = function(options) {
         function onResizeCallback(element) {
             var listeners = eventListenerHandler.get(element);
 
-            forEach(listeners, function(listener) {
+            forEach(listeners, function callListenerProxy(listener) {
                 listener(element);
             });
         }
@@ -172,7 +172,7 @@ module.exports = function(options) {
 
         var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
 
-        forEach(elements, function(element) {
+        forEach(elements, function attachListenerToElement(element) {
             //The element may change size directly after the call to listenTo, which would be unable to detect it because
             //the async adding of the object. By checking the size before and after, the size change can still be detected
             //and the listener can be called accordingly.
@@ -181,7 +181,7 @@ module.exports = function(options) {
 
             if(!elementUtils.isDetectable(element)) {
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
-                return elementUtils.makeDetectable(reporter, element, function(element) {
+                return elementUtils.makeDetectable(reporter, element, function onElementDetectable(element) {
                     elementUtils.addListener(element, onResizeCallback);
                     onElementReadyToAddListener(callOnAdd, element, listener);
 
@@ -362,7 +362,7 @@ module.exports = function(idHandler) {
      * @returns The object element of the target.
      */
     function getObject(element) {
-        return forEach(element.children, function(child) {
+        return forEach(element.children, function isObject(child) {
             if(child._erdObjectId !== undefined && child._erdObjectId !== null) {
                 return child;
             }
@@ -485,9 +485,9 @@ module.exports = function(idHandler) {
  * @param {boolean} quiet Tells if the reporter should be quiet or not.
  */
 module.exports = function(quiet) {
-    var noop = function () {
+    function noop() {
         //Does nothing.
-    };
+    }
 
     var reporter = {
         log: noop,
@@ -497,7 +497,9 @@ module.exports = function(quiet) {
 
     if(!quiet && window.console) {
         var attachFunction = function(reporter, name) {
-            reporter[name] = function() {
+            //The proxy is needed to be able to call the method with the console context,
+            //since we cannot use bind.
+            reporter[name] = function reporterProxy() {
                 console[name].apply(console, arguments);
             };
         };

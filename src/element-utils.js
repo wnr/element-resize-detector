@@ -141,7 +141,7 @@ module.exports = function(idHandler) {
      * @returns The object element of the target.
      */
     function getObject(element) {
-        return forEach(element.children, function(child) {
+        return forEach(element.children, function isObject(child) {
             if(child._erdObjectId !== undefined && child._erdObjectId !== null) {
                 return child;
             }
