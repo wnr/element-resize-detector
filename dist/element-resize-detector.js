@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.2.4 (2015-03-25, 14:46)
+ * element-resize-detector 0.2.5 (2015-03-26, 11:17)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -173,28 +173,11 @@ module.exports = function(options) {
         var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
 
         forEach(elements, function attachListenerToElement(element) {
-            //The element may change size directly after the call to listenTo, which would be unable to detect it because
-            //the async adding of the object. By checking the size before and after, the size change can still be detected
-            //and the listener can be called accordingly.
-            var preWidth = element.offsetWidth;
-            var preHeight = element.offsetHeight;
-
             if(!elementUtils.isDetectable(element)) {
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
                 return elementUtils.makeDetectable(reporter, element, function onElementDetectable(element) {
                     elementUtils.addListener(element, onResizeCallback);
                     onElementReadyToAddListener(callOnAdd, element, listener);
-
-                    //Only here the uncaught resize may occur (since this code is async).
-                    //Check if the size is the same as when adding the listener.
-                    var postWidth = element.offsetWidth;
-                    var postHeight = element.offsetHeight;
-
-                    //If callOnAdd is true, then the listener will have been called either way, so no need to call the listener manually then.
-                    if(!callOnAdd && (preWidth !== postWidth || preHeight !== postHeight)) {
-                        //The element was changed while the object was being added. Call the listener.
-                        listener(element);
-                    }
                 });
             }
             
@@ -294,7 +277,7 @@ module.exports = function(idHandler) {
                 }
 
                 //Create the style element to be added to the object.
-                var objectDocument = getDocument(this, function onObjectDocumentReady(objectDocument) {
+                getDocument(this, function onObjectDocumentReady(objectDocument) {
                     var style = objectDocument.createElement("style");
                     style.innerHTML = "html, body { margin: 0; padding: 0 } div { -webkit-transition: opacity 0.01s; -ms-transition: opacity 0.01s; -o-transition: opacity 0.01s; transition: opacity 0.01s; opacity: 0; }";
 

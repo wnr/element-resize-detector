@@ -206,17 +206,16 @@ describe("element-resize-detector", function() {
 
         it("should call listener if the element is changed synchronously after listenTo", function(done) {
             var erd = elementResizeDetectorMaker({
-                callOnAdd: false,
+                callOnAdd: true,
                 reporter: reporter
             });
 
             var listener1 = jasmine.createSpy("listener1");
             erd.listenTo($("#test, #test2"), listener1);
-            $("#test").width(300);
 
             setTimeout(function() {
                 expect(listener1).toHaveBeenCalledWith($("#test")[0]);
-                expect(listener1).not.toHaveBeenCalledWith($("#test2")[0]);
+                expect(listener1).toHaveBeenCalledWith($("#test2")[0]);
                 done();
             }, 100);
         });
