@@ -1,10 +1,124 @@
 /*!
- * element-resize-detector 0.2.5 (2015-03-26, 11:17)
+ * element-resize-detector 0.2.5 (2015-03-31, 13:43)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
 
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.elementResizeDetectorMaker = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+"use strict";
+
+var utils = require("./utils");
+
+module.exports = function batchUpdaterMaker(options) {
+    options = options || {};
+
+    var reporter    = options.reporter;
+    var async       = utils.getOption(options, "async", true);
+    var autoUpdate  = utils.getOption(options, "auto", true);
+
+    if(autoUpdate && !async) {
+        reporter.warn("Invalid options combination. auto=true and async=false is invalid. Setting async=true.");
+        async = true;
+    }
+
+    if(!reporter) {
+        throw new Error("Reporter required.");
+    }
+
+    var batchSize = 0;
+    var batch = {};
+    var handler;
+
+    function queueUpdate(element, updater) {
+        if(autoUpdate && async && batchSize === 0) {
+            updateBatchAsync();
+        }
+
+        if(!batch[element]) {
+            batch[element] = [];
+        }
+
+        batch[element].push(updater);
+        batchSize++;
+    }
+
+    function forceUpdateBatch(updateAsync) {
+        if(updateAsync === undefined) {
+            updateAsync = async;
+        }
+
+        if(handler) {
+            cancelFrame(handler);
+            handler = null;
+        }
+
+        if(async) {
+            updateBatchAsync();
+        } else {
+            updateBatch();
+        }
+    }
+
+    function updateBatch() {
+        for(var element in batch) {
+            if(batch.hasOwnProperty(element)) {
+                var updaters = batch[element];
+
+                for(var i = 0; i < updaters.length; i++) {
+                    var updater = updaters[i];
+                    updater();
+                }
+            }
+        }
+        clearBatch();
+    }
+
+    function updateBatchAsync() {
+        handler = requestFrame(function performUpdate() {
+            updateBatch();
+        });
+    }
+
+    function clearBatch() {
+        batchSize = 0;
+        batch = {};
+    }
+
+    function cancelFrame(listener) {
+        // var cancel = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.clearTimeout;
+        var cancel = window.clearTimeout;
+        return cancel(listener);
+    }
+
+    function requestFrame(callback) {
+        // var raf = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || function(fn) { return window.setTimeout(fn, 20); };
+        var raf = function(fn) { return window.setTimeout(fn, 0); };
+        return raf(callback);
+    }
+
+    return {
+        update: queueUpdate,
+        force: forceUpdateBatch
+    };
+};
+},{"./utils":2}],2:[function(require,module,exports){
+"use strict";
+
+var utils = module.exports = {};
+
+utils.getOption = getOption;
+
+function getOption(options, name, defaultValue) {
+    var value = options[name];
+
+    if((value === undefined || value === null) && defaultValue !== undefined) {
+        return defaultValue;
+    }
+
+    return value;
+}
+
+},{}],3:[function(require,module,exports){
 "use strict";
 
 var detector = module.exports = {};
@@ -41,7 +155,7 @@ detector.isIE = function(version) {
     return version === ieVersion;
 };
 
-},{}],2:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 "use strict";
 
 var utils = module.exports = {};
@@ -62,7 +176,7 @@ utils.forEach = function(collection, callback) {
     }
 };
 
-},{}],3:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 //Heavily inspired by http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/
 
 "use strict";
@@ -73,6 +187,7 @@ var listenerHandlerMaker = require("./listener-handler");
 var idGeneratorMaker = require("./id-generator");
 var idHandlerMaker = require("./id-handler");
 var reporterMaker = require("./reporter");
+var batchUpdater = require("batch-updater");
 
 /**
  * @typedef idHandler
@@ -102,10 +217,6 @@ var reporterMaker = require("./reporter");
 module.exports = function(options) {
     options = options || {};
 
-    //Options to be used as default for the listenTo function.
-    var globalOptions = {};
-    globalOptions.callOnAdd = !!getOption(options, "callOnAdd", true);
-
     //idHandler is currently not an option to the listenTo function, so it should not be added to globalOptions.
     var idHandler = options.idHandler;
 
@@ -123,6 +234,11 @@ module.exports = function(options) {
         var quiet = reporter === false;
         reporter = reporterMaker(quiet);
     }
+
+    //Options to be used as default for the listenTo function.
+    var globalOptions = {};
+    globalOptions.callOnAdd     = !!getOption(options, "callOnAdd", true);
+    globalOptions.batchUpdater  = getOption(options, "batchUpdater", batchUpdater({ reporter: reporter }));
 
     var eventListenerHandler = listenerHandlerMaker(idHandler);
     var elementUtils = elementUtilsMaker(idHandler);
@@ -170,12 +286,13 @@ module.exports = function(options) {
             elements = [elements];
         }
 
-        var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
+        var callOnAdd       = getOption(options, "callOnAdd", globalOptions.callOnAdd);
+        var batchUpdater    = getOption(options, "batchUpdater", globalOptions.batchUpdater);
 
         forEach(elements, function attachListenerToElement(element) {
             if(!elementUtils.isDetectable(element)) {
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
-                return elementUtils.makeDetectable(reporter, element, function onElementDetectable(element) {
+                return elementUtils.makeDetectable(batchUpdater, reporter, element, function onElementDetectable(element) {
                     elementUtils.addListener(element, onResizeCallback);
                     onElementReadyToAddListener(callOnAdd, element, listener);
                 });
@@ -201,7 +318,7 @@ function getOption(options, name, defaultValue) {
     return value;
 }
 
-},{"./collection-utils":2,"./element-utils":4,"./id-generator":5,"./id-handler":6,"./listener-handler":7,"./reporter":8}],4:[function(require,module,exports){
+},{"./collection-utils":4,"./element-utils":6,"./id-generator":7,"./id-handler":8,"./listener-handler":9,"./reporter":10,"batch-updater":1}],6:[function(require,module,exports){
 "use strict";
 
 var forEach = require("./collection-utils").forEach;
@@ -254,7 +371,7 @@ module.exports = function(idHandler) {
      * @param {element} element The element to make detectable
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
-    function makeDetectable(reporter, element, callback) {
+    function makeDetectable(batchUpdater, reporter, element, callback) {
         function injectObject(id, element, callback) {
             var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
 
@@ -276,8 +393,12 @@ module.exports = function(idHandler) {
                     callback(element.contentDocument);
                 }
 
+                var objectElement = this;
+
+                objectElement.style.cssText = OBJECT_STYLE;
+
                 //Create the style element to be added to the object.
-                getDocument(this, function onObjectDocumentReady(objectDocument) {
+                getDocument(objectElement, function onObjectDocumentReady(objectDocument) {
                     var style = objectDocument.createElement("style");
                     style.innerHTML = "html, body { margin: 0; padding: 0 } div { -webkit-transition: opacity 0.01s; -ms-transition: opacity 0.01s; -o-transition: opacity 0.01s; transition: opacity 0.01s; opacity: 0; }";
 
@@ -286,9 +407,6 @@ module.exports = function(idHandler) {
                     //Append the style to the object.
                     objectDocument.head.appendChild(style);
 
-                    //TODO: Is this needed here?
-                    //this.style.cssText = OBJECT_STYLE;
-
                     //Notify that the element is ready to be listened to.
                     callback(element);
                 });
@@ -296,48 +414,57 @@ module.exports = function(idHandler) {
 
             //The target element needs to be positioned (everything except static) so the absolute positioned object will be positioned relative to the target element.
             var style = getComputedStyle(element);
-            if(style.position === "static") {
-                element.style.position = "relative";
+            var position = style.position;
 
-                var removeRelativeStyles = function(reporter, element, style, property) {
-                    function getNumericalValue(value) {
-                        return value.replace(/[^-\d\.]/g, "");
-                    }
+            function mutateDom() {
+                if(position === "static") {
+                    element.style.position = "relative";
 
-                    var value = style[property];
+                    var removeRelativeStyles = function(reporter, element, style, property) {
+                        function getNumericalValue(value) {
+                            return value.replace(/[^-\d\.]/g, "");
+                        }
 
-                    if(value !== "auto" && getNumericalValue(value) !== "0") {
-                        reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
-                        element.style[property] = 0;
-                    }
-                };
+                        var value = style[property];
 
-                //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
-                //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
-                removeRelativeStyles(reporter, element, style, "top");
-                removeRelativeStyles(reporter, element, style, "right");
-                removeRelativeStyles(reporter, element, style, "bottom");
-                removeRelativeStyles(reporter, element, style, "left");
+                        if(value !== "auto" && getNumericalValue(value) !== "0") {
+                            reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
+                            element.style[property] = 0;
+                        }
+                    };
+
+                    //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
+                    //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
+                    removeRelativeStyles(reporter, element, style, "top");
+                    removeRelativeStyles(reporter, element, style, "right");
+                    removeRelativeStyles(reporter, element, style, "bottom");
+                    removeRelativeStyles(reporter, element, style, "left");
+                }
+
+                //Add an object element as a child to the target element that will be listened to for resize events.
+                var object = document.createElement("object");
+                object.type = "text/html";
+                object.onload = onObjectLoad;
+                object._erdObjectId = id;
+
+                //Safari: This must occur before adding the object to the DOM.
+                //IE: Does not like that this happens before, even if it is also added after.
+                if(!browserDetector.isIE()) {
+                    object.data = "about:blank";
+                }
+
+                element.appendChild(object);
+
+                //IE: This must occur after adding the object to the DOM.
+                if(browserDetector.isIE()) {
+                    object.data = "about:blank";
+                }
             }
 
-            //Add an object element as a child to the target element that will be listened to for resize events.
-            var object = document.createElement("object");
-            object.type = "text/html";
-            object.style.cssText = OBJECT_STYLE;
-            object.onload = onObjectLoad;
-            object._erdObjectId = id;
-
-            //Safari: This must occur before adding the object to the DOM.
-            //IE: Does not like that this happens before, even if it is also added after.
-            if(!browserDetector.isIE()) {
-                object.data = "about:blank";
-            }
-
-            element.appendChild(object);
-
-            //IE: This must occur after adding the object to the DOM.
-            if(browserDetector.isIE()) {
-                object.data = "about:blank";
+            if(batchUpdater) {
+                batchUpdater.update(id, mutateDom);
+            } else {
+                mutateDom();
             }
         }
 
@@ -375,7 +502,7 @@ module.exports = function(idHandler) {
     };
 };
 
-},{"./browser-detector":1,"./collection-utils":2}],5:[function(require,module,exports){
+},{"./browser-detector":3,"./collection-utils":4}],7:[function(require,module,exports){
 "use strict";
 
 module.exports = function() {
@@ -395,7 +522,7 @@ module.exports = function() {
     };
 };
 
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 
 module.exports = function(idGenerator) {
@@ -435,7 +562,7 @@ module.exports = function(idGenerator) {
     };
 };
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict";
 
 module.exports = function(idHandler) {
@@ -473,7 +600,7 @@ module.exports = function(idHandler) {
     };
 };
 
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";
 
 /* global console: false */
@@ -510,5 +637,5 @@ module.exports = function(quiet) {
 
     return reporter;
 };
-},{}]},{},[3])(3)
+},{}]},{},[5])(5)
 });

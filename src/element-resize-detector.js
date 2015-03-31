@@ -8,6 +8,7 @@ var listenerHandlerMaker = require("./listener-handler");
 var idGeneratorMaker = require("./id-generator");
 var idHandlerMaker = require("./id-handler");
 var reporterMaker = require("./reporter");
+var batchUpdater = require("batch-updater");
 
 /**
  * @typedef idHandler
@@ -37,10 +38,6 @@ var reporterMaker = require("./reporter");
 module.exports = function(options) {
     options = options || {};
 
-    //Options to be used as default for the listenTo function.
-    var globalOptions = {};
-    globalOptions.callOnAdd = !!getOption(options, "callOnAdd", true);
-
     //idHandler is currently not an option to the listenTo function, so it should not be added to globalOptions.
     var idHandler = options.idHandler;
 
@@ -58,6 +55,11 @@ module.exports = function(options) {
         var quiet = reporter === false;
         reporter = reporterMaker(quiet);
     }
+
+    //Options to be used as default for the listenTo function.
+    var globalOptions = {};
+    globalOptions.callOnAdd     = !!getOption(options, "callOnAdd", true);
+    globalOptions.batchUpdater  = getOption(options, "batchUpdater", batchUpdater({ reporter: reporter }));
 
     var eventListenerHandler = listenerHandlerMaker(idHandler);
     var elementUtils = elementUtilsMaker(idHandler);
@@ -105,12 +107,13 @@ module.exports = function(options) {
             elements = [elements];
         }
 
-        var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
+        var callOnAdd       = getOption(options, "callOnAdd", globalOptions.callOnAdd);
+        var batchUpdater    = getOption(options, "batchUpdater", globalOptions.batchUpdater);
 
         forEach(elements, function attachListenerToElement(element) {
             if(!elementUtils.isDetectable(element)) {
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
-                return elementUtils.makeDetectable(reporter, element, function onElementDetectable(element) {
+                return elementUtils.makeDetectable(batchUpdater, reporter, element, function onElementDetectable(element) {
                     elementUtils.addListener(element, onResizeCallback);
                     onElementReadyToAddListener(callOnAdd, element, listener);
                 });

@@ -10,6 +10,9 @@
   "main": "src/element-resize-detector.js",
   "private": false,
   "license": "MIT",
+  "dependencies": {
+    "batch-updater": "^0.1.0"
+  },
   "devDependencies": {
     "grunt": "^0.4.5",
     "grunt-banner": "^0.3.1",

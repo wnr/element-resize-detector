@@ -50,7 +50,7 @@ module.exports = function(idHandler) {
      * @param {element} element The element to make detectable
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
-    function makeDetectable(reporter, element, callback) {
+    function makeDetectable(batchUpdater, reporter, element, callback) {
         function injectObject(id, element, callback) {
             var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
 
@@ -72,8 +72,12 @@ module.exports = function(idHandler) {
                     callback(element.contentDocument);
                 }
 
+                var objectElement = this;
+
+                objectElement.style.cssText = OBJECT_STYLE;
+
                 //Create the style element to be added to the object.
-                getDocument(this, function onObjectDocumentReady(objectDocument) {
+                getDocument(objectElement, function onObjectDocumentReady(objectDocument) {
                     var style = objectDocument.createElement("style");
                     style.innerHTML = "html, body { margin: 0; padding: 0 } div { -webkit-transition: opacity 0.01s; -ms-transition: opacity 0.01s; -o-transition: opacity 0.01s; transition: opacity 0.01s; opacity: 0; }";
 
@@ -82,9 +86,6 @@ module.exports = function(idHandler) {
                     //Append the style to the object.
                     objectDocument.head.appendChild(style);
 
-                    //TODO: Is this needed here?
-                    //this.style.cssText = OBJECT_STYLE;
-
                     //Notify that the element is ready to be listened to.
                     callback(element);
                 });
@@ -92,48 +93,57 @@ module.exports = function(idHandler) {
 
             //The target element needs to be positioned (everything except static) so the absolute positioned object will be positioned relative to the target element.
             var style = getComputedStyle(element);
-            if(style.position === "static") {
-                element.style.position = "relative";
+            var position = style.position;
 
-                var removeRelativeStyles = function(reporter, element, style, property) {
-                    function getNumericalValue(value) {
-                        return value.replace(/[^-\d\.]/g, "");
-                    }
+            function mutateDom() {
+                if(position === "static") {
+                    element.style.position = "relative";
 
-                    var value = style[property];
+                    var removeRelativeStyles = function(reporter, element, style, property) {
+                        function getNumericalValue(value) {
+                            return value.replace(/[^-\d\.]/g, "");
+                        }
 
-                    if(value !== "auto" && getNumericalValue(value) !== "0") {
-                        reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
-                        element.style[property] = 0;
-                    }
-                };
+                        var value = style[property];
 
-                //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
-                //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
-                removeRelativeStyles(reporter, element, style, "top");
-                removeRelativeStyles(reporter, element, style, "right");
-                removeRelativeStyles(reporter, element, style, "bottom");
-                removeRelativeStyles(reporter, element, style, "left");
+                        if(value !== "auto" && getNumericalValue(value) !== "0") {
+                            reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
+                            element.style[property] = 0;
+                        }
+                    };
+
+                    //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
+                    //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
+                    removeRelativeStyles(reporter, element, style, "top");
+                    removeRelativeStyles(reporter, element, style, "right");
+                    removeRelativeStyles(reporter, element, style, "bottom");
+                    removeRelativeStyles(reporter, element, style, "left");
+                }
+
+                //Add an object element as a child to the target element that will be listened to for resize events.
+                var object = document.createElement("object");
+                object.type = "text/html";
+                object.onload = onObjectLoad;
+                object._erdObjectId = id;
+
+                //Safari: This must occur before adding the object to the DOM.
+                //IE: Does not like that this happens before, even if it is also added after.
+                if(!browserDetector.isIE()) {
+                    object.data = "about:blank";
+                }
+
+                element.appendChild(object);
+
+                //IE: This must occur after adding the object to the DOM.
+                if(browserDetector.isIE()) {
+                    object.data = "about:blank";
+                }
             }
 
-            //Add an object element as a child to the target element that will be listened to for resize events.
-            var object = document.createElement("object");
-            object.type = "text/html";
-            object.style.cssText = OBJECT_STYLE;
-            object.onload = onObjectLoad;
-            object._erdObjectId = id;
-
-            //Safari: This must occur before adding the object to the DOM.
-            //IE: Does not like that this happens before, even if it is also added after.
-            if(!browserDetector.isIE()) {
-                object.data = "about:blank";
-            }
-
-            element.appendChild(object);
-
-            //IE: This must occur after adding the object to the DOM.
-            if(browserDetector.isIE()) {
-                object.data = "about:blank";
+            if(batchUpdater) {
+                batchUpdater.update(id, mutateDom);
+            } else {
+                mutateDom();
             }
         }
 

@@ -307,8 +307,10 @@ describe("element-resize-detector", function() {
             //The test should not fail because the reporter should not be using console.
             //So succeed the test if this has been reached.
             if(window.console) {
-                console.warn = oldWarn;
-                expect(called).toEqual(true);
+                setTimeout(function() {
+                    console.warn = oldWarn;
+                    expect(called).toEqual(true);
+                }, 200);
             }
         });
     });
