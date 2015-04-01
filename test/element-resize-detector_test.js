@@ -225,19 +225,19 @@ describe("element-resize-detector", function() {
 
             var idHandler = {
                 get: function(element) {
-                    return $(element).attr(ID_ATTR);
-                },
-                set: function(element) {
-                    var id;
+                    if(element[ID_ATTR] === undefined) {
+                        var id;
 
-                    if($(element).attr("id") === "test") {
-                        id = "test+1";
-                    } else if($(element).attr("id") === "test2") {
-                        id = "test2+2";
+                        if($(element).attr("id") === "test") {
+                            id = "test+1";
+                        } else if($(element).attr("id") === "test2") {
+                            id = "test2+2";
+                        }
+
+                        $(element).attr(ID_ATTR, id);
                     }
 
-                    $(element).attr(ID_ATTR, id);
-                    return id;
+                    return $(element).attr(ID_ATTR);
                 }
             };
 

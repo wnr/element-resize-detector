@@ -147,8 +147,8 @@ module.exports = function(idHandler) {
             }
         }
 
-        //Create an unique erd-target-id for the target element, so that event listeners can be identified to this element.
-        var id = idHandler.set(element);
+        //Obtain the id of the element (will be generated if not present), so that event listeners can be identified to this element.
+        var id = idHandler.get(element);
 
         if(browserDetector.isIE(8)) {
             //IE 8 does not support objects properly. Luckily they do support the resize event.

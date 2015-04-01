@@ -4,35 +4,33 @@ module.exports = function(idGenerator) {
     var ID_PROP_NAME = "_erdTargetId";
 
     /**
-     * Gets the resize detector id of the element.
+     * Gets the resize detector id of the element. If the element does not have an id, one will be assigned to the element.
      * @public
-     * @param {element} The target element to get the id of.
+     * @param {element} element The target element to get the id of.
+     * @param {boolean?} readonly An id will not be assigned to the element if the readonly parameter is true. Default is false.
      * @returns {string|number} The id of the element.
      */
-    function getId(element) {
+    function getId(element, readonly) {
+        if(!readonly && !hasId(element)) {
+            setId(element);
+        }
+
         return element[ID_PROP_NAME];
     }
 
-    /**
-     * Sets the resize detector id of the element.
-     * @public
-     * @param {element} The target element to set the id to.
-     * @param {string?} An optional id to set to the element. If not specified, an id will be generated. All id's must be unique.
-     * @returns {string|number} The id of the element.
-     */
-    function setId(element, id) {
-        if(!id && id !== 0) {
-            //Number should be generated.
-            id = idGenerator.generate();
-        }
+    function setId(element) {
+        var id = idGenerator.generate();
 
         element[ID_PROP_NAME] = id;
 
         return id;
     }
 
+    function hasId(element) {
+        return element[ID_PROP_NAME] !== undefined;
+    }
+
     return {
-        get: getId,
-        set: setId
+        get: getId
     };
 };
