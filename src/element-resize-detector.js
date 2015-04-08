@@ -12,6 +12,7 @@ var batchUpdaterMaker       = require("batch-updater");
 
 //Detection strategies.
 var objectStrategyMaker     = require("./detection-strategy/object.js");
+var scrollStrategyMaker     = require("./detection-strategy/scroll.js");
 
 /**
  * @typedef idHandler
@@ -70,7 +71,7 @@ module.exports = function(options) {
     var elementUtils            = elementUtilsMaker();
 
     //The detection strategy to be used.
-    var detectionStrategy = objectStrategyMaker({
+    var detectionStrategy = scrollStrategyMaker({
         idHandler: idHandler,
         reporter: reporter,
         batchUpdater: batchUpdater

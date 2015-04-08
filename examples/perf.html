@@ -49,7 +49,6 @@
     <script src="../build/element-resize-detector.js"></script>
     <script>
         var alignerWidth = 100;
-        var erd = elementResizeDetectorMaker();
 
         function resize() {
             if(alignerWidth === 100) {
@@ -61,31 +60,46 @@
             $("#aligner").width(alignerWidth + "%");
         }
 
-        function onElementResize(element) {
-            var style = getComputedStyle(element);
-            console.log(style.width);
-        }
+        $(function() {
+            var erd = elementResizeDetectorMaker();
 
-        function createDiv(width) {
-            var d = document.createElement("div");
-            d.className = "container";
-            d.style.width = width;
-            erd.listenTo({
-                callOnAdd: false
-            }, d, onElementResize);
-            return d;
-        }
+            
 
-        function loopCreateAndAppend(numNested, create, target) {
-            for(var i = 0; i < numNested; i++) {
-                var d = create();
-                target.appendChild(d);
+            function onElementResize(element) {
+                var style = getComputedStyle(element);
+                console.log(style.width);
             }
 
-            return target;
-        }
+            function createDiv(width) {
+                var d = document.createElement("div");
+                d.className = "container";
+                d.style.width = width;
+                return d;
+            }
 
-        loopCreateAndAppend(10, createDiv.bind(null, 10), document.getElementById("aligner"));
+            function loopCreateAndAppend(numNested, create, target) {
+                for(var i = 0; i < numNested; i++) {
+                    var d = create();
+                    target.appendChild(d);
+                }
+
+                return target;
+            }
+
+            loopCreateAndAppend(10, createDiv.bind(null, 10), document.getElementById("aligner"));
+
+            (function listenToResize() {
+                var erd = elementResizeDetectorMaker({
+                });
+                var elements = $(".container");
+                elements.each(function(i, e) {
+                    erd.listenTo({
+                        callOnAdd: false
+                    }, e, onElementResize);
+                });
+            })();
+        });
+
     </script>
 </body>
 </html>
