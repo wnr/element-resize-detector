@@ -2,13 +2,16 @@
 
 "use strict";
 
-var forEach = require("./collection-utils").forEach;
-var elementUtilsMaker = require("./element-utils");
-var listenerHandlerMaker = require("./listener-handler");
-var idGeneratorMaker = require("./id-generator");
-var idHandlerMaker = require("./id-handler");
-var reporterMaker = require("./reporter");
-var batchUpdater = require("batch-updater");
+var forEach                 = require("./collection-utils").forEach;
+var elementUtilsMaker       = require("./element-utils");
+var listenerHandlerMaker    = require("./listener-handler");
+var idGeneratorMaker        = require("./id-generator");
+var idHandlerMaker          = require("./id-handler");
+var reporterMaker           = require("./reporter");
+var batchUpdaterMaker       = require("batch-updater");
+
+//Detection strategies.
+var objectStrategyMaker     = require("./detection-strategy/object.js");
 
 /**
  * @typedef idHandler
@@ -56,13 +59,22 @@ module.exports = function(options) {
         reporter = reporterMaker(quiet);
     }
 
+    //batchUpdater is currently not an option to the listenTo function, so it should not be added to globalOptions.
+    var batchUpdater  = getOption(options, "batchUpdater", batchUpdaterMaker({ reporter: reporter }));
+
     //Options to be used as default for the listenTo function.
     var globalOptions = {};
     globalOptions.callOnAdd     = !!getOption(options, "callOnAdd", true);
-    globalOptions.batchUpdater  = getOption(options, "batchUpdater", batchUpdater({ reporter: reporter }));
 
-    var eventListenerHandler = listenerHandlerMaker(idHandler);
-    var elementUtils = elementUtilsMaker(idHandler);
+    var eventListenerHandler    = listenerHandlerMaker(idHandler);
+    var elementUtils            = elementUtilsMaker();
+
+    //The detection strategy to be used.
+    var detectionStrategy = objectStrategyMaker({
+        idHandler: idHandler,
+        reporter: reporter,
+        batchUpdater: batchUpdater
+    });
 
     /**
      * Makes the given elements resize-detectable and starts listening to resize events on the elements. Calls the event callback for each event for each element.
@@ -107,14 +119,14 @@ module.exports = function(options) {
             elements = [elements];
         }
 
-        var callOnAdd       = getOption(options, "callOnAdd", globalOptions.callOnAdd);
-        var batchUpdater    = getOption(options, "batchUpdater", globalOptions.batchUpdater);
+        var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
 
         forEach(elements, function attachListenerToElement(element) {
             if(!elementUtils.isDetectable(element)) {
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
-                return elementUtils.makeDetectable(batchUpdater, reporter, element, function onElementDetectable(element) {
-                    elementUtils.addListener(element, onResizeCallback);
+                return detectionStrategy.makeDetectable(element, function onElementDetectable(element) {
+                    elementUtils.markAsDetectable(element);
+                    detectionStrategy.addListener(element, onResizeCallback);
                     onElementReadyToAddListener(callOnAdd, element, listener);
                 });
             }
