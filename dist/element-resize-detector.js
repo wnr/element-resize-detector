@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.2.6 (2015-04-01, 18:33)
+ * element-resize-detector 0.2.7 (2015-04-08, 14:28)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -393,9 +393,9 @@ module.exports = function(idHandler) {
                     callback(element.contentDocument);
                 }
 
+                //Mutating the object element here seems to fire another load event.
+                //Mutating the inner document of the object element is fine though.
                 var objectElement = this;
-
-                objectElement.style.cssText = OBJECT_STYLE;
 
                 //Create the style element to be added to the object.
                 getDocument(objectElement, function onObjectDocumentReady(objectDocument) {
@@ -443,6 +443,7 @@ module.exports = function(idHandler) {
 
                 //Add an object element as a child to the target element that will be listened to for resize events.
                 var object = document.createElement("object");
+                object.style.cssText = OBJECT_STYLE;
                 object.type = "text/html";
                 object.onload = onObjectLoad;
                 object._erdObjectId = id;
