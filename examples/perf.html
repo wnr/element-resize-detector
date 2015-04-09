@@ -89,14 +89,10 @@
             loopCreateAndAppend(10, createDiv.bind(null, 10), document.getElementById("aligner"));
 
             (function listenToResize() {
-                var erd = elementResizeDetectorMaker({
-                });
-                var elements = $(".container");
-                elements.each(function(i, e) {
-                    erd.listenTo({
-                        callOnAdd: false
-                    }, e, onElementResize);
-                });
+                var erd = elementResizeDetectorMaker({});
+                erd.listenTo({
+                    callOnAdd: false
+                }, $(".container"), onElementResize);
             })();
         });
 

@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.2.7 (2015-04-08, 14:28)
+ * element-resize-detector 0.2.8 (2015-04-09, 13:55)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -28,6 +28,7 @@ module.exports = function batchUpdaterMaker(options) {
     var batchSize = 0;
     var batch = {};
     var handler;
+    var onProcessedCallback = function() {};
 
     function queueUpdate(element, updater) {
         if(autoUpdate && async && batchSize === 0) {
@@ -71,6 +72,7 @@ module.exports = function batchUpdaterMaker(options) {
             }
         }
         clearBatch();
+        onProcessedCallback();
     }
 
     function updateBatchAsync() {
@@ -96,9 +98,14 @@ module.exports = function batchUpdaterMaker(options) {
         return raf(callback);
     }
 
+    function onProcessed(callback) {
+        onProcessedCallback = callback || function() {};
+    }
+
     return {
         update: queueUpdate,
-        force: forceUpdateBatch
+        force: forceUpdateBatch,
+        onProcessed: onProcessed
     };
 };
 },{"./utils":2}],2:[function(require,module,exports){
@@ -177,168 +184,28 @@ utils.forEach = function(collection, callback) {
 };
 
 },{}],5:[function(require,module,exports){
-//Heavily inspired by http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/
+/**
+ * Resize detection strategy that injects objects to elements in order to detect resize events.
+ * Heavily inspired by: http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/
+ */
 
 "use strict";
 
-var forEach = require("./collection-utils").forEach;
-var elementUtilsMaker = require("./element-utils");
-var listenerHandlerMaker = require("./listener-handler");
-var idGeneratorMaker = require("./id-generator");
-var idHandlerMaker = require("./id-handler");
-var reporterMaker = require("./reporter");
-var batchUpdater = require("batch-updater");
+var forEach = require("../collection-utils").forEach;
+var browserDetector = require("../browser-detector");
 
-/**
- * @typedef idHandler
- * @type {object}
- * @property {function} get Gets the resize detector id of the element.
- * @property {function} set Generate and sets the resize detector id of the element.
- */
-
-/**
- * @typedef Options
- * @type {object}
- * @property {boolean} callOnAdd    Determines if listeners should be called when they are getting added. 
-                                    Default is true. If true, the listener is guaranteed to be called when it has been added. 
-                                    If false, the listener will not be guarenteed to be called when it has been added (does not prevent it from being called).
- * @property {idHandler} idHandler  A custom id handler that is responsible for generating, setting and retrieving id's for elements.
-                                    If not provided, a default id handler will be used.
- * @property {reporter} reporter    A custom reporter that handles reporting logs, warnings and errors. 
-                                    If not provided, a default id handler will be used.
-                                    If set to false, then nothing will be reported.
- */
-
-/**
- * Creates an element resize detector instance.
- * @public
- * @param {Options?} options Optional global options object that will decide how this instance will work.
- */
 module.exports = function(options) {
-    options = options || {};
-
-    //idHandler is currently not an option to the listenTo function, so it should not be added to globalOptions.
-    var idHandler = options.idHandler;
+    options             = options || {};
+    var idHandler       = options.idHandler;
+    var reporter        = options.reporter;
+    var batchUpdater    = options.batchUpdater;
 
     if(!idHandler) {
-        var idGenerator = idGeneratorMaker();
-        var defaultIdHandler = idHandlerMaker(idGenerator);
-        idHandler = defaultIdHandler;
+        throw new Error("Missing required dependency: idHandler.");
     }
-
-    //reporter is currently not an option to the listenTo function, so it should not be added to globalOptions.
-    var reporter = options.reporter;
 
     if(!reporter) {
-        //If options.reporter is false, then the reporter should be quiet.
-        var quiet = reporter === false;
-        reporter = reporterMaker(quiet);
-    }
-
-    //Options to be used as default for the listenTo function.
-    var globalOptions = {};
-    globalOptions.callOnAdd     = !!getOption(options, "callOnAdd", true);
-    globalOptions.batchUpdater  = getOption(options, "batchUpdater", batchUpdater({ reporter: reporter }));
-
-    var eventListenerHandler = listenerHandlerMaker(idHandler);
-    var elementUtils = elementUtilsMaker(idHandler);
-
-    /**
-     * Makes the given elements resize-detectable and starts listening to resize events on the elements. Calls the event callback for each event for each element.
-     * @public
-     * @param {Options?} options Optional options object. These options will override the global options. Some options may not be overriden, such as idHandler.
-     * @param {element[]|element} elements The given array of elements to detect resize events of. Single element is also valid.
-     * @param {function} listener The callback to be executed for each resize event for each element.
-     */
-    function listenTo(options, elements, listener) {
-        function onResizeCallback(element) {
-            var listeners = eventListenerHandler.get(element);
-
-            forEach(listeners, function callListenerProxy(listener) {
-                listener(element);
-            });
-        }
-
-        function onElementReadyToAddListener(callOnAdd, element, listener) {
-            eventListenerHandler.add(element, listener);
-            
-            if(callOnAdd) {
-                listener(element);
-            }
-        }
-
-        //Options object may be omitted.
-        if(!listener) {
-            listener = elements;
-            elements = options;
-            options = {};
-        }
-
-        if(!elements) {
-            throw new Error("At least one element required.");
-        }
-
-        if(!listener) {
-            throw new Error("Listener required.");
-        }
-
-        if(elements.length === undefined) {
-            elements = [elements];
-        }
-
-        var callOnAdd       = getOption(options, "callOnAdd", globalOptions.callOnAdd);
-        var batchUpdater    = getOption(options, "batchUpdater", globalOptions.batchUpdater);
-
-        forEach(elements, function attachListenerToElement(element) {
-            if(!elementUtils.isDetectable(element)) {
-                //The element is not prepared to be detectable, so do prepare it and add a listener to it.
-                return elementUtils.makeDetectable(batchUpdater, reporter, element, function onElementDetectable(element) {
-                    elementUtils.addListener(element, onResizeCallback);
-                    onElementReadyToAddListener(callOnAdd, element, listener);
-                });
-            }
-            
-            //The element has been prepared to be detectable and is ready to be listened to.
-            onElementReadyToAddListener(callOnAdd, element, listener);
-        });
-    }
-
-    return {
-        listenTo: listenTo
-    };
-};
-
-function getOption(options, name, defaultValue) {
-    var value = options[name];
-
-    if((value === undefined || value === null) && defaultValue !== undefined) {
-        return defaultValue;
-    }
-
-    return value;
-}
-
-},{"./collection-utils":4,"./element-utils":6,"./id-generator":7,"./id-handler":8,"./listener-handler":9,"./reporter":10,"batch-updater":1}],6:[function(require,module,exports){
-"use strict";
-
-var forEach = require("./collection-utils").forEach;
-var browserDetector = require("./browser-detector");
-
-module.exports = function(idHandler) {
-    /**
-     * Tells if the element has been made detectable and ready to be listened for resize events.
-     * @public
-     * @param {element} The element to check.
-     * @returns {boolean} True or false depending on if the element is detectable or not.
-     */
-    function isDetectable(element) {
-        if(browserDetector.isIE(8)) {
-            //IE 8 does not use the object method.
-            //Check only if the element has been given an id.
-            return !!idHandler.get(element);
-        }
-
-        return !!getObject(element);
+        throw new Error("Missing required dependency: reporter.");
     }
 
     /**
@@ -348,8 +215,8 @@ module.exports = function(idHandler) {
      * @param {function} listener The listener callback to be called for each resize event of the element. The element will be given as a parameter to the listener callback.
      */
     function addListener(element, listener) {
-        if(!isDetectable(element)) {
-            throw new Error("Element is not detectable.");
+        if(!getObject(element)) {
+            throw new Error("Element is not detectable by this strategy.");
         }
 
         function listenerProxy() {
@@ -371,7 +238,7 @@ module.exports = function(idHandler) {
      * @param {element} element The element to make detectable
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
-    function makeDetectable(batchUpdater, reporter, element, callback) {
+    function makeDetectable(element, callback) {
         function injectObject(id, element, callback) {
             var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
 
@@ -497,13 +364,416 @@ module.exports = function(idHandler) {
     }
 
     return {
-        isDetectable: isDetectable,
         makeDetectable: makeDetectable,
-        addListener: addListener,
+        addListener: addListener
     };
 };
 
-},{"./browser-detector":3,"./collection-utils":4}],7:[function(require,module,exports){
+},{"../browser-detector":3,"../collection-utils":4}],6:[function(require,module,exports){
+/**
+ * Resize detection strategy that injects divs to elements in order to detect resize events on scroll events.
+ * Heavily inspired by: https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js
+ */
+
+"use strict";
+
+var forEach = require("../collection-utils").forEach;
+var browserDetector = require("../browser-detector");
+var batchUpdaterMaker = require("batch-updater");
+
+module.exports = function(options) {
+    options             = options || {};
+    var idHandler       = options.idHandler;
+    var reporter        = options.reporter;
+    var batchUpdater    = options.batchUpdater;
+
+    //TODO: This should probably be DI, or atleast the maker function so that other frameworks can share the batch-updater code. It might not make sense to share a batch updater, since batches can interfere with each other.
+    var scrollbarsBatchUpdater = batchUpdaterMaker({
+        reporter: reporter
+    });
+
+    var resizeResetBatchUpdater = batchUpdaterMaker({
+        reporter: reporter
+    });
+
+    if(!idHandler) {
+        throw new Error("Missing required dependency: idHandler.");
+    }
+
+    if(!reporter) {
+        throw new Error("Missing required dependency: reporter.");
+    }
+
+    /**
+     * Adds a resize event listener to the element.
+     * @public
+     * @param {element} element The element that should have the listener added.
+     * @param {function} listener The listener callback to be called for each resize event of the element. The element will be given as a parameter to the listener callback.
+     */
+    function addListener(element, listener) {
+        var changed = function() {
+            var elementStyle    = getComputedStyle(element);
+            var width           = parseSize(elementStyle.width);
+            var height          = parseSize(elementStyle.height);
+
+            updateChildSizes(element, width, height);
+            storeCurrentSize(element, width, height);
+            positionScrollbars(element, width, height);
+
+            listener(element);
+        };
+
+        var addEvent = function(el, name, cb) {
+            if (el.attachEvent) {
+                el.attachEvent('on' + name, cb);
+            } else {
+                el.addEventListener(name, cb);
+            }
+        };
+
+        var expand = getExpandElement(element);
+        var shrink = getShrinkElement(element);
+
+        addEvent(expand, 'scroll', function() {
+            var style = getComputedStyle(element);
+            var width = parseSize(style.width);
+            var height = parseSize(style.height);
+            if (width > element.lastWidth || height > element.lastHeight) {
+                changed();
+            }
+        });
+
+        addEvent(shrink, 'scroll',function() {
+            var style = getComputedStyle(element);
+            var width = parseSize(style.width);
+            var height = parseSize(style.height);
+            if (width < element.lastWidth || height < element.lastHeight) {
+                changed();
+            }
+        });
+    }
+
+    /**
+     * Makes an element detectable and ready to be listened for resize events. Will call the callback when the element is ready to be listened for resize changes.
+     * @private
+     * @param {element} element The element to make detectable
+     * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
+     */
+    function makeDetectable(element, callback) {
+        var elementStyle = getComputedStyle(element);
+        var width = parseSize(elementStyle.width);
+        var height = parseSize(elementStyle.height);
+
+        function mutateDom() {
+            if(elementStyle.position === "static") {
+                element.style.position = 'relative';
+
+                var removeRelativeStyles = function(reporter, element, style, property) {
+                    function getNumericalValue(value) {
+                        return value.replace(/[^-\d\.]/g, "");
+                    }
+
+                    var value = elementStyle[property];
+
+                    if(value !== "auto" && getNumericalValue(value) !== "0") {
+                        reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
+                        element.style[property] = 0;
+                    }
+                };
+
+                //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
+                //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
+                removeRelativeStyles(reporter, element, elementStyle, "top");
+                removeRelativeStyles(reporter, element, elementStyle, "right");
+                removeRelativeStyles(reporter, element, elementStyle, "bottom");
+                removeRelativeStyles(reporter, element, elementStyle, "left");
+            }
+
+            function getContainerCssText(left, top) {
+                left = (!left ? "0" : (left + "px"));
+                top = (!top ? "0" : (top + "px"));
+
+                return "position: absolute; left: " + left + "; top: " + top + "; right: 0; bottom: 0; overflow: scroll; z-index: -1; visibility: hidden;";
+            }
+
+            var resizeSensorCssText             = getContainerCssText(-1, -1);
+            var shrinkExpandstyle               = getContainerCssText(0, 0);
+            var shrinkExpandChildStyle          = "position: absolute; left: 0; top: 0;";
+            element.resizeSensor                = document.createElement('div');
+            element.resizeSensor.style.cssText  = resizeSensorCssText;
+
+            element.resizeSensor.innerHTML =
+                '<div style="' + shrinkExpandstyle + '">' +
+                    '<div style="' + shrinkExpandChildStyle + '"></div>' +
+                '</div>' +
+                '<div style="' + shrinkExpandstyle + '">' +
+                    '<div style="' + shrinkExpandChildStyle + ' width: 200%; height: 200%"></div>' +
+                '</div>';
+            element.appendChild(element.resizeSensor);
+
+            updateChildSizes(element, width, height);
+
+            scrollbarsBatchUpdater.update(id, function finalize() {
+                storeCurrentSize(element, width, height);
+                positionScrollbars(element, width, height);
+                callback(element);
+            });
+        }
+
+        var id = idHandler.get(element);
+
+        if(batchUpdater) {
+            batchUpdater.update(id, mutateDom);
+        } else {
+            mutateDom();
+        }
+    }
+
+    function getExpandElement(element) {
+        return element.resizeSensor.childNodes[0];
+    }
+
+    function getExpandChildElement(element) {
+        return getExpandElement(element).childNodes[0];
+    }
+
+    function getShrinkElement(element) {
+        return element.resizeSensor.childNodes[1];
+    }
+
+    function getShrinkChildElement(element) {
+        return getShrinkElement(element).childNodes[0];
+    }
+
+    function getExpandSize(size) {
+        return size + 10;
+    }
+
+    function getShrinkSize(size) {
+        return size * 2;
+    }
+
+    function updateChildSizes(element, width, height) {
+        var expandChild             = getExpandChildElement(element);
+        var expandWidth             = getExpandSize(width);
+        var expandHeight            = getExpandSize(height);
+        expandChild.style.width     = expandWidth + 'px';
+        expandChild.style.height    = expandHeight + 'px';
+    }
+
+    function storeCurrentSize(element, width, height) {
+        element.lastWidth   = width;
+        element.lastHeight  = height;
+    }
+
+    function positionScrollbars(element, width, height) {
+        var expand          = getExpandElement(element);
+        var shrink          = getShrinkElement(element);
+        var expandWidth     = getExpandSize(width);
+        var expandHeight    = getExpandSize(height);
+        var shrinkWidth     = getShrinkSize(width);
+        var shrinkHeight    = getShrinkSize(height);
+        expand.scrollLeft   = expandWidth;
+        expand.scrollTop    = expandHeight;
+        shrink.scrollLeft   = shrinkWidth;
+        shrink.scrollTop    = shrinkHeight;
+    };
+
+    return {
+        makeDetectable: makeDetectable,
+        addListener: addListener
+    };
+};
+
+function parseSize(size) {
+    return parseFloat(size.replace(/px/, ""));
+}
+
+},{"../browser-detector":3,"../collection-utils":4,"batch-updater":1}],7:[function(require,module,exports){
+//Heavily inspired by http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/
+
+"use strict";
+
+var forEach                 = require("./collection-utils").forEach;
+var elementUtilsMaker       = require("./element-utils");
+var listenerHandlerMaker    = require("./listener-handler");
+var idGeneratorMaker        = require("./id-generator");
+var idHandlerMaker          = require("./id-handler");
+var reporterMaker           = require("./reporter");
+var batchUpdaterMaker       = require("batch-updater");
+
+//Detection strategies.
+var objectStrategyMaker     = require("./detection-strategy/object.js");
+var scrollStrategyMaker     = require("./detection-strategy/scroll.js");
+
+/**
+ * @typedef idHandler
+ * @type {object}
+ * @property {function} get Gets the resize detector id of the element.
+ * @property {function} set Generate and sets the resize detector id of the element.
+ */
+
+/**
+ * @typedef Options
+ * @type {object}
+ * @property {boolean} callOnAdd    Determines if listeners should be called when they are getting added. 
+                                    Default is true. If true, the listener is guaranteed to be called when it has been added. 
+                                    If false, the listener will not be guarenteed to be called when it has been added (does not prevent it from being called).
+ * @property {idHandler} idHandler  A custom id handler that is responsible for generating, setting and retrieving id's for elements.
+                                    If not provided, a default id handler will be used.
+ * @property {reporter} reporter    A custom reporter that handles reporting logs, warnings and errors. 
+                                    If not provided, a default id handler will be used.
+                                    If set to false, then nothing will be reported.
+ */
+
+/**
+ * Creates an element resize detector instance.
+ * @public
+ * @param {Options?} options Optional global options object that will decide how this instance will work.
+ */
+module.exports = function(options) {
+    options = options || {};
+
+    //idHandler is currently not an option to the listenTo function, so it should not be added to globalOptions.
+    var idHandler = options.idHandler;
+
+    if(!idHandler) {
+        var idGenerator = idGeneratorMaker();
+        var defaultIdHandler = idHandlerMaker(idGenerator);
+        idHandler = defaultIdHandler;
+    }
+
+    //reporter is currently not an option to the listenTo function, so it should not be added to globalOptions.
+    var reporter = options.reporter;
+
+    if(!reporter) {
+        //If options.reporter is false, then the reporter should be quiet.
+        var quiet = reporter === false;
+        reporter = reporterMaker(quiet);
+    }
+
+    //batchUpdater is currently not an option to the listenTo function, so it should not be added to globalOptions.
+    var batchUpdater  = getOption(options, "batchUpdater", batchUpdaterMaker({ reporter: reporter }));
+
+    //Options to be used as default for the listenTo function.
+    var globalOptions = {};
+    globalOptions.callOnAdd     = !!getOption(options, "callOnAdd", true);
+
+    var eventListenerHandler    = listenerHandlerMaker(idHandler);
+    var elementUtils            = elementUtilsMaker();
+
+    //The detection strategy to be used.
+    var detectionStrategy = scrollStrategyMaker({
+        idHandler: idHandler,
+        reporter: reporter,
+        batchUpdater: batchUpdater
+    });
+
+    /**
+     * Makes the given elements resize-detectable and starts listening to resize events on the elements. Calls the event callback for each event for each element.
+     * @public
+     * @param {Options?} options Optional options object. These options will override the global options. Some options may not be overriden, such as idHandler.
+     * @param {element[]|element} elements The given array of elements to detect resize events of. Single element is also valid.
+     * @param {function} listener The callback to be executed for each resize event for each element.
+     */
+    function listenTo(options, elements, listener) {
+        function onResizeCallback(element) {
+            var listeners = eventListenerHandler.get(element);
+
+            forEach(listeners, function callListenerProxy(listener) {
+                listener(element);
+            });
+        }
+
+        function onElementReadyToAddListener(callOnAdd, element, listener) {
+            eventListenerHandler.add(element, listener);
+            
+            if(callOnAdd) {
+                listener(element);
+            }
+        }
+
+        //Options object may be omitted.
+        if(!listener) {
+            listener = elements;
+            elements = options;
+            options = {};
+        }
+
+        if(!elements) {
+            throw new Error("At least one element required.");
+        }
+
+        if(!listener) {
+            throw new Error("Listener required.");
+        }
+
+        if(elements.length === undefined) {
+            elements = [elements];
+        }
+
+        var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
+
+        forEach(elements, function attachListenerToElement(element) {
+            if(!elementUtils.isDetectable(element)) {
+                //The element is not prepared to be detectable, so do prepare it and add a listener to it.
+                return detectionStrategy.makeDetectable(element, function onElementDetectable(element) {
+                    elementUtils.markAsDetectable(element);
+                    detectionStrategy.addListener(element, onResizeCallback);
+                    onElementReadyToAddListener(callOnAdd, element, listener);
+                });
+            }
+            
+            //The element has been prepared to be detectable and is ready to be listened to.
+            onElementReadyToAddListener(callOnAdd, element, listener);
+        });
+    }
+
+    return {
+        listenTo: listenTo
+    };
+};
+
+function getOption(options, name, defaultValue) {
+    var value = options[name];
+
+    if((value === undefined || value === null) && defaultValue !== undefined) {
+        return defaultValue;
+    }
+
+    return value;
+}
+
+},{"./collection-utils":4,"./detection-strategy/object.js":5,"./detection-strategy/scroll.js":6,"./element-utils":8,"./id-generator":9,"./id-handler":10,"./listener-handler":11,"./reporter":12,"batch-updater":1}],8:[function(require,module,exports){
+"use strict";
+
+module.exports = function() {
+    /**
+     * Tells if the element has been made detectable and ready to be listened for resize events.
+     * @public
+     * @param {element} The element to check.
+     * @returns {boolean} True or false depending on if the element is detectable or not.
+     */
+    function isDetectable(element) {
+        return !!element._erdIsDetectable;
+    }
+
+    /**
+     * Marks the element that it has been made detectable and ready to be listened for resize events.
+     * @public
+     * @param {element} The element to mark.
+     */
+    function markAsDetectable(element) {
+        element._erdIsDetectable = true;
+    }
+
+    return {
+        isDetectable: isDetectable,
+        markAsDetectable: markAsDetectable
+    };
+};
+
+},{}],9:[function(require,module,exports){
 "use strict";
 
 module.exports = function() {
@@ -523,7 +793,7 @@ module.exports = function() {
     };
 };
 
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";
 
 module.exports = function(idGenerator) {
@@ -561,7 +831,7 @@ module.exports = function(idGenerator) {
     };
 };
 
-},{}],9:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 
 module.exports = function(idHandler) {
@@ -599,7 +869,7 @@ module.exports = function(idHandler) {
     };
 };
 
-},{}],10:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 "use strict";
 
 /* global console: false */
@@ -636,5 +906,5 @@ module.exports = function(quiet) {
 
     return reporter;
 };
-},{}]},{},[5])(5)
+},{}]},{},[7])(7)
 });

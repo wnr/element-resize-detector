@@ -282,7 +282,7 @@ describe("element-resize-detector", function() {
             }, 600);
         });
 
-        it("should report warnings when top/right/bottom/left is set for an element to be changed to relative", function() {
+        it("should report warnings when top/right/bottom/left is set for an element to be changed to relative", function(done) {
             $("#test").css("bottom", "1px");
 
             var oldWarn;
@@ -310,7 +310,10 @@ describe("element-resize-detector", function() {
                 setTimeout(function() {
                     console.warn = oldWarn;
                     expect(called).toEqual(true);
+                    done();
                 }, 200);
+            } else {
+                done();
             }
         });
     });
