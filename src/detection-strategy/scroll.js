@@ -5,8 +5,6 @@
 
 "use strict";
 
-var forEach = require("../collection-utils").forEach;
-var browserDetector = require("../browser-detector");
 var batchUpdaterMaker = require("batch-updater");
 
 module.exports = function(options) {
@@ -15,6 +13,7 @@ module.exports = function(options) {
     var reporter        = options.reporter;
     var batchUpdater    = options.batchUpdater;
 
+    //TODO: This is ugly. The batch updator should support leveled batches or something similar.
     var testBatchUpdater = batchUpdaterMaker({
         reporter: reporter
     });
@@ -24,10 +23,6 @@ module.exports = function(options) {
 
     //TODO: This should probably be DI, or atleast the maker function so that other frameworks can share the batch-updater code. It might not make sense to share a batch updater, since batches can interfere with each other.
     var scrollbarsBatchUpdater = batchUpdaterMaker({
-        reporter: reporter
-    });
-
-    var resizeResetBatchUpdater = batchUpdaterMaker({
         reporter: reporter
     });
 
@@ -65,7 +60,7 @@ module.exports = function(options) {
         var expand = getExpandElement(element);
         var shrink = getShrinkElement(element);
 
-        addEvent(expand, 'scroll', function onExpand() {
+        addEvent(expand, "scroll", function onExpand() {
             var style = getComputedStyle(element);
             var width = parseSize(style.width);
             var height = parseSize(style.height);
@@ -74,7 +69,7 @@ module.exports = function(options) {
             }
         });
 
-        addEvent(shrink, 'scroll', function onShrink() {
+        addEvent(shrink, "scroll", function onShrink() {
             var style = getComputedStyle(element);
             var width = parseSize(style.width);
             var height = parseSize(style.height);
@@ -97,7 +92,7 @@ module.exports = function(options) {
 
         function mutateDom() {
             if(elementStyle.position === "static") {
-                element.style.position = 'relative';
+                element.style.position = "relative";
 
                 var removeRelativeStyles = function(reporter, element, style, property) {
                     function getNumericalValue(value) {
@@ -137,29 +132,35 @@ module.exports = function(options) {
                 }
             }
 
-            var resizeSensorCssText             = getContainerCssText(-1, -1);
-            var shrinkExpandstyle               = getContainerCssText(0, 0);
-            var shrinkExpandChildStyle          = "position: absolute; left: 0; top: 0;";
-            element.resizeSensor                = document.createElement('div');
-            element.resizeSensor.style.cssText  = resizeSensorCssText;
+            var containerStyle          = getContainerCssText(-1, -1);
+            var shrinkExpandstyle       = getContainerCssText(0, 0);
+            var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
 
-            element.resizeSensor.innerHTML =
-                '<div style="' + shrinkExpandstyle + '">' +
-                    '<div style="' + shrinkExpandChildStyle + '"></div>' +
-                '</div>' +
-                '<div style="' + shrinkExpandstyle + '">' +
-                    '<div style="' + shrinkExpandChildStyle + ' width: 200%; height: 200%"></div>' +
-                '</div>';
-            element.appendChild(element.resizeSensor);
+            var container               = document.createElement("div");
+            var expand                  = document.createElement("div");
+            var expandChild             = document.createElement("div");
+            var shrink                  = document.createElement("div");
+            var shrinkChild             = document.createElement("div");
 
-            var expand = getExpandElement(element);
+            container.style.cssText     = containerStyle;
+            expand.style.cssText        = shrinkExpandstyle;
+            expandChild.style.cssText   = shrinkExpandChildStyle;
+            shrink.style.cssText        = shrinkExpandstyle;
+            shrinkChild.style.cssText   = shrinkExpandChildStyle + " width: 200%; height: 200%;";
+
+            expand.appendChild(expandChild);
+            shrink.appendChild(shrinkChild);
+            container.appendChild(expand);
+            container.appendChild(shrink);
+            element.appendChild(container);
+            element._erdElement = container;
+
             addEvent(expand, "scroll", function onFirstExpandScroll() {
                 removeEvent(expand, "scroll", onFirstExpandScroll);
                 readyExpandScroll = true;
                 ready();
             });
 
-            var shrink = getShrinkElement(element);
             addEvent(shrink, "scroll", function onFirstShrinkScroll() {
                 removeEvent(shrink, "scroll", onFirstShrinkScroll);
                 readyShrinkScroll = true;
@@ -186,7 +187,7 @@ module.exports = function(options) {
     }
 
     function getExpandElement(element) {
-        return element.resizeSensor.childNodes[0];
+        return element._erdElement.childNodes[0];
     }
 
     function getExpandChildElement(element) {
@@ -194,11 +195,7 @@ module.exports = function(options) {
     }
 
     function getShrinkElement(element) {
-        return element.resizeSensor.childNodes[1];
-    }
-
-    function getShrinkChildElement(element) {
-        return getShrinkElement(element).childNodes[0];
+        return element._erdElement.childNodes[1];
     }
 
     function getExpandSize(size) {
@@ -213,8 +210,8 @@ module.exports = function(options) {
         var expandChild             = getExpandChildElement(element);
         var expandWidth             = getExpandSize(width);
         var expandHeight            = getExpandSize(height);
-        expandChild.style.width     = expandWidth + 'px';
-        expandChild.style.height    = expandHeight + 'px';
+        expandChild.style.width     = expandWidth + "px";
+        expandChild.style.height    = expandHeight + "px";
     }
 
     function storeCurrentSize(element, width, height) {
@@ -237,7 +234,7 @@ module.exports = function(options) {
 
     function addEvent(el, name, cb) {
         if (el.attachEvent) {
-            el.attachEvent('on' + name, cb);
+            el.attachEvent("on" + name, cb);
         } else {
             el.addEventListener(name, cb);
         }
