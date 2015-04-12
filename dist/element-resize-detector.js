@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.2.8 (2015-04-12, 14:50)
+ * element-resize-detector 0.2.8 (2015-04-12, 18:14)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -377,8 +377,6 @@ module.exports = function(options) {
 
 "use strict";
 
-var forEach = require("../collection-utils").forEach;
-var browserDetector = require("../browser-detector");
 var batchUpdaterMaker = require("batch-updater");
 
 module.exports = function(options) {
@@ -387,6 +385,7 @@ module.exports = function(options) {
     var reporter        = options.reporter;
     var batchUpdater    = options.batchUpdater;
 
+    //TODO: This is ugly. The batch updator should support leveled batches or something similar.
     var testBatchUpdater = batchUpdaterMaker({
         reporter: reporter
     });
@@ -396,10 +395,6 @@ module.exports = function(options) {
 
     //TODO: This should probably be DI, or atleast the maker function so that other frameworks can share the batch-updater code. It might not make sense to share a batch updater, since batches can interfere with each other.
     var scrollbarsBatchUpdater = batchUpdaterMaker({
-        reporter: reporter
-    });
-
-    var resizeResetBatchUpdater = batchUpdaterMaker({
         reporter: reporter
     });
 
@@ -437,7 +432,7 @@ module.exports = function(options) {
         var expand = getExpandElement(element);
         var shrink = getShrinkElement(element);
 
-        addEvent(expand, 'scroll', function onExpand() {
+        addEvent(expand, "scroll", function onExpand() {
             var style = getComputedStyle(element);
             var width = parseSize(style.width);
             var height = parseSize(style.height);
@@ -446,7 +441,7 @@ module.exports = function(options) {
             }
         });
 
-        addEvent(shrink, 'scroll', function onShrink() {
+        addEvent(shrink, "scroll", function onShrink() {
             var style = getComputedStyle(element);
             var width = parseSize(style.width);
             var height = parseSize(style.height);
@@ -469,7 +464,7 @@ module.exports = function(options) {
 
         function mutateDom() {
             if(elementStyle.position === "static") {
-                element.style.position = 'relative';
+                element.style.position = "relative";
 
                 var removeRelativeStyles = function(reporter, element, style, property) {
                     function getNumericalValue(value) {
@@ -509,29 +504,35 @@ module.exports = function(options) {
                 }
             }
 
-            var resizeSensorCssText             = getContainerCssText(-1, -1);
-            var shrinkExpandstyle               = getContainerCssText(0, 0);
-            var shrinkExpandChildStyle          = "position: absolute; left: 0; top: 0;";
-            element.resizeSensor                = document.createElement('div');
-            element.resizeSensor.style.cssText  = resizeSensorCssText;
+            var containerStyle          = getContainerCssText(-1, -1);
+            var shrinkExpandstyle       = getContainerCssText(0, 0);
+            var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
 
-            element.resizeSensor.innerHTML =
-                '<div style="' + shrinkExpandstyle + '">' +
-                    '<div style="' + shrinkExpandChildStyle + '"></div>' +
-                '</div>' +
-                '<div style="' + shrinkExpandstyle + '">' +
-                    '<div style="' + shrinkExpandChildStyle + ' width: 200%; height: 200%"></div>' +
-                '</div>';
-            element.appendChild(element.resizeSensor);
+            var container               = document.createElement("div");
+            var expand                  = document.createElement("div");
+            var expandChild             = document.createElement("div");
+            var shrink                  = document.createElement("div");
+            var shrinkChild             = document.createElement("div");
 
-            var expand = getExpandElement(element);
+            container.style.cssText     = containerStyle;
+            expand.style.cssText        = shrinkExpandstyle;
+            expandChild.style.cssText   = shrinkExpandChildStyle;
+            shrink.style.cssText        = shrinkExpandstyle;
+            shrinkChild.style.cssText   = shrinkExpandChildStyle + " width: 200%; height: 200%;";
+
+            expand.appendChild(expandChild);
+            shrink.appendChild(shrinkChild);
+            container.appendChild(expand);
+            container.appendChild(shrink);
+            element.appendChild(container);
+            element._erdElement = container;
+
             addEvent(expand, "scroll", function onFirstExpandScroll() {
                 removeEvent(expand, "scroll", onFirstExpandScroll);
                 readyExpandScroll = true;
                 ready();
             });
 
-            var shrink = getShrinkElement(element);
             addEvent(shrink, "scroll", function onFirstShrinkScroll() {
                 removeEvent(shrink, "scroll", onFirstShrinkScroll);
                 readyShrinkScroll = true;
@@ -558,7 +559,7 @@ module.exports = function(options) {
     }
 
     function getExpandElement(element) {
-        return element.resizeSensor.childNodes[0];
+        return element._erdElement.childNodes[0];
     }
 
     function getExpandChildElement(element) {
@@ -566,11 +567,7 @@ module.exports = function(options) {
     }
 
     function getShrinkElement(element) {
-        return element.resizeSensor.childNodes[1];
-    }
-
-    function getShrinkChildElement(element) {
-        return getShrinkElement(element).childNodes[0];
+        return element._erdElement.childNodes[1];
     }
 
     function getExpandSize(size) {
@@ -585,8 +582,8 @@ module.exports = function(options) {
         var expandChild             = getExpandChildElement(element);
         var expandWidth             = getExpandSize(width);
         var expandHeight            = getExpandSize(height);
-        expandChild.style.width     = expandWidth + 'px';
-        expandChild.style.height    = expandHeight + 'px';
+        expandChild.style.width     = expandWidth + "px";
+        expandChild.style.height    = expandHeight + "px";
     }
 
     function storeCurrentSize(element, width, height) {
@@ -609,7 +606,7 @@ module.exports = function(options) {
 
     function addEvent(el, name, cb) {
         if (el.attachEvent) {
-            el.attachEvent('on' + name, cb);
+            el.attachEvent("on" + name, cb);
         } else {
             el.addEventListener(name, cb);
         }
@@ -633,7 +630,7 @@ function parseSize(size) {
     return parseFloat(size.replace(/px/, ""));
 }
 
-},{"../browser-detector":3,"../collection-utils":4,"batch-updater":1}],7:[function(require,module,exports){
+},{"batch-updater":1}],7:[function(require,module,exports){
 //Heavily inspired by http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/
 
 "use strict";
@@ -723,6 +720,13 @@ module.exports = function(options) {
         throw new Error("Invalid strategy name: " + desiredStrategy);
     }
 
+    //Calls can be made to listenTo with elements that are still are being installed.
+    //Also, same elements can occur in the elements list in the listenTo function.
+    //With this map, the ready callbacks can be synchronized between the calls
+    //so that the ready callback can always be called when an element is ready - even if
+    //it wasn't installed from the function intself.
+    var onReadyCallbacks = {};
+
     /**
      * Makes the given elements resize-detectable and starts listening to resize events on the elements. Calls the event callback for each event for each element.
      * @public
@@ -739,7 +743,7 @@ module.exports = function(options) {
             });
         }
 
-        function onElementReadyToAddListener(callOnAdd, element, listener) {
+        function addListener(callOnAdd, element, listener) {
             eventListenerHandler.add(element, listener);
             
             if(callOnAdd) {
@@ -773,21 +777,47 @@ module.exports = function(options) {
 
         forEach(elements, function attachListenerToElement(element) {
             if(!elementUtils.isDetectable(element)) {
+                if(elementUtils.isBusy(element)) {
+                    //The element is being prepared to be detectable. Do not make it detectable.
+                    //Just add the listener, because the element will soon be detectable.
+                    addListener(callOnAdd, element, listener);
+                    var id = idHandler.get(element);
+                    onReadyCallbacks[id] = onReadyCallbacks[id] || [];
+                    onReadyCallbacks[id].push(function onReady() {
+                        elementsReady++;
+
+                        if(elementsReady === elements.length) {
+                            onReadyCallback();
+                        }
+                    });
+                    return;
+                }
+
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
+                elementUtils.markBusy(element, true);
                 return detectionStrategy.makeDetectable(element, function onElementDetectable(element) {
                     elementUtils.markAsDetectable(element);
+                    elementUtils.markBusy(element, false);
                     detectionStrategy.addListener(element, onResizeCallback);
-                    onElementReadyToAddListener(callOnAdd, element, listener);
-                    elementsReady++;
+                    addListener(callOnAdd, element, listener);
 
+                    elementsReady++;
                     if(elementsReady === elements.length) {
                         onReadyCallback();
+                    }
+
+                    var id = idHandler.get(element);
+                    if(onReadyCallbacks[id]) {
+                        forEach(onReadyCallbacks[id], function(callback) {
+                            callback();
+                        });
+                        delete onReadyCallbacks[id];
                     }
                 });
             }
             
             //The element has been prepared to be detectable and is ready to be listened to.
-            onElementReadyToAddListener(callOnAdd, element, listener);
+            addListener(callOnAdd, element, listener);
             elementsReady++;
         });
 
@@ -834,9 +864,31 @@ module.exports = function() {
         element._erdIsDetectable = true;
     }
 
+    /**
+     * Tells if the element is busy or not.
+     * @public
+     * @param {element} The element to check.
+     * @returns {boolean} True or false depending on if the element is busy or not.
+     */
+    function isBusy(element) {
+        return !!element._erdBusy;
+    }
+
+    /**
+     * Marks the object is busy and should not be made detectable.
+     * @public
+     * @param {element} element The element to mark.
+     * @param {boolean} busy If the element is busy or not.
+     */
+    function markBusy(element, busy) {
+        element._erdBusy = !!busy;
+    }
+
     return {
         isDetectable: isDetectable,
-        markAsDetectable: markAsDetectable
+        markAsDetectable: markAsDetectable,
+        isBusy: isBusy,
+        markBusy: markBusy
     };
 };
 
