@@ -87,6 +87,13 @@ module.exports = function(options) {
         throw new Error("Invalid strategy name: " + desiredStrategy);
     }
 
+    //Calls can be made to listenTo with elements that are still are being installed.
+    //Also, same elements can occur in the elements list in the listenTo function.
+    //With this map, the ready callbacks can be synchronized between the calls
+    //so that the ready callback can always be called when an element is ready - even if
+    //it wasn't installed from the function intself.
+    var onReadyCallbacks = {};
+
     /**
      * Makes the given elements resize-detectable and starts listening to resize events on the elements. Calls the event callback for each event for each element.
      * @public
@@ -103,7 +110,7 @@ module.exports = function(options) {
             });
         }
 
-        function onElementReadyToAddListener(callOnAdd, element, listener) {
+        function addListener(callOnAdd, element, listener) {
             eventListenerHandler.add(element, listener);
             
             if(callOnAdd) {
@@ -137,21 +144,47 @@ module.exports = function(options) {
 
         forEach(elements, function attachListenerToElement(element) {
             if(!elementUtils.isDetectable(element)) {
+                if(elementUtils.isBusy(element)) {
+                    //The element is being prepared to be detectable. Do not make it detectable.
+                    //Just add the listener, because the element will soon be detectable.
+                    addListener(callOnAdd, element, listener);
+                    var id = idHandler.get(element);
+                    onReadyCallbacks[id] = onReadyCallbacks[id] || [];
+                    onReadyCallbacks[id].push(function onReady() {
+                        elementsReady++;
+
+                        if(elementsReady === elements.length) {
+                            onReadyCallback();
+                        }
+                    });
+                    return;
+                }
+
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
+                elementUtils.markBusy(element, true);
                 return detectionStrategy.makeDetectable(element, function onElementDetectable(element) {
                     elementUtils.markAsDetectable(element);
+                    elementUtils.markBusy(element, false);
                     detectionStrategy.addListener(element, onResizeCallback);
-                    onElementReadyToAddListener(callOnAdd, element, listener);
-                    elementsReady++;
+                    addListener(callOnAdd, element, listener);
 
+                    elementsReady++;
                     if(elementsReady === elements.length) {
                         onReadyCallback();
+                    }
+
+                    var id = idHandler.get(element);
+                    if(onReadyCallbacks[id]) {
+                        forEach(onReadyCallbacks[id], function(callback) {
+                            callback();
+                        });
+                        delete onReadyCallbacks[id];
                     }
                 });
             }
             
             //The element has been prepared to be detectable and is ready to be listened to.
-            onElementReadyToAddListener(callOnAdd, element, listener);
+            addListener(callOnAdd, element, listener);
             elementsReady++;
         });
 
