@@ -61,10 +61,6 @@
         }
 
         $(function() {
-            var erd = elementResizeDetectorMaker();
-
-            
-
             function onElementResize(element) {
                 var style = getComputedStyle(element);
                 console.log(style.width);
@@ -86,12 +82,19 @@
                 return target;
             }
 
-            loopCreateAndAppend(10, createDiv.bind(null, 10), document.getElementById("aligner"));
+            loopCreateAndAppend(100, createDiv.bind(null, 100), document.getElementById("aligner"));
 
             (function listenToResize() {
-                var erd = elementResizeDetectorMaker({});
+                var erd = elementResizeDetectorMaker({
+                    strategy: "scroll"
+                });
+                console.time("install");
                 erd.listenTo({
-                    callOnAdd: false
+                    callOnAdd: false,
+                    onReady: function onReady() {
+                        console.timeEnd("install");
+                        console.log("ready");
+                    }
                 }, $(".container"), onElementResize);
             })();
         });
