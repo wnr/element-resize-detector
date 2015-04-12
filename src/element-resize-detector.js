@@ -61,7 +61,7 @@ module.exports = function(options) {
     }
 
     //batchUpdater is currently not an option to the listenTo function, so it should not be added to globalOptions.
-    var batchUpdater  = getOption(options, "batchUpdater", batchUpdaterMaker({ reporter: reporter }));
+    var batchUpdater = getOption(options, "batchUpdater", batchUpdaterMaker({ reporter: reporter }));
 
     //Options to be used as default for the listenTo function.
     var globalOptions = {};
@@ -71,11 +71,21 @@ module.exports = function(options) {
     var elementUtils            = elementUtilsMaker();
 
     //The detection strategy to be used.
-    var detectionStrategy = scrollStrategyMaker({
+    var detectionStrategy;
+    var desiredStrategy = getOption(options, "strategy", "object");
+    var strategyOptions = {
         idHandler: idHandler,
         reporter: reporter,
         batchUpdater: batchUpdater
-    });
+    };
+
+    if(desiredStrategy === "scroll") {
+        detectionStrategy = scrollStrategyMaker(strategyOptions);
+    } else if(desiredStrategy === "object") {
+        detectionStrategy = objectStrategyMaker(strategyOptions);
+    } else {
+        throw new Error("Invalid strategy name: " + desiredStrategy);
+    }
 
     /**
      * Makes the given elements resize-detectable and starts listening to resize events on the elements. Calls the event callback for each event for each element.
@@ -120,7 +130,10 @@ module.exports = function(options) {
             elements = [elements];
         }
 
+        var elementsReady = 0;
+
         var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
+        var onReadyCallback = getOption(options, "onReady", function noop() {});
 
         forEach(elements, function attachListenerToElement(element) {
             if(!elementUtils.isDetectable(element)) {
@@ -129,12 +142,22 @@ module.exports = function(options) {
                     elementUtils.markAsDetectable(element);
                     detectionStrategy.addListener(element, onResizeCallback);
                     onElementReadyToAddListener(callOnAdd, element, listener);
+                    elementsReady++;
+
+                    if(elementsReady === elements.length) {
+                        onReadyCallback();
+                    }
                 });
             }
             
             //The element has been prepared to be detectable and is ready to be listened to.
             onElementReadyToAddListener(callOnAdd, element, listener);
+            elementsReady++;
         });
+
+        if(elementsReady === elements.length) {
+            onReadyCallback();
+        }
     }
 
     return {
