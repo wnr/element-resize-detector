@@ -77,32 +77,13 @@ var reporter = {
 
 $("body").prepend("<div id=fixtures></div>");
 
-describe("element-resize-detector", function() {
-    beforeEach(function() {
-        //This messed with tests in IE8.
-        //TODO: Investigate why, because it would be nice to have instead of the current solution.
-        //loadFixtures("element-resize-detector_fixture.html");
-        $("#fixtures").html("<div id=test></div><div id=test2></div>");
-    });
-
-    describe("elementResizeDetectorMaker", function() {
-        it("should be globally defined", function() {
-            expect(elementResizeDetectorMaker).toBeFunction();
-        });
-
-        it("should create an element-resize-detector instance", function() {
-            var erd = elementResizeDetectorMaker();
-
-            expect(erd).toBeObject();
-            expect(erd).toHaveMethod("listenTo");
-        });
-    });
-
-    describe("listenTo", function() {
-        it("should be able to attach an listener to an element", function(done) {
+function listenToTest(strategy) {
+    describe("listenTo (" + strategy + ")", function() {
+        it("should be able to attach a listener to an element", function(done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter
+                reporter: reporter,
+                strategy: strategy
             });
 
             var listener = jasmine.createSpy("listener");
@@ -122,7 +103,8 @@ describe("element-resize-detector", function() {
         it("should throw on invalid parameters", function() {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter
+                reporter: reporter,
+                strategy: strategy
             });
 
             expect(erd.listenTo).toThrow();
@@ -130,10 +112,103 @@ describe("element-resize-detector", function() {
             expect(_.partial(erd.listenTo, $("#test")[0])).toThrow();
         });
 
+        describe("option.onReady", function() {
+            it("should be called when installing a listener to an element", function(done) {
+                var erd = elementResizeDetectorMaker({
+                    callOnAdd: false,
+                    reporter: reporter,
+                    strategy: strategy
+                });
+
+                var listener = jasmine.createSpy("listener");
+
+                erd.listenTo({
+                    onReady: function() {
+                        $("#test").width(200);
+                        setTimeout(function() {
+                            expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                            done();
+                        }, 100);
+                    }
+                }, $("#test")[0], listener);
+            });
+
+            it("should be called when all elements are ready", function(done) {
+                var erd = elementResizeDetectorMaker({
+                    callOnAdd: false,
+                    reporter: reporter,
+                    strategy: strategy
+                });
+
+                var listener = jasmine.createSpy("listener");
+
+                erd.listenTo({
+                    onReady: function() {
+                        $("#test").width(200);
+                        $("#test2").width(300);
+                        setTimeout(function() {
+                            expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                            expect(listener).toHaveBeenCalledWith($("#test2")[0]);
+                            done();
+                        }, 100);
+                    }
+                }, $("#test, #test2"), listener);
+            });
+
+            it("should be able to handle listeners for the same element but different calls", function(done) {
+                var erd = elementResizeDetectorMaker({
+                    callOnAdd: false,
+                    reporter: reporter,
+                    strategy: strategy
+                });
+
+                var onReady1 = jasmine.createSpy("listener");
+                var onReady2 = jasmine.createSpy("listener");
+
+                erd.listenTo({
+                    onReady: onReady1
+                }, $("#test"), function noop() {});
+                erd.listenTo({
+                    onReady: onReady2
+                }, $("#test"), function noop() {});
+
+                setTimeout(function() {
+                    expect(onReady1.calls.count()).toBe(1);
+                    expect(onReady2.calls.count()).toBe(1);
+                    done();
+                }, 300);
+            });
+
+            it("should be able to handle when elements occur multiple times in the same call (and other calls)", function(done) {
+                var erd = elementResizeDetectorMaker({
+                    callOnAdd: false,
+                    reporter: reporter,
+                    strategy: strategy
+                });
+
+                var onReady1 = jasmine.createSpy("listener");
+                var onReady2 = jasmine.createSpy("listener");
+
+                erd.listenTo({
+                    onReady: onReady1
+                }, [$("#test")[0], $("#test")[0]], function noop() {});
+                erd.listenTo({
+                    onReady: onReady2
+                }, $("#test"), function noop() {});
+
+                setTimeout(function() {
+                    expect(onReady1.calls.count()).toBe(1);
+                    expect(onReady2.calls.count()).toBe(1);
+                    done();
+                }, 300);
+            });
+        });
+
         it("should be able to attach multiple listeners to an element", function(done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter
+                reporter: reporter,
+                strategy: strategy
             });
 
             var listener1 = jasmine.createSpy("listener1");
@@ -144,19 +219,42 @@ describe("element-resize-detector", function() {
 
             setTimeout(function() {
                 $("#test").width(300);
-            }, 100);
+            }, 200);
 
             setTimeout(function() {
                 expect(listener1).toHaveBeenCalledWith($("#test")[0]);
                 expect(listener2).toHaveBeenCalledWith($("#test")[0]);
                 done();
+            }, 400);
+        });
+
+        it("should be able to attach a listener to an element multiple times within the same call", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            var listener1 = jasmine.createSpy("listener1");
+
+            erd.listenTo([$("#test")[0], $("#test")[0]], listener1);
+
+            setTimeout(function() {
+                $("#test").width(300);
             }, 200);
+
+            setTimeout(function() {
+                expect(listener1).toHaveBeenCalledWith($("#test")[0]);
+                expect(listener1.calls.count()).toBe(2);
+                done();
+            }, 400);
         });
 
         it("should be able to attach listeners to multiple elements", function(done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter
+                reporter: reporter,
+                strategy: strategy
             });
 
             var listener1 = jasmine.createSpy("listener1");
@@ -187,7 +285,8 @@ describe("element-resize-detector", function() {
             it("should keep the style of the element intact", function(done) {
                 var erd = elementResizeDetectorMaker({
                     callOnAdd: false,
-                    reporter: reporter
+                    reporter: reporter,
+                    strategy: strategy
                 });
 
                 var before = getStyle($("#test")[0]);
@@ -207,7 +306,8 @@ describe("element-resize-detector", function() {
         it("should call listener if the element is changed synchronously after listenTo", function(done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: true,
-                reporter: reporter
+                reporter: reporter,
+                strategy: strategy
             });
 
             var listener1 = jasmine.createSpy("listener1");
@@ -244,7 +344,8 @@ describe("element-resize-detector", function() {
             var erd = elementResizeDetectorMaker({
                 idHandler: idHandler,
                 callOnAdd: false,
-                reporter: reporter
+                reporter: reporter,
+                strategy: strategy
             });
 
             var listener1 = jasmine.createSpy("listener1");
@@ -281,40 +382,27 @@ describe("element-resize-detector", function() {
                done();
             }, 600);
         });
+    });
+}
 
-        it("should report warnings when top/right/bottom/left is set for an element to be changed to relative", function(done) {
-            $("#test").css("bottom", "1px");
+describe("element-resize-detector", function() {
+    beforeEach(function() {
+        //This messed with tests in IE8.
+        //TODO: Investigate why, because it would be nice to have instead of the current solution.
+        //loadFixtures("element-resize-detector_fixture.html");
+        $("#fixtures").html("<div id=test></div><div id=test2></div>");
+    });
 
-            var oldWarn;
+    describe("elementResizeDetectorMaker", function() {
+        it("should be globally defined", function() {
+            expect(elementResizeDetectorMaker).toBeFunction();
+        });
 
-            var called = false;
-
-            if(window.console) {
-                /* global console: false */
-                oldWarn = console.warn;
-
-                var warn = function() {
-                    expect(this).toEqual(console);
-                    called = true;
-                };
-
-                console.warn = warn;
-            }
-
+        it("should create an element-resize-detector instance", function() {
             var erd = elementResizeDetectorMaker();
-            erd.listenTo($("#test"), _.noop);
-            
-            //The test should not fail because the reporter should not be using console.
-            //So succeed the test if this has been reached.
-            if(window.console) {
-                setTimeout(function() {
-                    console.warn = oldWarn;
-                    expect(called).toEqual(true);
-                    done();
-                }, 200);
-            } else {
-                done();
-            }
+
+            expect(erd).toBeObject();
+            expect(erd).toHaveMethod("listenTo");
         });
     });
 
@@ -346,7 +434,6 @@ describe("element-resize-detector", function() {
         });
     });
 
-    // describe("options.reporter", function() {
-    //     it("")
-    // });
+    listenToTest("object");
+    listenToTest("scroll");
 });
