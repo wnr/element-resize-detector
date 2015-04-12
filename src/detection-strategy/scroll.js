@@ -15,6 +15,13 @@ module.exports = function(options) {
     var reporter        = options.reporter;
     var batchUpdater    = options.batchUpdater;
 
+    var testBatchUpdater = batchUpdaterMaker({
+        reporter: reporter
+    });
+    var testBatchUpdater2 = batchUpdaterMaker({
+        reporter: reporter
+    });
+
     //TODO: This should probably be DI, or atleast the maker function so that other frameworks can share the batch-updater code. It might not make sense to share a batch updater, since batches can interfere with each other.
     var scrollbarsBatchUpdater = batchUpdaterMaker({
         reporter: reporter
@@ -43,26 +50,22 @@ module.exports = function(options) {
             var elementStyle    = getComputedStyle(element);
             var width           = parseSize(elementStyle.width);
             var height          = parseSize(elementStyle.height);
+            var id              = idHandler.get(element);
 
-            updateChildSizes(element, width, height);
-            storeCurrentSize(element, width, height);
-            positionScrollbars(element, width, height);
-
-            listener(element);
-        };
-
-        var addEvent = function(el, name, cb) {
-            if (el.attachEvent) {
-                el.attachEvent('on' + name, cb);
-            } else {
-                el.addEventListener(name, cb);
-            }
+            testBatchUpdater.update(id, function updateDetectorElements() {
+                updateChildSizes(element, width, height);
+                storeCurrentSize(element, width, height);
+                testBatchUpdater2.update(id, function updateScrollbars() {
+                    positionScrollbars(element, width, height);
+                    listener(element);
+                });
+            });
         };
 
         var expand = getExpandElement(element);
         var shrink = getShrinkElement(element);
 
-        addEvent(expand, 'scroll', function() {
+        addEvent(expand, 'scroll', function onExpand() {
             var style = getComputedStyle(element);
             var width = parseSize(style.width);
             var height = parseSize(style.height);
@@ -71,7 +74,7 @@ module.exports = function(options) {
             }
         });
 
-        addEvent(shrink, 'scroll',function() {
+        addEvent(shrink, 'scroll', function onShrink() {
             var style = getComputedStyle(element);
             var width = parseSize(style.width);
             var height = parseSize(style.height);
@@ -124,6 +127,16 @@ module.exports = function(options) {
                 return "position: absolute; left: " + left + "; top: " + top + "; right: 0; bottom: 0; overflow: scroll; z-index: -1; visibility: hidden;";
             }
 
+            var readyExpandScroll = false;
+            var readyShrinkScroll = false;
+            var readyOverall = false;
+
+            function ready() {
+                if(readyExpandScroll && readyShrinkScroll && readyOverall) {
+                    callback(element);
+                }
+            }
+
             var resizeSensorCssText             = getContainerCssText(-1, -1);
             var shrinkExpandstyle               = getContainerCssText(0, 0);
             var shrinkExpandChildStyle          = "position: absolute; left: 0; top: 0;";
@@ -139,12 +152,27 @@ module.exports = function(options) {
                 '</div>';
             element.appendChild(element.resizeSensor);
 
+            var expand = getExpandElement(element);
+            addEvent(expand, "scroll", function onFirstExpandScroll() {
+                removeEvent(expand, "scroll", onFirstExpandScroll);
+                readyExpandScroll = true;
+                ready();
+            });
+
+            var shrink = getShrinkElement(element);
+            addEvent(shrink, "scroll", function onFirstShrinkScroll() {
+                removeEvent(shrink, "scroll", onFirstShrinkScroll);
+                readyShrinkScroll = true;
+                ready();
+            });
+
             updateChildSizes(element, width, height);
 
             scrollbarsBatchUpdater.update(id, function finalize() {
                 storeCurrentSize(element, width, height);
                 positionScrollbars(element, width, height);
-                callback(element);
+                readyOverall = true;
+                ready();
             });
         }
 
@@ -205,7 +233,23 @@ module.exports = function(options) {
         expand.scrollTop    = expandHeight;
         shrink.scrollLeft   = shrinkWidth;
         shrink.scrollTop    = shrinkHeight;
-    };
+    }
+
+    function addEvent(el, name, cb) {
+        if (el.attachEvent) {
+            el.attachEvent('on' + name, cb);
+        } else {
+            el.addEventListener(name, cb);
+        }
+    }
+
+    function removeEvent(el, name, cb) {
+        if(el.attachEvent) {
+            el.detachEvent("on" + name, cb);
+        } else {
+            el.removeEventListener(name, cb);
+        }
+    }
 
     return {
         makeDetectable: makeDetectable,
