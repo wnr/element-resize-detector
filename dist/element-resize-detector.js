@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.2.8 (2015-04-12, 18:14)
+ * element-resize-detector 0.3.0 (2015-04-13, 10:48)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -9,81 +9,88 @@
 
 var utils = require("./utils");
 
-module.exports = function batchUpdaterMaker(options) {
-    options = options || {};
-
+module.exports = function batchProcessorMaker(options) {
+    options         = options || {};
     var reporter    = options.reporter;
     var async       = utils.getOption(options, "async", true);
-    var autoUpdate  = utils.getOption(options, "auto", true);
+    var autoProcess = utils.getOption(options, "auto", true);
 
-    if(autoUpdate && !async) {
-        reporter.warn("Invalid options combination. auto=true and async=false is invalid. Setting async=true.");
+    if(autoProcess && !async) {
+        reporter && reporter.warn("Invalid options combination. auto=true and async=false is invalid. Setting async=true.");
         async = true;
     }
 
-    if(!reporter) {
-        throw new Error("Reporter required.");
-    }
+    var batch;
+    var batchSize;
+    var topLevel;
+    var bottomLevel;
 
-    var batchSize = 0;
-    var batch = {};
-    var handler;
-    var onProcessedCallback = function() {};
+    clearBatch();
 
-    function queueUpdate(element, updater) {
-        if(autoUpdate && async && batchSize === 0) {
-            updateBatchAsync();
+    var asyncFrameHandler;
+
+    function addFunction(level, fn) {
+        if(!fn) {
+            fn = level;
+            level = 0;
         }
 
-        if(!batch[element]) {
-            batch[element] = [];
+        if(level > topLevel) {
+            topLevel = level;
+        } else if(level < bottomLevel) {
+            bottomLevel = level;
         }
 
-        batch[element].push(updater);
+        if(!batch[level]) {
+            batch[level] = [];
+        }
+
+        if(autoProcess && async && batchSize === 0) {
+            processBatchAsync();
+        }
+
+        batch[level].push(fn);
         batchSize++;
     }
 
-    function forceUpdateBatch(updateAsync) {
-        if(updateAsync === undefined) {
-            updateAsync = async;
+    function forceProcessBatch(processAsync) {
+        if(processAsync === undefined) {
+            processAsync = async;
         }
 
-        if(handler) {
-            cancelFrame(handler);
-            handler = null;
+        if(asyncFrameHandler) {
+            cancelFrame(asyncFrameHandler);
+            asyncFrameHandler = null;
         }
 
         if(async) {
-            updateBatchAsync();
+            processBatchAsync();
         } else {
-            updateBatch();
+            processBatch();
         }
     }
 
-    function updateBatch() {
-        for(var element in batch) {
-            if(batch.hasOwnProperty(element)) {
-                var updaters = batch[element];
+    function processBatch() {
+        for(var level = bottomLevel; level <= topLevel; level++) {
+            var fns = batch[level];
 
-                for(var i = 0; i < updaters.length; i++) {
-                    var updater = updaters[i];
-                    updater();
-                }
+            for(var i = 0; i < fns.length; i++) {
+                var fn = fns[i];
+                fn();
             }
         }
         clearBatch();
-        onProcessedCallback();
     }
 
-    function updateBatchAsync() {
-        handler = requestFrame(function performUpdate() {
-            updateBatch();
-        });
+    function processBatchAsync() {
+        asyncFrameHandler = requestFrame(processBatch);
     }
 
     function clearBatch() {
-        batchSize = 0;
-        batch = {};
+        batch           = {};
+        batchSize       = 0;
+        topLevel        = 0;
+        bottomLevel     = 0;
     }
 
     function cancelFrame(listener) {
@@ -98,14 +105,9 @@ module.exports = function batchUpdaterMaker(options) {
         return raf(callback);
     }
 
-    function onProcessed(callback) {
-        onProcessedCallback = callback || function() {};
-    }
-
     return {
-        update: queueUpdate,
-        force: forceUpdateBatch,
-        onProcessed: onProcessed
+        add: addFunction,
+        force: forceProcessBatch
     };
 };
 },{"./utils":2}],2:[function(require,module,exports){
@@ -198,7 +200,7 @@ module.exports = function(options) {
     options             = options || {};
     var idHandler       = options.idHandler;
     var reporter        = options.reporter;
-    var batchUpdater    = options.batchUpdater;
+    var batchProcessor  = options.batchProcessor;
 
     if(!idHandler) {
         throw new Error("Missing required dependency: idHandler.");
@@ -329,8 +331,8 @@ module.exports = function(options) {
                 }
             }
 
-            if(batchUpdater) {
-                batchUpdater.update(id, mutateDom);
+            if(batchProcessor) {
+                batchProcessor.add(mutateDom);
             } else {
                 mutateDom();
             }
@@ -377,26 +379,11 @@ module.exports = function(options) {
 
 "use strict";
 
-var batchUpdaterMaker = require("batch-updater");
-
 module.exports = function(options) {
     options             = options || {};
     var idHandler       = options.idHandler;
     var reporter        = options.reporter;
-    var batchUpdater    = options.batchUpdater;
-
-    //TODO: This is ugly. The batch updator should support leveled batches or something similar.
-    var testBatchUpdater = batchUpdaterMaker({
-        reporter: reporter
-    });
-    var testBatchUpdater2 = batchUpdaterMaker({
-        reporter: reporter
-    });
-
-    //TODO: This should probably be DI, or atleast the maker function so that other frameworks can share the batch-updater code. It might not make sense to share a batch updater, since batches can interfere with each other.
-    var scrollbarsBatchUpdater = batchUpdaterMaker({
-        reporter: reporter
-    });
+    var batchProcessor  = options.batchProcessor;
 
     if(!idHandler) {
         throw new Error("Missing required dependency: idHandler.");
@@ -417,15 +404,15 @@ module.exports = function(options) {
             var elementStyle    = getComputedStyle(element);
             var width           = parseSize(elementStyle.width);
             var height          = parseSize(elementStyle.height);
-            var id              = idHandler.get(element);
 
-            testBatchUpdater.update(id, function updateDetectorElements() {
+            batchProcessor.add(function updateDetectorElements() {
                 updateChildSizes(element, width, height);
                 storeCurrentSize(element, width, height);
-                testBatchUpdater2.update(id, function updateScrollbars() {
-                    positionScrollbars(element, width, height);
-                    listener(element);
-                });
+            });
+
+            batchProcessor.add(1, function updateScrollbars() {
+                positionScrollbars(element, width, height);
+                listener(element);
             });
         };
 
@@ -458,9 +445,22 @@ module.exports = function(options) {
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
     function makeDetectable(element, callback) {
-        var elementStyle = getComputedStyle(element);
-        var width = parseSize(elementStyle.width);
-        var height = parseSize(elementStyle.height);
+        var elementStyle        = getComputedStyle(element);
+        var width               = parseSize(elementStyle.width);
+        var height              = parseSize(elementStyle.height);
+        var readyExpandScroll   = false;
+        var readyShrinkScroll   = false;
+        var readyOverall        = false;
+
+        //TODO: Remove this.
+        //Currently the API demands that an id should be generated for each element, which the strategy has to do.g
+        idHandler.get(element);
+
+        function ready() {
+            if(readyExpandScroll && readyShrinkScroll && readyOverall) {
+                callback(element);
+            }
+        }
 
         function mutateDom() {
             if(elementStyle.position === "static") {
@@ -492,16 +492,6 @@ module.exports = function(options) {
                 top = (!top ? "0" : (top + "px"));
 
                 return "position: absolute; left: " + left + "; top: " + top + "; right: 0; bottom: 0; overflow: scroll; z-index: -1; visibility: hidden;";
-            }
-
-            var readyExpandScroll = false;
-            var readyShrinkScroll = false;
-            var readyOverall = false;
-
-            function ready() {
-                if(readyExpandScroll && readyShrinkScroll && readyOverall) {
-                    callback(element);
-                }
             }
 
             var containerStyle          = getContainerCssText(-1, -1);
@@ -540,21 +530,21 @@ module.exports = function(options) {
             });
 
             updateChildSizes(element, width, height);
-
-            scrollbarsBatchUpdater.update(id, function finalize() {
-                storeCurrentSize(element, width, height);
-                positionScrollbars(element, width, height);
-                readyOverall = true;
-                ready();
-            });
         }
 
-        var id = idHandler.get(element);
+        function finalizeDomMutation() {
+            storeCurrentSize(element, width, height);
+            positionScrollbars(element, width, height);
+            readyOverall = true;
+            ready();
+        }
 
-        if(batchUpdater) {
-            batchUpdater.update(id, mutateDom);
+        if(batchProcessor) {
+            batchProcessor.add(mutateDom);
+            batchProcessor.add(1, finalizeDomMutation);
         } else {
             mutateDom();
+            finalizeDomMutation();
         }
     }
 
@@ -630,7 +620,7 @@ function parseSize(size) {
     return parseFloat(size.replace(/px/, ""));
 }
 
-},{"batch-updater":1}],7:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 //Heavily inspired by http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/
 
 "use strict";
@@ -641,7 +631,7 @@ var listenerHandlerMaker    = require("./listener-handler");
 var idGeneratorMaker        = require("./id-generator");
 var idHandlerMaker          = require("./id-handler");
 var reporterMaker           = require("./reporter");
-var batchUpdaterMaker       = require("batch-updater");
+var batchProcessorMaker       = require("batch-processor");
 
 //Detection strategies.
 var objectStrategyMaker     = require("./detection-strategy/object.js");
@@ -693,8 +683,8 @@ module.exports = function(options) {
         reporter = reporterMaker(quiet);
     }
 
-    //batchUpdater is currently not an option to the listenTo function, so it should not be added to globalOptions.
-    var batchUpdater = getOption(options, "batchUpdater", batchUpdaterMaker({ reporter: reporter }));
+    //batchProcessor is currently not an option to the listenTo function, so it should not be added to globalOptions.
+    var batchProcessor = getOption(options, "batchProcessor", batchProcessorMaker({ reporter: reporter }));
 
     //Options to be used as default for the listenTo function.
     var globalOptions = {};
@@ -709,7 +699,7 @@ module.exports = function(options) {
     var strategyOptions = {
         idHandler: idHandler,
         reporter: reporter,
-        batchUpdater: batchUpdater
+        batchProcessor: batchProcessor
     };
 
     if(desiredStrategy === "scroll") {
@@ -841,7 +831,7 @@ function getOption(options, name, defaultValue) {
     return value;
 }
 
-},{"./collection-utils":4,"./detection-strategy/object.js":5,"./detection-strategy/scroll.js":6,"./element-utils":8,"./id-generator":9,"./id-handler":10,"./listener-handler":11,"./reporter":12,"batch-updater":1}],8:[function(require,module,exports){
+},{"./collection-utils":4,"./detection-strategy/object.js":5,"./detection-strategy/scroll.js":6,"./element-utils":8,"./id-generator":9,"./id-handler":10,"./listener-handler":11,"./reporter":12,"batch-processor":1}],8:[function(require,module,exports){
 "use strict";
 
 module.exports = function() {
