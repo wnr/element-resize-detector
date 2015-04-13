@@ -74,7 +74,6 @@ module.exports = function(options) {
     var detectionStrategy;
     var desiredStrategy = getOption(options, "strategy", "object");
     var strategyOptions = {
-        idHandler: idHandler,
         reporter: reporter,
         batchProcessor: batchProcessor
     };
@@ -143,12 +142,13 @@ module.exports = function(options) {
         var onReadyCallback = getOption(options, "onReady", function noop() {});
 
         forEach(elements, function attachListenerToElement(element) {
+            var id = idHandler.get(element);
+            
             if(!elementUtils.isDetectable(element)) {
                 if(elementUtils.isBusy(element)) {
                     //The element is being prepared to be detectable. Do not make it detectable.
                     //Just add the listener, because the element will soon be detectable.
                     addListener(callOnAdd, element, listener);
-                    var id = idHandler.get(element);
                     onReadyCallbacks[id] = onReadyCallbacks[id] || [];
                     onReadyCallbacks[id].push(function onReady() {
                         elementsReady++;
@@ -173,7 +173,6 @@ module.exports = function(options) {
                         onReadyCallback();
                     }
 
-                    var id = idHandler.get(element);
                     if(onReadyCallbacks[id]) {
                         forEach(onReadyCallbacks[id], function(callback) {
                             callback();

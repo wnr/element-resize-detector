@@ -7,13 +7,8 @@
 
 module.exports = function(options) {
     options             = options || {};
-    var idHandler       = options.idHandler;
     var reporter        = options.reporter;
     var batchProcessor  = options.batchProcessor;
-
-    if(!idHandler) {
-        throw new Error("Missing required dependency: idHandler.");
-    }
 
     if(!reporter) {
         throw new Error("Missing required dependency: reporter.");
@@ -77,10 +72,6 @@ module.exports = function(options) {
         var readyExpandScroll   = false;
         var readyShrinkScroll   = false;
         var readyOverall        = false;
-
-        //TODO: Remove this.
-        //Currently the API demands that an id should be generated for each element, which the strategy has to do.g
-        idHandler.get(element);
 
         function ready() {
             if(readyExpandScroll && readyShrinkScroll && readyOverall) {

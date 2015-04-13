@@ -29,7 +29,6 @@
     "karma": "^0.12.31",
     "karma-chrome-launcher": "^0.1.7",
     "karma-firefox-launcher": "^0.1.4",
-    "karma-ievms": "0.0.4",
     "karma-jasmine": "^0.3.5",
     "karma-safari-launcher": "^0.1.1",
     "karma-sauce-launcher": "^0.2.10",

@@ -5,18 +5,12 @@
 
 "use strict";
 
-var forEach = require("../collection-utils").forEach;
 var browserDetector = require("../browser-detector");
 
 module.exports = function(options) {
     options             = options || {};
-    var idHandler       = options.idHandler;
     var reporter        = options.reporter;
     var batchProcessor  = options.batchProcessor;
-
-    if(!idHandler) {
-        throw new Error("Missing required dependency: idHandler.");
-    }
 
     if(!reporter) {
         throw new Error("Missing required dependency: reporter.");
@@ -53,7 +47,7 @@ module.exports = function(options) {
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
     function makeDetectable(element, callback) {
-        function injectObject(id, element, callback) {
+        function injectObject(element, callback) {
             var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
 
             function onObjectLoad() {
@@ -127,7 +121,6 @@ module.exports = function(options) {
                 object.style.cssText = OBJECT_STYLE;
                 object.type = "text/html";
                 object.onload = onObjectLoad;
-                object._erdObjectId = id;
 
                 //Safari: This must occur before adding the object to the DOM.
                 //IE: Does not like that this happens before, even if it is also added after.
@@ -136,6 +129,7 @@ module.exports = function(options) {
                 }
 
                 element.appendChild(object);
+                element._erdObject = object;
 
                 //IE: This must occur after adding the object to the DOM.
                 if(browserDetector.isIE()) {
@@ -150,16 +144,13 @@ module.exports = function(options) {
             }
         }
 
-        //Obtain the id of the element (will be generated if not present), so that event listeners can be identified to this element.
-        var id = idHandler.get(element);
-
         if(browserDetector.isIE(8)) {
             //IE 8 does not support objects properly. Luckily they do support the resize event.
             //So do not inject the object and notify that the element is already ready to be listened to.
             //The event handler for the resize event is attached in the utils.addListener instead.
             callback(element);
         } else {
-            injectObject(id, element, callback);
+            injectObject(element, callback);
         }
     }
 
@@ -170,11 +161,7 @@ module.exports = function(options) {
      * @returns The object element of the target.
      */
     function getObject(element) {
-        return forEach(element.children, function isObject(child) {
-            if(child._erdObjectId !== undefined && child._erdObjectId !== null) {
-                return child;
-            }
-        });
+        return element._erdObject;
     }
 
     return {
