@@ -33,3 +33,7 @@ detector.isIE = function(version) {
 
     return version === ieVersion;
 };
+
+detector.isLegacyOpera = function() {
+    return !!window.opera;
+}

@@ -435,5 +435,9 @@ describe("element-resize-detector", function() {
     });
 
     listenToTest("object");
-    listenToTest("scroll");
+
+    //Scroll only supported on non-opera browsers.    
+    if(!window.opera) {
+        listenToTest("scroll");
+    }
 });

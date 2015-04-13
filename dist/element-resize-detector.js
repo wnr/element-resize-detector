@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.3.0 (2015-04-13, 14:44)
+ * element-resize-detector 0.3.0 (2015-04-13, 14:53)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -163,6 +163,10 @@ detector.isIE = function(version) {
 
     return version === ieVersion;
 };
+
+detector.isLegacyOpera = function() {
+    return !!window.opera;
+}
 
 },{}],4:[function(require,module,exports){
 "use strict";
@@ -631,8 +635,6 @@ module.exports = function(options) {
 };
 
 },{}],7:[function(require,module,exports){
-//Heavily inspired by http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/
-
 "use strict";
 
 var forEach                 = require("./collection-utils").forEach;
@@ -641,7 +643,8 @@ var listenerHandlerMaker    = require("./listener-handler");
 var idGeneratorMaker        = require("./id-generator");
 var idHandlerMaker          = require("./id-handler");
 var reporterMaker           = require("./reporter");
-var batchProcessorMaker       = require("batch-processor");
+var browserDetector         = require("./browser-detector");
+var batchProcessorMaker     = require("batch-processor");
 
 //Detection strategies.
 var objectStrategyMaker     = require("./detection-strategy/object.js");
@@ -711,6 +714,11 @@ module.exports = function(options) {
         batchProcessor: batchProcessor
     };
 
+    if(desiredStrategy === "scroll" && browserDetector.isLegacyOpera()) {
+        reporter.warn("Scroll strategy is not supported on legacy Opera. Changing to object strategy.");
+        desiredStrategy = "object";
+    }
+
     if(desiredStrategy === "scroll") {
         detectionStrategy = scrollStrategyMaker(strategyOptions);
     } else if(desiredStrategy === "object") {
@@ -776,7 +784,7 @@ module.exports = function(options) {
 
         forEach(elements, function attachListenerToElement(element) {
             var id = idHandler.get(element);
-            
+
             if(!elementUtils.isDetectable(element)) {
                 if(elementUtils.isBusy(element)) {
                     //The element is being prepared to be detectable. Do not make it detectable.
@@ -840,7 +848,7 @@ function getOption(options, name, defaultValue) {
     return value;
 }
 
-},{"./collection-utils":4,"./detection-strategy/object.js":5,"./detection-strategy/scroll.js":6,"./element-utils":8,"./id-generator":9,"./id-handler":10,"./listener-handler":11,"./reporter":12,"batch-processor":1}],8:[function(require,module,exports){
+},{"./browser-detector":3,"./collection-utils":4,"./detection-strategy/object.js":5,"./detection-strategy/scroll.js":6,"./element-utils":8,"./id-generator":9,"./id-handler":10,"./listener-handler":11,"./reporter":12,"batch-processor":1}],8:[function(require,module,exports){
 "use strict";
 
 module.exports = function() {

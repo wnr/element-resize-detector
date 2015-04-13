@@ -1,5 +1,3 @@
-//Heavily inspired by http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/
-
 "use strict";
 
 var forEach                 = require("./collection-utils").forEach;
@@ -8,7 +6,8 @@ var listenerHandlerMaker    = require("./listener-handler");
 var idGeneratorMaker        = require("./id-generator");
 var idHandlerMaker          = require("./id-handler");
 var reporterMaker           = require("./reporter");
-var batchProcessorMaker       = require("batch-processor");
+var browserDetector         = require("./browser-detector");
+var batchProcessorMaker     = require("batch-processor");
 
 //Detection strategies.
 var objectStrategyMaker     = require("./detection-strategy/object.js");
@@ -78,6 +77,11 @@ module.exports = function(options) {
         batchProcessor: batchProcessor
     };
 
+    if(desiredStrategy === "scroll" && browserDetector.isLegacyOpera()) {
+        reporter.warn("Scroll strategy is not supported on legacy Opera. Changing to object strategy.");
+        desiredStrategy = "object";
+    }
+
     if(desiredStrategy === "scroll") {
         detectionStrategy = scrollStrategyMaker(strategyOptions);
     } else if(desiredStrategy === "object") {
@@ -143,7 +147,7 @@ module.exports = function(options) {
 
         forEach(elements, function attachListenerToElement(element) {
             var id = idHandler.get(element);
-            
+
             if(!elementUtils.isDetectable(element)) {
                 if(elementUtils.isBusy(element)) {
                     //The element is being prepared to be detectable. Do not make it detectable.
