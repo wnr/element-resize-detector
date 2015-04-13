@@ -63,7 +63,9 @@
         setup(function ready() {
             console.log("Setup done");
             getComputedStyle(document.body);
-            originalRun.call(self);
+            setTimeout(function() {
+                originalRun.call(self);
+            }, 2000);
         });
     }
 
@@ -87,6 +89,7 @@
 
         erdScroll.listenTo({
             onReady: function onReady() {
+                console.log("scroll ready");
                 scrollready = true;
 
                 if(objectready) {
@@ -96,6 +99,8 @@
         },$("#fixtures #scroll .item"), onResize);
         erdObject.listenTo({
             onReady: function onReady() {
+                console.log("object ready");
+
                 objectready = true;
 
                 if(scrollready) {

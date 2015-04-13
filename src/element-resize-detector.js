@@ -8,7 +8,7 @@ var listenerHandlerMaker    = require("./listener-handler");
 var idGeneratorMaker        = require("./id-generator");
 var idHandlerMaker          = require("./id-handler");
 var reporterMaker           = require("./reporter");
-var batchUpdaterMaker       = require("batch-updater");
+var batchProcessorMaker       = require("batch-processor");
 
 //Detection strategies.
 var objectStrategyMaker     = require("./detection-strategy/object.js");
@@ -60,8 +60,8 @@ module.exports = function(options) {
         reporter = reporterMaker(quiet);
     }
 
-    //batchUpdater is currently not an option to the listenTo function, so it should not be added to globalOptions.
-    var batchUpdater = getOption(options, "batchUpdater", batchUpdaterMaker({ reporter: reporter }));
+    //batchProcessor is currently not an option to the listenTo function, so it should not be added to globalOptions.
+    var batchProcessor = getOption(options, "batchProcessor", batchProcessorMaker({ reporter: reporter }));
 
     //Options to be used as default for the listenTo function.
     var globalOptions = {};
@@ -76,7 +76,7 @@ module.exports = function(options) {
     var strategyOptions = {
         idHandler: idHandler,
         reporter: reporter,
-        batchUpdater: batchUpdater
+        batchProcessor: batchProcessor
     };
 
     if(desiredStrategy === "scroll") {

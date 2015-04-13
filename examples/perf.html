@@ -82,7 +82,8 @@
                 return target;
             }
 
-            loopCreateAndAppend(100, createDiv.bind(null, 100), document.getElementById("aligner"));
+            var numElements = 100;
+            loopCreateAndAppend(numElements, createDiv.bind(null, numElements), document.getElementById("aligner"));
 
             (function listenToResize() {
                 var erd = elementResizeDetectorMaker({

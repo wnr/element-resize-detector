@@ -5,26 +5,11 @@
 
 "use strict";
 
-var batchUpdaterMaker = require("batch-updater");
-
 module.exports = function(options) {
     options             = options || {};
     var idHandler       = options.idHandler;
     var reporter        = options.reporter;
-    var batchUpdater    = options.batchUpdater;
-
-    //TODO: This is ugly. The batch updator should support leveled batches or something similar.
-    var testBatchUpdater = batchUpdaterMaker({
-        reporter: reporter
-    });
-    var testBatchUpdater2 = batchUpdaterMaker({
-        reporter: reporter
-    });
-
-    //TODO: This should probably be DI, or atleast the maker function so that other frameworks can share the batch-updater code. It might not make sense to share a batch updater, since batches can interfere with each other.
-    var scrollbarsBatchUpdater = batchUpdaterMaker({
-        reporter: reporter
-    });
+    var batchProcessor  = options.batchProcessor;
 
     if(!idHandler) {
         throw new Error("Missing required dependency: idHandler.");
@@ -45,15 +30,15 @@ module.exports = function(options) {
             var elementStyle    = getComputedStyle(element);
             var width           = parseSize(elementStyle.width);
             var height          = parseSize(elementStyle.height);
-            var id              = idHandler.get(element);
 
-            testBatchUpdater.update(id, function updateDetectorElements() {
+            batchProcessor.add(function updateDetectorElements() {
                 updateChildSizes(element, width, height);
                 storeCurrentSize(element, width, height);
-                testBatchUpdater2.update(id, function updateScrollbars() {
-                    positionScrollbars(element, width, height);
-                    listener(element);
-                });
+            });
+
+            batchProcessor.add(1, function updateScrollbars() {
+                positionScrollbars(element, width, height);
+                listener(element);
             });
         };
 
@@ -86,9 +71,22 @@ module.exports = function(options) {
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
     function makeDetectable(element, callback) {
-        var elementStyle = getComputedStyle(element);
-        var width = parseSize(elementStyle.width);
-        var height = parseSize(elementStyle.height);
+        var elementStyle        = getComputedStyle(element);
+        var width               = parseSize(elementStyle.width);
+        var height              = parseSize(elementStyle.height);
+        var readyExpandScroll   = false;
+        var readyShrinkScroll   = false;
+        var readyOverall        = false;
+
+        //TODO: Remove this.
+        //Currently the API demands that an id should be generated for each element, which the strategy has to do.g
+        idHandler.get(element);
+
+        function ready() {
+            if(readyExpandScroll && readyShrinkScroll && readyOverall) {
+                callback(element);
+            }
+        }
 
         function mutateDom() {
             if(elementStyle.position === "static") {
@@ -120,16 +118,6 @@ module.exports = function(options) {
                 top = (!top ? "0" : (top + "px"));
 
                 return "position: absolute; left: " + left + "; top: " + top + "; right: 0; bottom: 0; overflow: scroll; z-index: -1; visibility: hidden;";
-            }
-
-            var readyExpandScroll = false;
-            var readyShrinkScroll = false;
-            var readyOverall = false;
-
-            function ready() {
-                if(readyExpandScroll && readyShrinkScroll && readyOverall) {
-                    callback(element);
-                }
             }
 
             var containerStyle          = getContainerCssText(-1, -1);
@@ -168,21 +156,21 @@ module.exports = function(options) {
             });
 
             updateChildSizes(element, width, height);
-
-            scrollbarsBatchUpdater.update(id, function finalize() {
-                storeCurrentSize(element, width, height);
-                positionScrollbars(element, width, height);
-                readyOverall = true;
-                ready();
-            });
         }
 
-        var id = idHandler.get(element);
+        function finalizeDomMutation() {
+            storeCurrentSize(element, width, height);
+            positionScrollbars(element, width, height);
+            readyOverall = true;
+            ready();
+        }
 
-        if(batchUpdater) {
-            batchUpdater.update(id, mutateDom);
+        if(batchProcessor) {
+            batchProcessor.add(mutateDom);
+            batchProcessor.add(1, finalizeDomMutation);
         } else {
             mutateDom();
+            finalizeDomMutation();
         }
     }
 

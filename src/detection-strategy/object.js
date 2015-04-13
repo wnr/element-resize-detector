@@ -12,7 +12,7 @@ module.exports = function(options) {
     options             = options || {};
     var idHandler       = options.idHandler;
     var reporter        = options.reporter;
-    var batchUpdater    = options.batchUpdater;
+    var batchProcessor  = options.batchProcessor;
 
     if(!idHandler) {
         throw new Error("Missing required dependency: idHandler.");
@@ -143,8 +143,8 @@ module.exports = function(options) {
                 }
             }
 
-            if(batchUpdater) {
-                batchUpdater.update(id, mutateDom);
+            if(batchProcessor) {
+                batchProcessor.add(mutateDom);
             } else {
                 mutateDom();
             }
