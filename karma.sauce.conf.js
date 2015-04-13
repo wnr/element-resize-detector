@@ -127,6 +127,7 @@ module.exports = function(config) {
 
         // If browser does not capture in given timeout [ms], kill it
         captureTimeout: 5*60*1000,
+        browserNoActivityTimeout: 60*1000,
 
         sauceLabs: {
             testName: "element-resize-detector",

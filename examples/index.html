@@ -58,7 +58,9 @@
 
             var container = $("#container");
 
-            var erd = elementResizeDetectorMaker();
+            var erd = elementResizeDetectorMaker({
+                strategy: "scroll"
+            });
             erd.listenTo(container, updateDimensions);
 
             container.click(function onContainerClick() {

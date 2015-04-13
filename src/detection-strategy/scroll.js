@@ -14,6 +14,9 @@ module.exports = function(options) {
         throw new Error("Missing required dependency: reporter.");
     }
 
+    //TODO: Could this perhaps be done at installation time?
+    var scrollbarSizes = getScrollbarSizes();
+
     /**
      * Adds a resize event listener to the element.
      * @public
@@ -104,15 +107,19 @@ module.exports = function(options) {
                 removeRelativeStyles(reporter, element, elementStyle, "left");
             }
 
-            function getContainerCssText(left, top) {
+            function getContainerCssText(left, top, bottom, right) {
                 left = (!left ? "0" : (left + "px"));
                 top = (!top ? "0" : (top + "px"));
+                bottom = (!bottom ? "0" : (bottom + "px"));
+                right = (!right ? "0" : (right + "px"));
 
-                return "position: absolute; left: " + left + "; top: " + top + "; right: 0; bottom: 0; overflow: scroll; z-index: -1; visibility: hidden;";
+                return "position: absolute; left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + "; overflow: scroll; z-index: -1; visibility: hidden;";
             }
 
-            var containerStyle          = getContainerCssText(-1, -1);
-            var shrinkExpandstyle       = getContainerCssText(0, 0);
+            var scrollbarWidth          = scrollbarSizes.width;
+            var scrollbarHeight         = scrollbarSizes.height;
+            var containerStyle          = getContainerCssText(-1, -1, -scrollbarHeight, -scrollbarWidth);
+            var shrinkExpandstyle       = getContainerCssText(0, 0, -scrollbarHeight, -scrollbarWidth);
             var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
 
             var container               = document.createElement("div");
@@ -227,12 +234,37 @@ module.exports = function(options) {
         }
     }
 
+    function parseSize(size) {
+        return parseFloat(size.replace(/px/, ""));
+    }
+
+    function getScrollbarSizes() {
+        var width = 500;
+        var height = 500;
+
+        var child = document.createElement("div");
+        child.style.cssText = "position: absolute; width: " + width*2 + "px; height: " + height*2 + "px; visibility: hidden;";
+
+        var container = document.createElement("div");
+        container.style.cssText = "position: absolute; width: " + width + "px; height: " + height + "px; overflow: scroll; visibility: none; top: " + -width*3 + "px; left: " + -height*3 + "px; visibility: hidden;";
+
+        container.appendChild(child);
+
+        document.body.insertBefore(container, document.body.firstChild);
+
+        var widthSize = width - container.clientWidth;
+        var heightSize = height - container.clientHeight;
+
+        document.body.removeChild(container);
+
+        return {
+            width: widthSize,
+            height: heightSize
+        };
+    }
+
     return {
         makeDetectable: makeDetectable,
         addListener: addListener
     };
 };
-
-function parseSize(size) {
-    return parseFloat(size.replace(/px/, ""));
-}

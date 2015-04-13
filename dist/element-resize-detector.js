@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.3.0 (2015-04-13, 10:48)
+ * element-resize-detector 0.3.0 (2015-04-13, 14:44)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -193,18 +193,12 @@ utils.forEach = function(collection, callback) {
 
 "use strict";
 
-var forEach = require("../collection-utils").forEach;
 var browserDetector = require("../browser-detector");
 
 module.exports = function(options) {
     options             = options || {};
-    var idHandler       = options.idHandler;
     var reporter        = options.reporter;
     var batchProcessor  = options.batchProcessor;
-
-    if(!idHandler) {
-        throw new Error("Missing required dependency: idHandler.");
-    }
 
     if(!reporter) {
         throw new Error("Missing required dependency: reporter.");
@@ -241,7 +235,7 @@ module.exports = function(options) {
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
     function makeDetectable(element, callback) {
-        function injectObject(id, element, callback) {
+        function injectObject(element, callback) {
             var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
 
             function onObjectLoad() {
@@ -315,7 +309,6 @@ module.exports = function(options) {
                 object.style.cssText = OBJECT_STYLE;
                 object.type = "text/html";
                 object.onload = onObjectLoad;
-                object._erdObjectId = id;
 
                 //Safari: This must occur before adding the object to the DOM.
                 //IE: Does not like that this happens before, even if it is also added after.
@@ -324,6 +317,7 @@ module.exports = function(options) {
                 }
 
                 element.appendChild(object);
+                element._erdObject = object;
 
                 //IE: This must occur after adding the object to the DOM.
                 if(browserDetector.isIE()) {
@@ -338,16 +332,13 @@ module.exports = function(options) {
             }
         }
 
-        //Obtain the id of the element (will be generated if not present), so that event listeners can be identified to this element.
-        var id = idHandler.get(element);
-
         if(browserDetector.isIE(8)) {
             //IE 8 does not support objects properly. Luckily they do support the resize event.
             //So do not inject the object and notify that the element is already ready to be listened to.
             //The event handler for the resize event is attached in the utils.addListener instead.
             callback(element);
         } else {
-            injectObject(id, element, callback);
+            injectObject(element, callback);
         }
     }
 
@@ -358,11 +349,7 @@ module.exports = function(options) {
      * @returns The object element of the target.
      */
     function getObject(element) {
-        return forEach(element.children, function isObject(child) {
-            if(child._erdObjectId !== undefined && child._erdObjectId !== null) {
-                return child;
-            }
-        });
+        return element._erdObject;
     }
 
     return {
@@ -371,7 +358,7 @@ module.exports = function(options) {
     };
 };
 
-},{"../browser-detector":3,"../collection-utils":4}],6:[function(require,module,exports){
+},{"../browser-detector":3}],6:[function(require,module,exports){
 /**
  * Resize detection strategy that injects divs to elements in order to detect resize events on scroll events.
  * Heavily inspired by: https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js
@@ -381,17 +368,15 @@ module.exports = function(options) {
 
 module.exports = function(options) {
     options             = options || {};
-    var idHandler       = options.idHandler;
     var reporter        = options.reporter;
     var batchProcessor  = options.batchProcessor;
-
-    if(!idHandler) {
-        throw new Error("Missing required dependency: idHandler.");
-    }
 
     if(!reporter) {
         throw new Error("Missing required dependency: reporter.");
     }
+
+    //TODO: Could this perhaps be done at installation time?
+    var scrollbarSizes = getScrollbarSizes();
 
     /**
      * Adds a resize event listener to the element.
@@ -452,10 +437,6 @@ module.exports = function(options) {
         var readyShrinkScroll   = false;
         var readyOverall        = false;
 
-        //TODO: Remove this.
-        //Currently the API demands that an id should be generated for each element, which the strategy has to do.g
-        idHandler.get(element);
-
         function ready() {
             if(readyExpandScroll && readyShrinkScroll && readyOverall) {
                 callback(element);
@@ -487,15 +468,19 @@ module.exports = function(options) {
                 removeRelativeStyles(reporter, element, elementStyle, "left");
             }
 
-            function getContainerCssText(left, top) {
+            function getContainerCssText(left, top, bottom, right) {
                 left = (!left ? "0" : (left + "px"));
                 top = (!top ? "0" : (top + "px"));
+                bottom = (!bottom ? "0" : (bottom + "px"));
+                right = (!right ? "0" : (right + "px"));
 
-                return "position: absolute; left: " + left + "; top: " + top + "; right: 0; bottom: 0; overflow: scroll; z-index: -1; visibility: hidden;";
+                return "position: absolute; left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + "; overflow: scroll; z-index: -1; visibility: hidden;";
             }
 
-            var containerStyle          = getContainerCssText(-1, -1);
-            var shrinkExpandstyle       = getContainerCssText(0, 0);
+            var scrollbarWidth          = scrollbarSizes.width;
+            var scrollbarHeight         = scrollbarSizes.height;
+            var containerStyle          = getContainerCssText(-1, -1, -scrollbarHeight, -scrollbarWidth);
+            var shrinkExpandstyle       = getContainerCssText(0, 0, -scrollbarHeight, -scrollbarWidth);
             var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
 
             var container               = document.createElement("div");
@@ -610,15 +595,40 @@ module.exports = function(options) {
         }
     }
 
+    function parseSize(size) {
+        return parseFloat(size.replace(/px/, ""));
+    }
+
+    function getScrollbarSizes() {
+        var width = 500;
+        var height = 500;
+
+        var child = document.createElement("div");
+        child.style.cssText = "position: absolute; width: " + width*2 + "px; height: " + height*2 + "px; visibility: hidden;";
+
+        var container = document.createElement("div");
+        container.style.cssText = "position: absolute; width: " + width + "px; height: " + height + "px; overflow: scroll; visibility: none; top: " + -width*3 + "px; left: " + -height*3 + "px; visibility: hidden;";
+
+        container.appendChild(child);
+
+        document.body.insertBefore(container, document.body.firstChild);
+
+        var widthSize = width - container.clientWidth;
+        var heightSize = height - container.clientHeight;
+
+        document.body.removeChild(container);
+
+        return {
+            width: widthSize,
+            height: heightSize
+        };
+    }
+
     return {
         makeDetectable: makeDetectable,
         addListener: addListener
     };
 };
-
-function parseSize(size) {
-    return parseFloat(size.replace(/px/, ""));
-}
 
 },{}],7:[function(require,module,exports){
 //Heavily inspired by http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/
@@ -697,7 +707,6 @@ module.exports = function(options) {
     var detectionStrategy;
     var desiredStrategy = getOption(options, "strategy", "object");
     var strategyOptions = {
-        idHandler: idHandler,
         reporter: reporter,
         batchProcessor: batchProcessor
     };
@@ -766,12 +775,13 @@ module.exports = function(options) {
         var onReadyCallback = getOption(options, "onReady", function noop() {});
 
         forEach(elements, function attachListenerToElement(element) {
+            var id = idHandler.get(element);
+            
             if(!elementUtils.isDetectable(element)) {
                 if(elementUtils.isBusy(element)) {
                     //The element is being prepared to be detectable. Do not make it detectable.
                     //Just add the listener, because the element will soon be detectable.
                     addListener(callOnAdd, element, listener);
-                    var id = idHandler.get(element);
                     onReadyCallbacks[id] = onReadyCallbacks[id] || [];
                     onReadyCallbacks[id].push(function onReady() {
                         elementsReady++;
@@ -796,7 +806,6 @@ module.exports = function(options) {
                         onReadyCallback();
                     }
 
-                    var id = idHandler.get(element);
                     if(onReadyCallbacks[id]) {
                         forEach(onReadyCallbacks[id], function(callback) {
                             callback();
