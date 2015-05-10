@@ -69,9 +69,15 @@ module.exports = function(options) {
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
     function makeDetectable(element, callback) {
+        // Reading properties of elementStyle will result in a forced getComputedStyle for some browsers, so read all values and store them as primitives here.
         var elementStyle        = getComputedStyle(element);
+        var position            = elementStyle.position;
         var width               = parseSize(elementStyle.width);
         var height              = parseSize(elementStyle.height);
+        var top                 = elementStyle.top;
+        var right               = elementStyle.right;
+        var bottom              = elementStyle.bottom;
+        var left                = elementStyle.left;
         var readyExpandScroll   = false;
         var readyShrinkScroll   = false;
         var readyOverall        = false;
@@ -83,15 +89,13 @@ module.exports = function(options) {
         }
 
         function mutateDom() {
-            if(elementStyle.position === "static") {
+            if(position === "static") {
                 element.style.position = "relative";
 
-                var removeRelativeStyles = function(reporter, element, style, property) {
+                var removeRelativeStyles = function(reporter, element, value, property) {
                     function getNumericalValue(value) {
                         return value.replace(/[^-\d\.]/g, "");
                     }
-
-                    var value = elementStyle[property];
 
                     if(value !== "auto" && getNumericalValue(value) !== "0") {
                         reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
@@ -101,10 +105,10 @@ module.exports = function(options) {
 
                 //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
                 //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
-                removeRelativeStyles(reporter, element, elementStyle, "top");
-                removeRelativeStyles(reporter, element, elementStyle, "right");
-                removeRelativeStyles(reporter, element, elementStyle, "bottom");
-                removeRelativeStyles(reporter, element, elementStyle, "left");
+                removeRelativeStyles(reporter, element, top, "top");
+                removeRelativeStyles(reporter, element, right, "right");
+                removeRelativeStyles(reporter, element, bottom, "bottom");
+                removeRelativeStyles(reporter, element, left, "left");
             }
 
             function getContainerCssText(left, top, bottom, right) {
