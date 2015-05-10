@@ -36,4 +36,4 @@ detector.isIE = function(version) {
 
 detector.isLegacyOpera = function() {
     return !!window.opera;
-}
+};
