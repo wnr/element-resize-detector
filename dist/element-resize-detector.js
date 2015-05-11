@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.3.1 (2015-05-10, 14:36)
+ * element-resize-detector 0.3.2 (2015-05-11, 14:57)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -166,7 +166,7 @@ detector.isIE = function(version) {
 
 detector.isLegacyOpera = function() {
     return !!window.opera;
-}
+};
 
 },{}],4:[function(require,module,exports){
 "use strict";
@@ -266,14 +266,6 @@ module.exports = function(options) {
 
                 //Create the style element to be added to the object.
                 getDocument(objectElement, function onObjectDocumentReady(objectDocument) {
-                    var style = objectDocument.createElement("style");
-                    style.innerHTML = "html, body { margin: 0; padding: 0 } div { -webkit-transition: opacity 0.01s; -ms-transition: opacity 0.01s; -o-transition: opacity 0.01s; transition: opacity 0.01s; opacity: 0; }";
-
-                    //TODO: Remove any styles that has been set on the object. Only the style above should be styling the object.
-
-                    //Append the style to the object.
-                    objectDocument.head.appendChild(style);
-
                     //Notify that the element is ready to be listened to.
                     callback(element);
                 });

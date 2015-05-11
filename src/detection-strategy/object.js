@@ -74,14 +74,6 @@ module.exports = function(options) {
 
                 //Create the style element to be added to the object.
                 getDocument(objectElement, function onObjectDocumentReady(objectDocument) {
-                    var style = objectDocument.createElement("style");
-                    style.innerHTML = "html, body { margin: 0; padding: 0 } div { -webkit-transition: opacity 0.01s; -ms-transition: opacity 0.01s; -o-transition: opacity 0.01s; transition: opacity 0.01s; opacity: 0; }";
-
-                    //TODO: Remove any styles that has been set on the object. Only the style above should be styling the object.
-
-                    //Append the style to the object.
-                    objectDocument.head.appendChild(style);
-
                     //Notify that the element is ready to be listened to.
                     callback(element);
                 });
