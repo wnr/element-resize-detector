@@ -1,5 +1,5 @@
 # element-resize-detector
-Cross-browser resize event emitter for elements.
+Super-optimized cross-browser resize listener for elements.
 
 ```npm install element-resize-detector```
 
@@ -23,8 +23,13 @@ var elementResizeDetectorMaker = require("element-resize-detector");
 
 ### Create instance
 ```js
-//With default options.
+//With default options (will use the object-based approach).
 var erdDefault = elementResizeDetectorMaker();
+
+//With the experimental super fast scroll-based approach.
+var erdUltraFast = elementResizeDetectorMaker({
+    strategy: "scroll" //<- For ultra performance. 
+});
 ```
 
 ### API
@@ -45,3 +50,10 @@ erd.listenTo(document.getElementById("test"), function(element) {
 
 1. If the element has ```display: static``` it will be changed to ```display: relative```. This means if you have unintentional ```top/right/bottom/left``` styles on the element (which was ignored when being ```static```) they will now be applied to the element. This will also mean that if there are any elements with ```position: absolute``` as children to the element, they will now be positioned relative to the element.
 2. An ```<object>``` element will be injected as a direct child to the element. It has ```position: absolute``` so it will not affect the page flow. It is also visibly hidden.
+
+### Credits
+This library is using the two approaches (scroll and object) as first described at [http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/](backalleycoder).
+
+The scroll based approach implementation was based on Marc J's implementation [https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js](ResizeSensor).
+
+Please note that both approaches have been heavily reworked for better performance and robustness.
