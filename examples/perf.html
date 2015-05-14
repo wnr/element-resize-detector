@@ -49,6 +49,7 @@
     <script src="../build/element-resize-detector.js"></script>
     <script>
         var alignerWidth = 100;
+        var cnt = 0;
 
         function resize() {
             if(alignerWidth === 100) {
@@ -58,12 +59,19 @@
             }
 
             $("#aligner").width(alignerWidth + "%");
+
+            console.time("resize");
         }
 
         $(function() {
             function onElementResize(element) {
                 var style = getComputedStyle(element);
                 console.log(style.width);
+
+                if(++cnt === numElements) {
+                    cnt = 0;
+                    console.timeEnd("resize");
+                }
             }
 
             function createDiv(width) {
@@ -82,12 +90,12 @@
                 return target;
             }
 
-            var numElements = 100;
+            var numElements = 500;
             loopCreateAndAppend(numElements, createDiv.bind(null, numElements), document.getElementById("aligner"));
 
             (function listenToResize() {
                 var erd = elementResizeDetectorMaker({
-                    strategy: "scroll"
+                    strategy: "object"
                 });
                 console.time("install");
                 erd.listenTo({
