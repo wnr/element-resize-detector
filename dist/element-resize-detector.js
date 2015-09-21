@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.3.2 (2015-05-11, 14:57)
+ * element-resize-detector 0.3.3 (2015-09-21, 12:34)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -9,14 +9,16 @@
 
 var utils = require("./utils");
 
-module.exports = function batchProcessorMaker(options) {
+module.exports = function BatchProcessor(options) {
     options         = options || {};
     var reporter    = options.reporter;
     var async       = utils.getOption(options, "async", true);
     var autoProcess = utils.getOption(options, "auto", true);
 
     if(autoProcess && !async) {
-        reporter && reporter.warn("Invalid options combination. auto=true and async=false is invalid. Setting async=true.");
+        if(reporter) {
+            reporter.warn("Invalid options combination. auto=true and async=false is invalid. Setting async=true.");
+        }
         async = true;
     }
 
