@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.3.4 (2015-09-21, 12:38)
+ * element-resize-detector 0.3.5 (2015-09-28, 16:48)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -388,9 +388,12 @@ module.exports = function(options) {
             var width           = parseSize(elementStyle.width);
             var height          = parseSize(elementStyle.height);
 
+            // Store the size of the element sync here, so that multiple scroll events may be ignored in the event listeners.
+            // Otherwise the if-check in handleScroll is useless.
+            storeCurrentSize(element, width, height);
+
             batchProcessor.add(function updateDetectorElements() {
                 updateChildSizes(element, width, height);
-                storeCurrentSize(element, width, height);
             });
 
             batchProcessor.add(1, function updateScrollbars() {
@@ -399,26 +402,21 @@ module.exports = function(options) {
             });
         };
 
+        function handleScroll() {
+            var style = getComputedStyle(element);
+            var width = parseSize(style.width);
+            var height = parseSize(style.height);
+
+            if (width !== element.lastWidth || height !== element.lastHeight) {
+                changed();
+            }
+        }
+
         var expand = getExpandElement(element);
         var shrink = getShrinkElement(element);
 
-        addEvent(expand, "scroll", function onExpand() {
-            var style = getComputedStyle(element);
-            var width = parseSize(style.width);
-            var height = parseSize(style.height);
-            if (width > element.lastWidth || height > element.lastHeight) {
-                changed();
-            }
-        });
-
-        addEvent(shrink, "scroll", function onShrink() {
-            var style = getComputedStyle(element);
-            var width = parseSize(style.width);
-            var height = parseSize(style.height);
-            if (width < element.lastWidth || height < element.lastHeight) {
-                changed();
-            }
-        });
+        addEvent(expand, "scroll", handleScroll);
+        addEvent(shrink, "scroll", handleScroll);
     }
 
     /**
