@@ -52,8 +52,8 @@ erd.listenTo(document.getElementById("test"), function(element) {
 2. An ```<object>``` element will be injected as a direct child to the element. It has ```position: absolute``` so it will not affect the page flow. It is also visibly hidden.
 
 ### Credits
-This library is using the two approaches (scroll and object) as first described at [http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/](backalleycoder).
+This library is using the two approaches (scroll and object) as first described at [http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/).
 
-The scroll based approach implementation was based on Marc J's implementation [https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js](ResizeSensor).
+The scroll based approach implementation was based on Marc J's implementation [https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js).
 
 Please note that both approaches have been heavily reworked for better performance and robustness.
