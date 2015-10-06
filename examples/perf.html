@@ -65,8 +65,6 @@
 
         $(function() {
             function onElementResize(element) {
-                var style = getComputedStyle(element);
-                console.log(style.width);
 
                 if(++cnt === numElements) {
                     cnt = 0;
@@ -90,7 +88,7 @@
                 return target;
             }
 
-            var numElements = 500;
+            var numElements = 200;
             loopCreateAndAppend(numElements, createDiv.bind(null, numElements), document.getElementById("aligner"));
 
             (function listenToResize() {
