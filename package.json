@@ -11,7 +11,7 @@
   "private": false,
   "license": "MIT",
   "dependencies": {
-    "batch-processor": "^0.2.1"
+    "batch-processor": "^0.2.2"
   },
   "devDependencies": {
     "benchmark": "^1.0.0",
