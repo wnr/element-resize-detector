@@ -5,7 +5,7 @@ var detector = module.exports = {};
 detector.isIE = function(version) {
     function isAnyIeVersion() {
         var agent = navigator.userAgent.toLowerCase();
-        return agent.indexOf("msie") !== -1 || agent.indexOf("trident") !== -1;
+        return agent.indexOf("msie") !== -1 || agent.indexOf("trident") !== -1 || agent.indexOf(" edge/") !== -1;
     }
 
     if(!isAnyIeVersion()) {
