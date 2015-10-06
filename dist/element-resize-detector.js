@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.3.5 (2015-09-28, 16:48)
+ * element-resize-detector 0.3.5 (2015-10-06, 20:32)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -9,17 +9,15 @@
 
 var utils = require("./utils");
 
-module.exports = function BatchProcessor(options) {
-    options         = options || {};
-    var reporter    = options.reporter;
-    var async       = utils.getOption(options, "async", true);
-    var autoProcess = utils.getOption(options, "auto", true);
+module.exports = function batchProcessorMaker(options) {
+    options             = options || {};
+    var reporter        = options.reporter;
+    var asyncProcess    = utils.getOption(options, "async", true);
+    var autoProcess     = utils.getOption(options, "auto", true);
 
-    if(autoProcess && !async) {
-        if(reporter) {
-            reporter.warn("Invalid options combination. auto=true and async=false is invalid. Setting async=true.");
-        }
-        async = true;
+    if(autoProcess && !asyncProcess) {
+        reporter && reporter.warn("Invalid options combination. auto=true and async=false is invalid. Setting async=true.");
+        asyncProcess = true;
     }
 
     var batch;
@@ -47,7 +45,7 @@ module.exports = function BatchProcessor(options) {
             batch[level] = [];
         }
 
-        if(autoProcess && async && batchSize === 0) {
+        if(autoProcess && asyncProcess && batchSize === 0) {
             processBatchAsync();
         }
 
@@ -55,9 +53,9 @@ module.exports = function BatchProcessor(options) {
         batchSize++;
     }
 
-    function forceProcessBatch(processAsync) {
-        if(processAsync === undefined) {
-            processAsync = async;
+    function forceProcessBatch(localAsyncProcess) {
+        if(localAsyncProcess === undefined) {
+            localAsyncProcess = asyncProcess;
         }
 
         if(asyncFrameHandler) {
@@ -65,7 +63,7 @@ module.exports = function BatchProcessor(options) {
             asyncFrameHandler = null;
         }
 
-        if(async) {
+        if(localAsyncProcess) {
             processBatchAsync();
         } else {
             processBatch();
