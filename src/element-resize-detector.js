@@ -107,7 +107,6 @@ module.exports = function(options) {
     function listenTo(options, elements, listener) {
         function onResizeCallback(element) {
             var listeners = eventListenerHandler.get(element);
-
             forEach(listeners, function callListenerProxy(listener) {
                 listener(element);
             });
@@ -115,7 +114,7 @@ module.exports = function(options) {
 
         function addListener(callOnAdd, element, listener) {
             eventListenerHandler.add(element, listener);
-            
+
             if(callOnAdd) {
                 listener(element);
             }
@@ -196,8 +195,14 @@ module.exports = function(options) {
         }
     }
 
+    function detach(element) {
+      eventListenerHandler.remove(element);
+      detectionStrategy.removeListeners(element);
+    }
+
     return {
-        listenTo: listenTo
+        listenTo: listenTo,
+        detach: detach
     };
 };
 

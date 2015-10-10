@@ -156,8 +156,18 @@ module.exports = function(options) {
         return element._erdObject;
     }
 
+    function removeObject(element) {
+        element.removeChild(getObject(element));
+        delete element._erdObject;
+    }
+
+    function removeListeners(element) {
+        removeObject(element);
+    }
+
     return {
         makeDetectable: makeDetectable,
-        addListener: addListener
+        addListener: addListener,
+        removeListeners: removeListeners
     };
 };

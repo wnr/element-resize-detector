@@ -186,6 +186,11 @@ module.exports = function(options) {
         return element._erdElement.childNodes[1];
     }
 
+    function removeErdElement(element) {
+        element.removeChild(element._erdElement);
+        delete element._erdElement;
+    }
+
     function getExpandSize(size) {
         return size + 10;
     }
@@ -265,8 +270,13 @@ module.exports = function(options) {
         };
     }
 
+    function removeListeners(element) {
+      removeErdElement(element);
+    }
+
     return {
         makeDetectable: makeDetectable,
-        addListener: addListener
+        addListener: addListener,
+        removeListeners: removeListeners
     };
 };

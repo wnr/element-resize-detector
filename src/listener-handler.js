@@ -29,8 +29,15 @@ module.exports = function(idHandler) {
         eventListeners[id].push(listener);
     }
 
+    function removeListener(element) {
+        var id = idHandler.get(element);
+        idHandler.remove(element);
+        delete eventListeners[id];
+    }
+
     return {
         get: getListeners,
-        add: addListener
+        add: addListener,
+        remove: removeListener
     };
 };

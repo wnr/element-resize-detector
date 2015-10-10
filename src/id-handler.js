@@ -30,7 +30,12 @@ module.exports = function(idGenerator) {
         return element[ID_PROP_NAME] !== undefined;
     }
 
+    function removeId(element) {
+        delete element[ID_PROP_NAME];
+    }
+
     return {
-        get: getId
+        get: getId,
+        remove: removeId
     };
 };

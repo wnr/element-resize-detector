@@ -434,6 +434,55 @@ describe("element-resize-detector", function() {
         });
     });
 
+    describe("resizeDetector.detach, object strategy", function() {
+      it("should remove listener from element", function(done) {
+        var erd = elementResizeDetectorMaker({
+          callOnAdd: false
+        });
+
+        var $testElem = $("#test");
+
+        var listener = jasmine.createSpy("listener");
+
+        erd.listenTo($testElem[0], listener);
+
+        setTimeout(function() {
+          erd.detach($testElem[0]);
+          $testElem.width(300);
+        }, 100);
+
+        setTimeout(function() {
+          expect(listener).not.toHaveBeenCalled();
+          done();
+        }, 400);
+      });
+    });
+
+    describe("resizeDetector.detach, scroll strategy", function() {
+      it("should remove listener from element", function(done) {
+        var erd = elementResizeDetectorMaker({
+          callOnAdd: false,
+          strategy: "scroll"
+        });
+
+        var $testElem = $("#test");
+
+        var listener = jasmine.createSpy("listener");
+
+        erd.listenTo($testElem[0], listener);
+
+        setTimeout(function() {
+          erd.detach($testElem[0]);
+          $testElem.width(300);
+        }, 100);
+
+        setTimeout(function() {
+          expect(listener).not.toHaveBeenCalled();
+          done();
+        }, 400);
+      });
+    });
+
     listenToTest("object");
 
     //Scroll only supported on non-opera browsers.    
