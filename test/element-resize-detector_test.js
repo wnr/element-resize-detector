@@ -503,6 +503,8 @@ describe("element-resize-detector", function() {
 
             setTimeout(function() {
                 erd.uninstall($testElem[0]);
+                // detector element should be removed
+                expect($testElem[0].childNodes.length).toBe(0);
                 $testElem.width(300);
             }, 100);
 
@@ -513,7 +515,7 @@ describe("element-resize-detector", function() {
         });
     });
 
-    describe("resizeDetector.uninstall - object strategy", function() {
+    describe("resizeDetector.uninstall - scroll strategy", function() {
         it("should completely remove detector from element", function(done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
@@ -528,6 +530,8 @@ describe("element-resize-detector", function() {
 
             setTimeout(function() {
                 erd.uninstall($testElem[0]);
+                // detector element should be removed
+                expect($testElem[0].childNodes.length).toBe(0);
                 $testElem.width(300);
             }, 100);
 
