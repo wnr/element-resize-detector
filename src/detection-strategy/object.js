@@ -5,6 +5,8 @@
 
 "use strict";
 
+var getState = require("../state-manager").getState;
+
 var browserDetector = require("../browser-detector");
 
 module.exports = function(options) {
@@ -121,7 +123,7 @@ module.exports = function(options) {
                 }
 
                 element.appendChild(object);
-                element._erdObject = object;
+                getState(element).object = object;
 
                 //IE: This must occur after adding the object to the DOM.
                 if(browserDetector.isIE()) {
@@ -153,7 +155,7 @@ module.exports = function(options) {
      * @returns The object element of the target.
      */
     function getObject(element) {
-        return element._erdObject;
+        return getState(element).object;
     }
 
     return {
