@@ -11,6 +11,7 @@ module.exports = function(options) {
     options             = options || {};
     var reporter        = options.reporter;
     var batchProcessor  = options.batchProcessor;
+    var getState        = options.stateHandler.getState;
 
     if(!reporter) {
         throw new Error("Missing required dependency: reporter.");
@@ -33,6 +34,9 @@ module.exports = function(options) {
 
         if(browserDetector.isIE(8)) {
             //IE 8 does not support object, but supports the resize event directly on elements.
+            getState(element).object = {
+              proxy: listenerProxy
+            };
             element.attachEvent("onresize", listenerProxy);
         } else {
             var object = getObject(element);
@@ -121,7 +125,7 @@ module.exports = function(options) {
                 }
 
                 element.appendChild(object);
-                element._erdObject = object;
+                getState(element).object = object;
 
                 //IE: This must occur after adding the object to the DOM.
                 if(browserDetector.isIE()) {
@@ -153,11 +157,21 @@ module.exports = function(options) {
      * @returns The object element of the target.
      */
     function getObject(element) {
-        return element._erdObject;
+        return getState(element).object;
+    }
+
+    function uninstall(element) {
+        if(browserDetector.isIE(8)) {
+            element.detachEvent("onresize", getState(element).object.proxy);
+        } else {
+            element.removeChild(getObject(element));
+        }
+        delete getState(element).object;
     }
 
     return {
         makeDetectable: makeDetectable,
-        addListener: addListener
+        addListener: addListener,
+        uninstall: uninstall
     };
 };

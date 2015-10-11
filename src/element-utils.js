@@ -1,6 +1,8 @@
 "use strict";
 
-module.exports = function() {
+module.exports = function(options) {
+    var getState = options.stateHandler.getState;
+
     /**
      * Tells if the element has been made detectable and ready to be listened for resize events.
      * @public
@@ -8,7 +10,7 @@ module.exports = function() {
      * @returns {boolean} True or false depending on if the element is detectable or not.
      */
     function isDetectable(element) {
-        return !!element._erdIsDetectable;
+        return !!getState(element).isDetectable;
     }
 
     /**
@@ -17,7 +19,7 @@ module.exports = function() {
      * @param {element} The element to mark.
      */
     function markAsDetectable(element) {
-        element._erdIsDetectable = true;
+        getState(element).isDetectable = true;
     }
 
     /**
@@ -27,7 +29,7 @@ module.exports = function() {
      * @returns {boolean} True or false depending on if the element is busy or not.
      */
     function isBusy(element) {
-        return !!element._erdBusy;
+        return !!getState(element).busy;
     }
 
     /**
@@ -37,7 +39,7 @@ module.exports = function() {
      * @param {boolean} busy If the element is busy or not.
      */
     function markBusy(element, busy) {
-        element._erdBusy = !!busy;
+        getState(element).busy = !!busy;
     }
 
     return {

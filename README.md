@@ -33,6 +33,7 @@ var erdUltraFast = elementResizeDetectorMaker({
 ```
 
 ### API
+
 #### listenTo(element, listener)
 Listens to the element for resize events and calls the listener function with the element as argument on resize events.
 
@@ -45,6 +46,14 @@ erd.listenTo(document.getElementById("test"), function(element) {
   console.log("Size: " + width + "x" + height);
 });
 ```
+
+#### removeListener(element, listener)
+
+#### removeAllListeners(element)
+Removes all listeners from the element, but does not completely remove the detector. Use this function if you may add listeners later and don't want the detector to have to initialize again.
+
+#### uninstall(element)
+Completely removes the detector and all listeners.
 
 **Caveats:**
 

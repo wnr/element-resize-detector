@@ -8,6 +8,7 @@ var idHandlerMaker          = require("./id-handler");
 var reporterMaker           = require("./reporter");
 var browserDetector         = require("./browser-detector");
 var batchProcessorMaker     = require("batch-processor");
+var stateHandler            = require("./state-handler");
 
 //Detection strategies.
 var objectStrategyMaker     = require("./detection-strategy/object.js");
@@ -23,12 +24,12 @@ var scrollStrategyMaker     = require("./detection-strategy/scroll.js");
 /**
  * @typedef Options
  * @type {object}
- * @property {boolean} callOnAdd    Determines if listeners should be called when they are getting added. 
-                                    Default is true. If true, the listener is guaranteed to be called when it has been added. 
+ * @property {boolean} callOnAdd    Determines if listeners should be called when they are getting added.
+                                    Default is true. If true, the listener is guaranteed to be called when it has been added.
                                     If false, the listener will not be guarenteed to be called when it has been added (does not prevent it from being called).
  * @property {idHandler} idHandler  A custom id handler that is responsible for generating, setting and retrieving id's for elements.
                                     If not provided, a default id handler will be used.
- * @property {reporter} reporter    A custom reporter that handles reporting logs, warnings and errors. 
+ * @property {reporter} reporter    A custom reporter that handles reporting logs, warnings and errors.
                                     If not provided, a default id handler will be used.
                                     If set to false, then nothing will be reported.
  */
@@ -67,14 +68,17 @@ module.exports = function(options) {
     globalOptions.callOnAdd     = !!getOption(options, "callOnAdd", true);
 
     var eventListenerHandler    = listenerHandlerMaker(idHandler);
-    var elementUtils            = elementUtilsMaker();
+    var elementUtils            = elementUtilsMaker({
+        stateHandler: stateHandler
+    });
 
     //The detection strategy to be used.
     var detectionStrategy;
     var desiredStrategy = getOption(options, "strategy", "object");
     var strategyOptions = {
         reporter: reporter,
-        batchProcessor: batchProcessor
+        batchProcessor: batchProcessor,
+        stateHandler: stateHandler
     };
 
     if(desiredStrategy === "scroll" && browserDetector.isLegacyOpera()) {
@@ -107,7 +111,6 @@ module.exports = function(options) {
     function listenTo(options, elements, listener) {
         function onResizeCallback(element) {
             var listeners = eventListenerHandler.get(element);
-
             forEach(listeners, function callListenerProxy(listener) {
                 listener(element);
             });
@@ -115,7 +118,7 @@ module.exports = function(options) {
 
         function addListener(callOnAdd, element, listener) {
             eventListenerHandler.add(element, listener);
-            
+
             if(callOnAdd) {
                 listener(element);
             }
@@ -185,7 +188,7 @@ module.exports = function(options) {
                     }
                 });
             }
-            
+
             //The element has been prepared to be detectable and is ready to be listened to.
             addListener(callOnAdd, element, listener);
             elementsReady++;
@@ -196,8 +199,17 @@ module.exports = function(options) {
         }
     }
 
+    function uninstall(element) {
+      eventListenerHandler.removeAllListeners(element);
+      detectionStrategy.uninstall(element);
+      stateHandler.cleanState(element);
+    }
+
     return {
-        listenTo: listenTo
+        listenTo: listenTo,
+        removeListener: eventListenerHandler.removeListener,
+        removeAllListeners: eventListenerHandler.removeAllListeners,
+        uninstall: uninstall
     };
 };
 

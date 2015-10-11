@@ -29,8 +29,24 @@ module.exports = function(idHandler) {
         eventListeners[id].push(listener);
     }
 
+    function removeListener(element, listener) {
+        var listeners = getListeners(element);
+        for (var i = 0, len = listeners.length; i < len; ++i) {
+            if (listeners[i] === listener) {
+              listeners.splice(i, 1);
+              break;
+            }
+        }
+    }
+
+    function removeAllListeners(element) {
+      eventListeners[idHandler.get(element)].length = 0;
+    }
+
     return {
         get: getListeners,
-        add: addListener
+        add: addListener,
+        removeListener: removeListener,
+        removeAllListeners: removeAllListeners
     };
 };
