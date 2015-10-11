@@ -5,12 +5,11 @@
 
 "use strict";
 
-var getState = require("../state-manager").getState;
-
 module.exports = function(options) {
     options             = options || {};
     var reporter        = options.reporter;
     var batchProcessor  = options.batchProcessor;
+    var getState        = options.stateHandler.getState;
 
     if(!reporter) {
         throw new Error("Missing required dependency: reporter.");

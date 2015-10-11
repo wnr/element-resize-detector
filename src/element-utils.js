@@ -1,8 +1,8 @@
 "use strict";
 
-var getState = require("./state-manager").getState;
+module.exports = function(options) {
+    var getState = options.stateHandler.getState;
 
-module.exports = function() {
     /**
      * Tells if the element has been made detectable and ready to be listened for resize events.
      * @public
