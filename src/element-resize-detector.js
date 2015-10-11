@@ -12,6 +12,7 @@ var batchProcessorMaker     = require("batch-processor");
 //Detection strategies.
 var objectStrategyMaker     = require("./detection-strategy/object.js");
 var scrollStrategyMaker     = require("./detection-strategy/scroll.js");
+var cleanState              = require("./state-manager").cleanState;
 
 /**
  * @typedef idHandler
@@ -184,7 +185,7 @@ module.exports = function(options) {
                     }
                 });
             }
-            
+
             //The element has been prepared to be detectable and is ready to be listened to.
             addListener(callOnAdd, element, listener);
             elementsReady++;
@@ -195,14 +196,17 @@ module.exports = function(options) {
         }
     }
 
-    function detach(element) {
-      eventListenerHandler.remove(element);
-      detectionStrategy.removeListeners(element);
+    function uninstall(element) {
+      eventListenerHandler.removeAllListeners(element);
+      detectionStrategy.uninstall(element);
+      cleanState(element);
     }
 
     return {
         listenTo: listenTo,
-        detach: detach
+        removeListener: eventListenerHandler.removeListener,
+        removeAllListeners: eventListenerHandler.removeAllListeners,
+        uninstall: uninstall
     };
 };
 

@@ -5,6 +5,8 @@
 
 "use strict";
 
+var getState = require("../state-manager").getState;
+
 module.exports = function(options) {
     options             = options || {};
     var reporter        = options.reporter;
@@ -141,7 +143,7 @@ module.exports = function(options) {
             container.appendChild(expand);
             container.appendChild(shrink);
             element.appendChild(container);
-            element._erdElement = container;
+            getState(element).element = container;
 
             addEvent(expand, "scroll", function onFirstExpandScroll() {
                 removeEvent(expand, "scroll", onFirstExpandScroll);
@@ -175,7 +177,7 @@ module.exports = function(options) {
     }
 
     function getExpandElement(element) {
-        return element._erdElement.childNodes[0];
+        return getState(element).element.childNodes[0];
     }
 
     function getExpandChildElement(element) {
@@ -183,12 +185,12 @@ module.exports = function(options) {
     }
 
     function getShrinkElement(element) {
-        return element._erdElement.childNodes[1];
+        return getState(element).element.childNodes[1];
     }
 
     function removeErdElement(element) {
-        element.removeChild(element._erdElement);
-        delete element._erdElement;
+        element.removeChild(getState(element).element);
+        delete getState(element).element;
     }
 
     function getExpandSize(size) {
@@ -270,13 +272,15 @@ module.exports = function(options) {
         };
     }
 
-    function removeListeners(element) {
-      removeErdElement(element);
+    function uninstall(element, callback) {
+        var state = getState(element);
+        element.removeChild(state.element);
+        delete state.element;
     }
 
     return {
         makeDetectable: makeDetectable,
         addListener: addListener,
-        removeListeners: removeListeners
+        uninstall: uninstall
     };
 };
