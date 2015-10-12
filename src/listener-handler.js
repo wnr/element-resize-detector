@@ -10,7 +10,7 @@ module.exports = function(idHandler) {
      * @returns All listeners for the given element.
      */
     function getListeners(element) {
-        return eventListeners[idHandler.get(element)];
+        return eventListeners[idHandler.get(element)] || [];
     }
 
     /**
