@@ -35,7 +35,7 @@ module.exports = function(options) {
         if(browserDetector.isIE(8)) {
             //IE 8 does not support object, but supports the resize event directly on elements.
             getState(element).object = {
-              proxy: listenerProxy
+                proxy: listenerProxy
             };
             element.attachEvent("onresize", listenerProxy);
         } else {
