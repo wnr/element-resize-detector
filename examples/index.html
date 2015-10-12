@@ -60,7 +60,7 @@
             var erd = elementResizeDetectorMaker({
                 strategy: "object"
             });
-            //erd.listenTo(container, updateDimensions);
+            erd.listenTo(container, updateDimensions);
 
             container.click(function onContainerClick() {
                 function rand(min, max) {
@@ -85,7 +85,11 @@
                 var style = getComputedStyle(element);
                 console.log(style.width, style.height);
             });
-            document.body.appendChild(div);
+
+            setTimeout(function () {
+                console.log("adding to DOM.");
+                document.body.appendChild(div);
+            }, 1000);
         });
     </script>
 </body>
