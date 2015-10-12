@@ -187,6 +187,11 @@ module.exports = function(options) {
         return getState(element).element.childNodes[1];
     }
 
+    function removeErdElement(element) {
+        element.removeChild(getState(element).element);
+        delete getState(element).element;
+    }
+
     function getExpandSize(size) {
         return size + 10;
     }
@@ -266,8 +271,15 @@ module.exports = function(options) {
         };
     }
 
+    function uninstall(element, callback) {
+        var state = getState(element);
+        element.removeChild(state.element);
+        delete state.element;
+    }
+
     return {
         makeDetectable: makeDetectable,
-        addListener: addListener
+        addListener: addListener,
+        uninstall: uninstall
     };
 };

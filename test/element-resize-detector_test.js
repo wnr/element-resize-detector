@@ -434,6 +434,114 @@ describe("element-resize-detector", function() {
         });
     });
 
+    describe("resizeDetector.removeListener", function() {
+        it("should remove listener from element", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false
+            });
+
+            var $testElem = $("#test");
+
+            var listenerCall    = jasmine.createSpy("listener");
+            var listenerNotCall = jasmine.createSpy("listener");
+
+            erd.listenTo($testElem[0], listenerCall);
+            erd.listenTo($testElem[0], listenerNotCall);
+
+            setTimeout(function() {
+                erd.removeListener($testElem[0], listenerNotCall);
+                $testElem.width(300);
+            }, 100);
+
+            setTimeout(function() {
+                expect(listenerCall).toHaveBeenCalled();
+                expect(listenerNotCall).not.toHaveBeenCalled();
+                done();
+            }, 400);
+        });
+    });
+
+    describe("resizeDetector.removeAllListeners", function() {
+        it("should remove all listeners from element", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false
+            });
+
+            var $testElem = $("#test");
+
+            var listener1 = jasmine.createSpy("listener");
+            var listener2 = jasmine.createSpy("listener");
+
+            erd.listenTo($testElem[0], listener1);
+            erd.listenTo($testElem[0], listener2);
+
+            setTimeout(function() {
+                erd.removeAllListeners($testElem[0]);
+                $testElem.width(300);
+            }, 100);
+
+            setTimeout(function() {
+                expect(listener1).not.toHaveBeenCalled();
+                expect(listener2).not.toHaveBeenCalled();
+                done();
+            }, 400);
+        });
+    });
+
+    describe("resizeDetector.uninstall - object strategy", function() {
+        it("should completely remove detector from element", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                strategy: "object"
+            });
+
+            var $testElem = $("#test");
+
+            var listener = jasmine.createSpy("listener");
+
+            erd.listenTo($testElem[0], listener);
+
+            setTimeout(function() {
+                erd.uninstall($testElem[0]);
+                // detector element should be removed
+                expect($testElem[0].childNodes.length).toBe(0);
+                $testElem.width(300);
+            }, 100);
+
+            setTimeout(function() {
+                expect(listener).not.toHaveBeenCalled();
+                done();
+            }, 400);
+        });
+    });
+
+    describe("resizeDetector.uninstall - scroll strategy", function() {
+        it("should completely remove detector from element", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                strategy: "scroll"
+            });
+
+            var $testElem = $("#test");
+
+            var listener = jasmine.createSpy("listener");
+
+            erd.listenTo($testElem[0], listener);
+
+            setTimeout(function() {
+                erd.uninstall($testElem[0]);
+                // detector element should be removed
+                expect($testElem[0].childNodes.length).toBe(0);
+                $testElem.width(300);
+            }, 100);
+
+            setTimeout(function() {
+                expect(listener).not.toHaveBeenCalled();
+                done();
+            }, 400);
+        });
+    });
+
     listenToTest("object");
 
     //Scroll only supported on non-opera browsers.    

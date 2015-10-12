@@ -34,6 +34,9 @@ module.exports = function(options) {
 
         if(browserDetector.isIE(8)) {
             //IE 8 does not support object, but supports the resize event directly on elements.
+            getState(element).object = {
+              proxy: listenerProxy
+            };
             element.attachEvent("onresize", listenerProxy);
         } else {
             var object = getObject(element);
@@ -157,8 +160,18 @@ module.exports = function(options) {
         return getState(element).object;
     }
 
+    function uninstall(element) {
+        if(browserDetector.isIE(8)) {
+            element.detachEvent("onresize", getState(element).object.proxy);
+        } else {
+            element.removeChild(getObject(element));
+        }
+        delete getState(element).object;
+    }
+
     return {
         makeDetectable: makeDetectable,
-        addListener: addListener
+        addListener: addListener,
+        uninstall: uninstall
     };
 };
