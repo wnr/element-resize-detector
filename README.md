@@ -28,7 +28,7 @@ var erdDefault = elementResizeDetectorMaker();
 
 //With the experimental super fast scroll-based approach.
 var erdUltraFast = elementResizeDetectorMaker({
-    strategy: "scroll" //<- For ultra performance. 
+    strategy: "scroll" //<- For ultra performance.
 });
 ```
 
@@ -48,6 +48,7 @@ erd.listenTo(document.getElementById("test"), function(element) {
 ```
 
 #### removeListener(element, listener)
+Removes the listener from the element.
 
 #### removeAllListeners(element)
 Removes all listeners from the element, but does not completely remove the detector. Use this function if you may add listeners later and don't want the detector to have to initialize again.
