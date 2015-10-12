@@ -84,11 +84,11 @@ module.exports = function(options) {
             }
 
             //The target element needs to be positioned (everything except static) so the absolute positioned object will be positioned relative to the target element.
+            // Important to not save properties of style as own variables, as some browers do not like this for elements not yet added to the DOM.
             var style = getComputedStyle(element);
-            var position = style.position;
 
             function mutateDom() {
-                if(position === "static") {
+                if(style.position === "static") {
                     element.style.position = "relative";
 
                     var removeRelativeStyles = function(reporter, element, style, property) {

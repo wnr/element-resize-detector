@@ -53,15 +53,14 @@
                 var height = $(element).height();
                 $("#dim-x").html(width);
                 $("#dim-y").html(height);
-                console.log(width, height);
             }
 
             var container = $("#container");
 
             var erd = elementResizeDetectorMaker({
-                strategy: "scroll"
+                strategy: "object"
             });
-            erd.listenTo(container, updateDimensions);
+            //erd.listenTo(container, updateDimensions);
 
             container.click(function onContainerClick() {
                 function rand(min, max) {
@@ -76,6 +75,17 @@
                     height: height + "%"
                 });
             });
+
+            var div = document.createElement("div");
+            div.style.display = "inline-block";
+            div.style.width = "50%";
+            div.style.height = "100px";
+            div.style.background = "red";
+            erd.listenTo(div, function (element) {
+                var style = getComputedStyle(element);
+                console.log(style.width, style.height);
+            });
+            document.body.appendChild(div);
         });
     </script>
 </body>
