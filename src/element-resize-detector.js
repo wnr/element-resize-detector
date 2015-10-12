@@ -47,7 +47,10 @@ module.exports = function(options) {
 
     if(!idHandler) {
         var idGenerator = idGeneratorMaker();
-        var defaultIdHandler = idHandlerMaker(idGenerator);
+        var defaultIdHandler = idHandlerMaker({
+            idGenerator: idGenerator,
+            stateHandler: stateHandler
+        });
         idHandler = defaultIdHandler;
     }
 

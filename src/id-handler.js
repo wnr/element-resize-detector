@@ -1,7 +1,8 @@
 "use strict";
 
-module.exports = function(idGenerator) {
-    var ID_PROP_NAME = "_erdTargetId";
+module.exports = function(options) {
+    var idGenerator     = options.idGenerator;
+    var getState        = options.stateHandler.getState;
 
     /**
      * Gets the resize detector id of the element. If the element does not have an id, one will be assigned to the element.
@@ -15,23 +16,23 @@ module.exports = function(idGenerator) {
             setId(element);
         }
 
-        return element[ID_PROP_NAME];
+        return getState(element).id;
     }
 
     function setId(element) {
         var id = idGenerator.generate();
 
-        element[ID_PROP_NAME] = id;
+        getState(element).id = id;
 
         return id;
     }
 
     function hasId(element) {
-        return element[ID_PROP_NAME] !== undefined;
+        return getState(element).id !== undefined;
     }
 
     function removeId(element) {
-        delete element[ID_PROP_NAME];
+        delete getState(element).id;
     }
 
     return {
