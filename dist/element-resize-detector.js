@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.3.7 (2015-10-06, 20:43)
+ * element-resize-detector 0.4.0 (2015-10-14, 13:20)
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -203,6 +203,7 @@ module.exports = function(options) {
     options             = options || {};
     var reporter        = options.reporter;
     var batchProcessor  = options.batchProcessor;
+    var getState        = options.stateHandler.getState;
 
     if(!reporter) {
         throw new Error("Missing required dependency: reporter.");
@@ -225,6 +226,9 @@ module.exports = function(options) {
 
         if(browserDetector.isIE(8)) {
             //IE 8 does not support object, but supports the resize event directly on elements.
+            getState(element).object = {
+                proxy: listenerProxy
+            };
             element.attachEvent("onresize", listenerProxy);
         } else {
             var object = getObject(element);
@@ -313,7 +317,7 @@ module.exports = function(options) {
                 }
 
                 element.appendChild(object);
-                element._erdObject = object;
+                getState(element).object = object;
 
                 //IE: This must occur after adding the object to the DOM.
                 if(browserDetector.isIE()) {
@@ -345,12 +349,22 @@ module.exports = function(options) {
      * @returns The object element of the target.
      */
     function getObject(element) {
-        return element._erdObject;
+        return getState(element).object;
+    }
+
+    function uninstall(element) {
+        if(browserDetector.isIE(8)) {
+            element.detachEvent("onresize", getState(element).object.proxy);
+        } else {
+            element.removeChild(getObject(element));
+        }
+        delete getState(element).object;
     }
 
     return {
         makeDetectable: makeDetectable,
-        addListener: addListener
+        addListener: addListener,
+        uninstall: uninstall
     };
 };
 
@@ -366,6 +380,7 @@ module.exports = function(options) {
     options             = options || {};
     var reporter        = options.reporter;
     var batchProcessor  = options.batchProcessor;
+    var getState        = options.stateHandler.getState;
 
     if(!reporter) {
         throw new Error("Missing required dependency: reporter.");
@@ -498,7 +513,7 @@ module.exports = function(options) {
             container.appendChild(expand);
             container.appendChild(shrink);
             element.appendChild(container);
-            element._erdElement = container;
+            getState(element).element = container;
 
             addEvent(expand, "scroll", function onFirstExpandScroll() {
                 removeEvent(expand, "scroll", onFirstExpandScroll);
@@ -532,7 +547,7 @@ module.exports = function(options) {
     }
 
     function getExpandElement(element) {
-        return element._erdElement.childNodes[0];
+        return getState(element).element.childNodes[0];
     }
 
     function getExpandChildElement(element) {
@@ -540,7 +555,7 @@ module.exports = function(options) {
     }
 
     function getShrinkElement(element) {
-        return element._erdElement.childNodes[1];
+        return getState(element).element.childNodes[1];
     }
 
     function getExpandSize(size) {
@@ -622,9 +637,16 @@ module.exports = function(options) {
         };
     }
 
+    function uninstall(element) {
+        var state = getState(element);
+        element.removeChild(state.element);
+        delete state.element;
+    }
+
     return {
         makeDetectable: makeDetectable,
-        addListener: addListener
+        addListener: addListener,
+        uninstall: uninstall
     };
 };
 
@@ -639,6 +661,7 @@ var idHandlerMaker          = require("./id-handler");
 var reporterMaker           = require("./reporter");
 var browserDetector         = require("./browser-detector");
 var batchProcessorMaker     = require("batch-processor");
+var stateHandler            = require("./state-handler");
 
 //Detection strategies.
 var objectStrategyMaker     = require("./detection-strategy/object.js");
@@ -654,12 +677,12 @@ var scrollStrategyMaker     = require("./detection-strategy/scroll.js");
 /**
  * @typedef Options
  * @type {object}
- * @property {boolean} callOnAdd    Determines if listeners should be called when they are getting added. 
-                                    Default is true. If true, the listener is guaranteed to be called when it has been added. 
+ * @property {boolean} callOnAdd    Determines if listeners should be called when they are getting added.
+                                    Default is true. If true, the listener is guaranteed to be called when it has been added.
                                     If false, the listener will not be guarenteed to be called when it has been added (does not prevent it from being called).
  * @property {idHandler} idHandler  A custom id handler that is responsible for generating, setting and retrieving id's for elements.
                                     If not provided, a default id handler will be used.
- * @property {reporter} reporter    A custom reporter that handles reporting logs, warnings and errors. 
+ * @property {reporter} reporter    A custom reporter that handles reporting logs, warnings and errors.
                                     If not provided, a default id handler will be used.
                                     If set to false, then nothing will be reported.
  */
@@ -677,7 +700,10 @@ module.exports = function(options) {
 
     if(!idHandler) {
         var idGenerator = idGeneratorMaker();
-        var defaultIdHandler = idHandlerMaker(idGenerator);
+        var defaultIdHandler = idHandlerMaker({
+            idGenerator: idGenerator,
+            stateHandler: stateHandler
+        });
         idHandler = defaultIdHandler;
     }
 
@@ -698,14 +724,17 @@ module.exports = function(options) {
     globalOptions.callOnAdd     = !!getOption(options, "callOnAdd", true);
 
     var eventListenerHandler    = listenerHandlerMaker(idHandler);
-    var elementUtils            = elementUtilsMaker();
+    var elementUtils            = elementUtilsMaker({
+        stateHandler: stateHandler
+    });
 
     //The detection strategy to be used.
     var detectionStrategy;
     var desiredStrategy = getOption(options, "strategy", "object");
     var strategyOptions = {
         reporter: reporter,
-        batchProcessor: batchProcessor
+        batchProcessor: batchProcessor,
+        stateHandler: stateHandler
     };
 
     if(desiredStrategy === "scroll" && browserDetector.isLegacyOpera()) {
@@ -738,7 +767,6 @@ module.exports = function(options) {
     function listenTo(options, elements, listener) {
         function onResizeCallback(element) {
             var listeners = eventListenerHandler.get(element);
-
             forEach(listeners, function callListenerProxy(listener) {
                 listener(element);
             });
@@ -746,7 +774,7 @@ module.exports = function(options) {
 
         function addListener(callOnAdd, element, listener) {
             eventListenerHandler.add(element, listener);
-            
+
             if(callOnAdd) {
                 listener(element);
             }
@@ -816,7 +844,7 @@ module.exports = function(options) {
                     }
                 });
             }
-            
+
             //The element has been prepared to be detectable and is ready to be listened to.
             addListener(callOnAdd, element, listener);
             elementsReady++;
@@ -827,8 +855,17 @@ module.exports = function(options) {
         }
     }
 
+    function uninstall(element) {
+      eventListenerHandler.removeAllListeners(element);
+      detectionStrategy.uninstall(element);
+      stateHandler.cleanState(element);
+    }
+
     return {
-        listenTo: listenTo
+        listenTo: listenTo,
+        removeListener: eventListenerHandler.removeListener,
+        removeAllListeners: eventListenerHandler.removeAllListeners,
+        uninstall: uninstall
     };
 };
 
@@ -842,10 +879,12 @@ function getOption(options, name, defaultValue) {
     return value;
 }
 
-},{"./browser-detector":3,"./collection-utils":4,"./detection-strategy/object.js":5,"./detection-strategy/scroll.js":6,"./element-utils":8,"./id-generator":9,"./id-handler":10,"./listener-handler":11,"./reporter":12,"batch-processor":1}],8:[function(require,module,exports){
+},{"./browser-detector":3,"./collection-utils":4,"./detection-strategy/object.js":5,"./detection-strategy/scroll.js":6,"./element-utils":8,"./id-generator":9,"./id-handler":10,"./listener-handler":11,"./reporter":12,"./state-handler":13,"batch-processor":1}],8:[function(require,module,exports){
 "use strict";
 
-module.exports = function() {
+module.exports = function(options) {
+    var getState = options.stateHandler.getState;
+
     /**
      * Tells if the element has been made detectable and ready to be listened for resize events.
      * @public
@@ -853,7 +892,7 @@ module.exports = function() {
      * @returns {boolean} True or false depending on if the element is detectable or not.
      */
     function isDetectable(element) {
-        return !!element._erdIsDetectable;
+        return !!getState(element).isDetectable;
     }
 
     /**
@@ -862,7 +901,7 @@ module.exports = function() {
      * @param {element} The element to mark.
      */
     function markAsDetectable(element) {
-        element._erdIsDetectable = true;
+        getState(element).isDetectable = true;
     }
 
     /**
@@ -872,7 +911,7 @@ module.exports = function() {
      * @returns {boolean} True or false depending on if the element is busy or not.
      */
     function isBusy(element) {
-        return !!element._erdBusy;
+        return !!getState(element).busy;
     }
 
     /**
@@ -882,7 +921,7 @@ module.exports = function() {
      * @param {boolean} busy If the element is busy or not.
      */
     function markBusy(element, busy) {
-        element._erdBusy = !!busy;
+        getState(element).busy = !!busy;
     }
 
     return {
@@ -916,8 +955,9 @@ module.exports = function() {
 },{}],10:[function(require,module,exports){
 "use strict";
 
-module.exports = function(idGenerator) {
-    var ID_PROP_NAME = "_erdTargetId";
+module.exports = function(options) {
+    var idGenerator     = options.idGenerator;
+    var getState        = options.stateHandler.getState;
 
     /**
      * Gets the resize detector id of the element. If the element does not have an id, one will be assigned to the element.
@@ -931,23 +971,28 @@ module.exports = function(idGenerator) {
             setId(element);
         }
 
-        return element[ID_PROP_NAME];
+        return getState(element).id;
     }
 
     function setId(element) {
         var id = idGenerator.generate();
 
-        element[ID_PROP_NAME] = id;
+        getState(element).id = id;
 
         return id;
     }
 
     function hasId(element) {
-        return element[ID_PROP_NAME] !== undefined;
+        return getState(element).id !== undefined;
+    }
+
+    function removeId(element) {
+        delete getState(element).id;
     }
 
     return {
-        get: getId
+        get: getId,
+        remove: removeId
     };
 };
 
@@ -964,7 +1009,7 @@ module.exports = function(idHandler) {
      * @returns All listeners for the given element.
      */
     function getListeners(element) {
-        return eventListeners[idHandler.get(element)];
+        return eventListeners[idHandler.get(element)] || [];
     }
 
     /**
@@ -983,9 +1028,27 @@ module.exports = function(idHandler) {
         eventListeners[id].push(listener);
     }
 
+    function removeListener(element, listener) {
+        var listeners = getListeners(element);
+        for (var i = 0, len = listeners.length; i < len; ++i) {
+            if (listeners[i] === listener) {
+              listeners.splice(i, 1);
+              break;
+            }
+        }
+    }
+
+    function removeAllListeners(element) {
+      var listeners = eventListeners[idHandler.get(element)];
+      if (!listeners) { return; }
+      listeners.length = 0;
+    }
+
     return {
         get: getListeners,
-        add: addListener
+        add: addListener,
+        removeListener: removeListener,
+        removeAllListeners: removeAllListeners
     };
 };
 
@@ -1026,5 +1089,29 @@ module.exports = function(quiet) {
 
     return reporter;
 };
+},{}],13:[function(require,module,exports){
+"use strict";
+
+var prop = "_erd";
+
+function initState(element) {
+    element[prop] = {};
+    return getState(element);
+}
+
+function getState(element) {
+    return element[prop] || initState(element);
+}
+
+function cleanState(element) {
+    delete element[prop];
+}
+
+module.exports = {
+    initState: initState,
+    getState: getState,
+    cleanState: cleanState
+};
+
 },{}]},{},[7])(7)
 });
