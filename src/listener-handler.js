@@ -40,7 +40,9 @@ module.exports = function(idHandler) {
     }
 
     function removeAllListeners(element) {
-      eventListeners[idHandler.get(element)].length = 0;
+      var listeners = eventListeners[idHandler.get(element)];
+      if (!listeners) { return; }
+      listeners.length = 0;
     }
 
     return {
