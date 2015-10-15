@@ -486,6 +486,12 @@ describe("element-resize-detector", function() {
                 done();
             }, 400);
         });
+
+        it("should work for elements that don't have the detector installed", function() {
+            var erd = elementResizeDetectorMaker();
+            var $testElem = $("#test");
+            expect(erd.removeAllListeners.bind(erd, $testElem[0])).not.toThrow();
+        });
     });
 
     describe("resizeDetector.uninstall - object strategy", function() {
