@@ -58,23 +58,23 @@
             var container = $("#container");
 
             var erd = elementResizeDetectorMaker({
-                strategy: "object"
+                strategy: "scroll"
             });
-            erd.listenTo(container, updateDimensions);
-
-            container.click(function onContainerClick() {
-                function rand(min, max) {
-                    return Math.floor(Math.random() * (max - min + 1)) + min;
-                }
-
-                var width = rand(30, 90);
-                var height = rand(30, 90);
-
-                $(this).css({
-                    width: width + "%",
-                    height: height + "%"
-                });
-            });
+            // erd.listenTo(container, updateDimensions);
+            //
+            // container.click(function onContainerClick() {
+            //     function rand(min, max) {
+            //         return Math.floor(Math.random() * (max - min + 1)) + min;
+            //     }
+            //
+            //     var width = rand(30, 90);
+            //     var height = rand(30, 90);
+            //
+            //     $(this).css({
+            //         width: width + "%",
+            //         height: height + "%"
+            //     });
+            // });
 
             var div = document.createElement("div");
             div.style.display = "inline-block";
@@ -83,7 +83,7 @@
             div.style.background = "red";
             erd.listenTo(div, function (element) {
                 var style = getComputedStyle(element);
-                console.log(style.width, style.height);
+                console.log("air element", style.width, style.height);
             });
 
             setTimeout(function () {
