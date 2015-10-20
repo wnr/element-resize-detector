@@ -544,7 +544,7 @@ describe("element-resize-detector", function() {
 
     listenToTest("object");
 
-    //Scroll only supported on non-opera browsers.    
+    //Scroll only supported on non-opera browsers.
     if(!window.opera) {
         listenToTest("scroll");
     }

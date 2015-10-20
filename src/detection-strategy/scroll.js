@@ -171,11 +171,13 @@ module.exports = function(options) {
                 getState(element).element = container;
 
                 addEvent(expand, "scroll", function onFirstExpandScroll() {
+                    removeEvent(expand, "scroll", onFirstExpandScroll);
                     readyExpandScroll = true;
                     ready();
                 });
 
                 addEvent(shrink, "scroll", function onFirstShrinkScroll() {
+                    removeEvent(shrink, "scroll", onFirstShrinkScroll);
                     readyShrinkScroll = true;
                     ready();
                 });
