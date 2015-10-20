@@ -203,14 +203,11 @@ module.exports = function(options) {
 
         // Only install the strategy if the style has been resolved (this does not always mean that the element is attached).
         if (isStyleResolved()) {
-            console.log("installing");
             install();
         } else {
             // Need to perform polling in order to detect when the element has been attached to the DOM.
             var timeout = setInterval(function () {
-                console.log("poll");
                 if (isStyleResolved()) {
-                    console.log("resolved, installing.");
                     install();
                     clearTimeout(timeout);
                 }
