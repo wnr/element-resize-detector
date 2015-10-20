@@ -91,16 +91,18 @@ module.exports = function(options) {
                 style.right                 = elementStyle.right;
                 style.bottom                = elementStyle.bottom;
                 style.left                  = elementStyle.left;
+                style.widthStyle            = elementStyle.width;
+                style.heightStyle           = elementStyle.height;
                 return style;
             }
 
             // Style is to be retrieved in the first level (before mutating the DOM) so that a forced layout is avoided later.
             var style = getStyle();
 
-            // getState(element).startSize = {
-            //     width: style.width,
-            //     height: style.height
-            // };
+            getState(element).startSizeStyle = {
+                width: style.widthStyle,
+                height: style.heightStyle
+            };
 
             var readyExpandScroll       = false;
             var readyShrinkScroll       = false;

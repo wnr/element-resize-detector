@@ -320,22 +320,22 @@ function listenToTest(strategy) {
             }, 100);
         });
 
-        // it("should call listener if the element is changed synchronously after listenTo", function(done) {
-        //     var erd = elementResizeDetectorMaker({
-        //         callOnAdd: false,
-        //         reporter: reporter,
-        //         strategy: strategy
-        //     });
-        //
-        //     var listener1 = jasmine.createSpy("listener1");
-        //     erd.listenTo($("#test"), listener1);
-        //     $("#test").width(200);
-        //
-        //     setTimeout(function() {
-        //         expect(listener1).toHaveBeenCalledWith($("#test")[0]);
-        //         done();
-        //     }, 100);
-        // });
+        it("should call listener if the element is changed synchronously after listenTo", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            var listener1 = jasmine.createSpy("listener1");
+            erd.listenTo($("#test"), listener1);
+            $("#test").width(200);
+
+            setTimeout(function() {
+                expect(listener1).toHaveBeenCalledWith($("#test")[0]);
+                done();
+            }, 100);
+        });
 
         it("should be able to install into elements that are detached from the DOM", function(done) {
             var erd = elementResizeDetectorMaker({

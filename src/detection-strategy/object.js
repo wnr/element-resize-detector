@@ -63,10 +63,10 @@ module.exports = function(options) {
             // Since the style object is a reference, it will be updated as soon as the element is attached to the DOM.
             var style = getComputedStyle(element);
 
-            // getState(element).startSize = {
-            //     width: style.width,
-            //     height: style.height
-            // };
+            getState(element).startSizeStyle = {
+                width: style.width,
+                height: style.height
+            };
 
             function mutateDom() {
                 function alterPositionStyles() {
