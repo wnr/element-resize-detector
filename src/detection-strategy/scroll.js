@@ -68,110 +68,157 @@ module.exports = function(options) {
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
     function makeDetectable(element, callback) {
-        // Reading properties of elementStyle will result in a forced getComputedStyle for some browsers, so read all values and store them as primitives here.
-        var elementStyle        = getComputedStyle(element);
-        var position            = elementStyle.position;
-        var width               = parseSize(elementStyle.width);
-        var height              = parseSize(elementStyle.height);
-        var top                 = elementStyle.top;
-        var right               = elementStyle.right;
-        var bottom              = elementStyle.bottom;
-        var left                = elementStyle.left;
-        var readyExpandScroll   = false;
-        var readyShrinkScroll   = false;
-        var readyOverall        = false;
-
-        function ready() {
-            if(readyExpandScroll && readyShrinkScroll && readyOverall) {
-                callback(element);
+        function isStyleResolved() {
+            function isPxValue(length) {
+                return length.indexOf("px") !== -1;
             }
+
+            var style = getComputedStyle(element);
+
+            return style.position && isPxValue(style.width) && isPxValue(style.height);
         }
 
-        function mutateDom() {
-            if(position === "static") {
-                element.style.position = "relative";
+        function install() {
+            function getStyle() {
+                // Some browsers only force layouts when actually reading the style properties of the style object, so make sure that they are all read here,
+                // so that the user of the function can be sure that it will perform the layout here, instead of later (important for batching).
+                var style                   = {};
+                var elementStyle            = getComputedStyle(element);
+                style.position              = elementStyle.position;
+                style.width                 = parseSize(elementStyle.width);
+                style.height                = parseSize(elementStyle.height);
+                style.top                   = elementStyle.top;
+                style.right                 = elementStyle.right;
+                style.bottom                = elementStyle.bottom;
+                style.left                  = elementStyle.left;
+                style.widthStyle            = elementStyle.width;
+                style.heightStyle           = elementStyle.height;
+                return style;
+            }
 
-                var removeRelativeStyles = function(reporter, element, value, property) {
-                    function getNumericalValue(value) {
-                        return value.replace(/[^-\d\.]/g, "");
+            // Style is to be retrieved in the first level (before mutating the DOM) so that a forced layout is avoided later.
+            var style = getStyle();
+
+            getState(element).startSizeStyle = {
+                width: style.widthStyle,
+                height: style.heightStyle
+            };
+
+            var readyExpandScroll       = false;
+            var readyShrinkScroll       = false;
+            var readyOverall            = false;
+
+            function ready() {
+                if(readyExpandScroll && readyShrinkScroll && readyOverall) {
+                    callback(element);
+                }
+            }
+
+            function mutateDom() {
+                function alterPositionStyles() {
+                    if(style.position === "static") {
+                        element.style.position = "relative";
+
+                        var removeRelativeStyles = function(reporter, element, style, property) {
+                            function getNumericalValue(value) {
+                                return value.replace(/[^-\d\.]/g, "");
+                            }
+
+                            var value = style[property];
+
+                            if(value !== "auto" && getNumericalValue(value) !== "0") {
+                                reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
+                                element.style[property] = 0;
+                            }
+                        };
+
+                        //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
+                        //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
+                        removeRelativeStyles(reporter, element, style, "top");
+                        removeRelativeStyles(reporter, element, style, "right");
+                        removeRelativeStyles(reporter, element, style, "bottom");
+                        removeRelativeStyles(reporter, element, style, "left");
                     }
+                }
 
-                    if(value !== "auto" && getNumericalValue(value) !== "0") {
-                        reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
-                        element.style[property] = 0;
-                    }
-                };
+                function getContainerCssText(left, top, bottom, right) {
+                    left = (!left ? "0" : (left + "px"));
+                    top = (!top ? "0" : (top + "px"));
+                    bottom = (!bottom ? "0" : (bottom + "px"));
+                    right = (!right ? "0" : (right + "px"));
 
-                //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
-                //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
-                removeRelativeStyles(reporter, element, top, "top");
-                removeRelativeStyles(reporter, element, right, "right");
-                removeRelativeStyles(reporter, element, bottom, "bottom");
-                removeRelativeStyles(reporter, element, left, "left");
+                    return "position: absolute; left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + "; overflow: scroll; z-index: -1; visibility: hidden;";
+                }
+
+                alterPositionStyles(style);
+
+                var scrollbarWidth          = scrollbarSizes.width;
+                var scrollbarHeight         = scrollbarSizes.height;
+                var containerStyle          = getContainerCssText(-1, -1, -scrollbarHeight, -scrollbarWidth);
+                var shrinkExpandstyle       = getContainerCssText(0, 0, -scrollbarHeight, -scrollbarWidth);
+                var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
+
+                var container               = document.createElement("div");
+                var expand                  = document.createElement("div");
+                var expandChild             = document.createElement("div");
+                var shrink                  = document.createElement("div");
+                var shrinkChild             = document.createElement("div");
+
+                container.style.cssText     = containerStyle;
+                expand.style.cssText        = shrinkExpandstyle;
+                expandChild.style.cssText   = shrinkExpandChildStyle;
+                shrink.style.cssText        = shrinkExpandstyle;
+                shrinkChild.style.cssText   = shrinkExpandChildStyle + " width: 200%; height: 200%;";
+
+                expand.appendChild(expandChild);
+                shrink.appendChild(shrinkChild);
+                container.appendChild(expand);
+                container.appendChild(shrink);
+                element.appendChild(container);
+                getState(element).element = container;
+
+                addEvent(expand, "scroll", function onFirstExpandScroll() {
+                    removeEvent(expand, "scroll", onFirstExpandScroll);
+                    readyExpandScroll = true;
+                    ready();
+                });
+
+                addEvent(shrink, "scroll", function onFirstShrinkScroll() {
+                    removeEvent(shrink, "scroll", onFirstShrinkScroll);
+                    readyShrinkScroll = true;
+                    ready();
+                });
+
+                updateChildSizes(element, style.width, style.height);
             }
 
-            function getContainerCssText(left, top, bottom, right) {
-                left = (!left ? "0" : (left + "px"));
-                top = (!top ? "0" : (top + "px"));
-                bottom = (!bottom ? "0" : (bottom + "px"));
-                right = (!right ? "0" : (right + "px"));
-
-                return "position: absolute; left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + "; overflow: scroll; z-index: -1; visibility: hidden;";
+            function finalizeDomMutation() {
+                storeCurrentSize(element, style.width, style.height);
+                positionScrollbars(element, style.width, style.height);
+                readyOverall = true;
+                ready();
             }
 
-            var scrollbarWidth          = scrollbarSizes.width;
-            var scrollbarHeight         = scrollbarSizes.height;
-            var containerStyle          = getContainerCssText(-1, -1, -scrollbarHeight, -scrollbarWidth);
-            var shrinkExpandstyle       = getContainerCssText(0, 0, -scrollbarHeight, -scrollbarWidth);
-            var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
-
-            var container               = document.createElement("div");
-            var expand                  = document.createElement("div");
-            var expandChild             = document.createElement("div");
-            var shrink                  = document.createElement("div");
-            var shrinkChild             = document.createElement("div");
-
-            container.style.cssText     = containerStyle;
-            expand.style.cssText        = shrinkExpandstyle;
-            expandChild.style.cssText   = shrinkExpandChildStyle;
-            shrink.style.cssText        = shrinkExpandstyle;
-            shrinkChild.style.cssText   = shrinkExpandChildStyle + " width: 200%; height: 200%;";
-
-            expand.appendChild(expandChild);
-            shrink.appendChild(shrinkChild);
-            container.appendChild(expand);
-            container.appendChild(shrink);
-            element.appendChild(container);
-            getState(element).element = container;
-
-            addEvent(expand, "scroll", function onFirstExpandScroll() {
-                removeEvent(expand, "scroll", onFirstExpandScroll);
-                readyExpandScroll = true;
-                ready();
-            });
-
-            addEvent(shrink, "scroll", function onFirstShrinkScroll() {
-                removeEvent(shrink, "scroll", onFirstShrinkScroll);
-                readyShrinkScroll = true;
-                ready();
-            });
-
-            updateChildSizes(element, width, height);
+            if(batchProcessor) {
+                batchProcessor.add(mutateDom);
+                batchProcessor.add(1, finalizeDomMutation);
+            } else {
+                mutateDom();
+                finalizeDomMutation();
+            }
         }
 
-        function finalizeDomMutation() {
-            storeCurrentSize(element, width, height);
-            positionScrollbars(element, width, height);
-            readyOverall = true;
-            ready();
-        }
-
-        if(batchProcessor) {
-            batchProcessor.add(mutateDom);
-            batchProcessor.add(1, finalizeDomMutation);
+        // Only install the strategy if the style has been resolved (this does not always mean that the element is attached).
+        if (isStyleResolved()) {
+            install();
         } else {
-            mutateDom();
-            finalizeDomMutation();
+            // Need to perform polling in order to detect when the element has been attached to the DOM.
+            var timeout = setInterval(function () {
+                if (isStyleResolved()) {
+                    install();
+                    clearTimeout(timeout);
+                }
+            }, 50);
         }
     }
 
