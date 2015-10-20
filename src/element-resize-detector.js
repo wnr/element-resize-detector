@@ -178,6 +178,8 @@ module.exports = function(options) {
                     detectionStrategy.addListener(element, onResizeCallback);
                     addListener(callOnAdd, element, listener);
 
+                    // Since the element size might have changed since the call to "listenTo", we need to check for this change,
+                    // so that a resize event may be emitted.
                     var style = getComputedStyle(element);
                     if (stateHandler.getState(element).startSizeStyle.width !== style.width || stateHandler.getState(element).startSizeStyle.height !== style.height) {
                         onResizeCallback(element);
