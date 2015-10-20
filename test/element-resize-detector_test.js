@@ -320,6 +320,33 @@ function listenToTest(strategy) {
             }, 100);
         });
 
+        it("should be able to install into elements that are detached from the DOM", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            var listener1 = jasmine.createSpy("listener1");
+            var div = document.createElement("div");
+            div.style.width = "100%";
+            div.style.height = "100%";
+            erd.listenTo(div, listener1);
+
+            setTimeout(function () {
+                $("#test")[0].appendChild(div);
+            }, 100);
+
+            setTimeout(function () {
+                $("#test").width(200);
+            }, 200);
+
+            setTimeout(function() {
+                expect(listener1).toHaveBeenCalledWith(div);
+                done();
+            }, 300);
+        });
+
         it("should use the option.idHandler if present", function(done) {
             var ID_ATTR = "some-fancy-id-attr";
 

@@ -178,6 +178,12 @@ module.exports = function(options) {
                     detectionStrategy.addListener(element, onResizeCallback);
                     addListener(callOnAdd, element, listener);
 
+                    // var style = getComputedStyle(element);
+                    // if (stateHandler.getState(element).startSize.width !== style.width || stateHandler.getState(element).startSize.height !== style.height) {
+                    //     // console.log("Element changed size during injection, (" + stateHandler.getState(element).startSize.width + "," + stateHandler.getState(element).startSize.height + ") vs (" + style.width + "," + style.height + ")");
+                    //     onResizeCallback(element);
+                    // }
+
                     elementsReady++;
                     if(elementsReady === elements.length) {
                         onReadyCallback();
