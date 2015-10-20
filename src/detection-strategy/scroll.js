@@ -69,8 +69,6 @@ module.exports = function(options) {
      */
     function makeDetectable(element, callback) {
         function isStyleResolved() {
-            var relativeUnits = ["%", "em", "ex", "ch", "rem", "vw", "vh", "vmin", "vmax"];
-
             function isPxValue(length) {
                 return length.indexOf("px") !== -1;
             }
