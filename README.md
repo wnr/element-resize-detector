@@ -52,10 +52,10 @@ Removes all listeners from the element, but does not completely remove the detec
 ### uninstall(element)
 Completely removes the detector and all listeners.
 
-**Caveats:**
+## Caveats
 
 1. If the element has `position: static` it will be changed to `position: relative`. Any unintentional `top/right/bottom/left/z-index` styles will therefore be applied and absolute positioned children will be positioned relative to the element.
-2. An hidden `<object>` element will be injected as a direct child to the element.
+2. A hidden `<object>` element will be injected as a direct child to the element.
 
 ## Credits
 This library is using the two approaches (scroll and object) as first described at [http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/).
