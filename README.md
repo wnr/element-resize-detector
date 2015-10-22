@@ -14,7 +14,7 @@ Include the script in the browser:
     </body>
 </html>
 ```
-This will create a global function ```elementResieDetectorMaker```, which is the maker function that makes an element resize detector instance.
+This will create a global function ```elementResizeDetectorMaker```, which is the maker function that makes an element resize detector instance.
 
 You can also ```require``` it like so:
 ```js
