@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 0.4.0 (2015-10-14, 13:20)
+ * element-resize-detector 1.0.0
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -246,62 +246,86 @@ module.exports = function(options) {
         function injectObject(element, callback) {
             var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
 
-            function onObjectLoad() {
-                /*jshint validthis: true */
-
-                function getDocument(element, callback) {
-                    //Opera 12 seem to call the object.onload before the actual document has been created.
-                    //So if it is not present, poll it with an timeout until it is present.
-                    //TODO: Could maybe be handled better with object.onreadystatechange or similar.
-                    if(!element.contentDocument) {
-                        setTimeout(function checkForObjectDocument() {
-                            getDocument(element, callback);
-                        }, 100);
-
-                        return;
-                    }
-
-                    callback(element.contentDocument);
-                }
-
-                //Mutating the object element here seems to fire another load event.
-                //Mutating the inner document of the object element is fine though.
-                var objectElement = this;
-
-                //Create the style element to be added to the object.
-                getDocument(objectElement, function onObjectDocumentReady(objectDocument) {
-                    //Notify that the element is ready to be listened to.
-                    callback(element);
-                });
-            }
-
             //The target element needs to be positioned (everything except static) so the absolute positioned object will be positioned relative to the target element.
+
+            // Position altering may be performed directly or on object load, depending on if style resolution is possible directly or not.
+            var positionCheckPerformed = false;
+
+            // The element may not yet be attached to the DOM, and therefore the style object may be empty in some browsers.
+            // Since the style object is a reference, it will be updated as soon as the element is attached to the DOM.
             var style = getComputedStyle(element);
-            var position = style.position;
+
+            getState(element).startSizeStyle = {
+                width: style.width,
+                height: style.height
+            };
 
             function mutateDom() {
-                if(position === "static") {
-                    element.style.position = "relative";
+                function alterPositionStyles() {
+                    if(style.position === "static") {
+                        element.style.position = "relative";
 
-                    var removeRelativeStyles = function(reporter, element, style, property) {
-                        function getNumericalValue(value) {
-                            return value.replace(/[^-\d\.]/g, "");
+                        var removeRelativeStyles = function(reporter, element, style, property) {
+                            function getNumericalValue(value) {
+                                return value.replace(/[^-\d\.]/g, "");
+                            }
+
+                            var value = style[property];
+
+                            if(value !== "auto" && getNumericalValue(value) !== "0") {
+                                reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
+                                element.style[property] = 0;
+                            }
+                        };
+
+                        //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
+                        //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
+                        removeRelativeStyles(reporter, element, style, "top");
+                        removeRelativeStyles(reporter, element, style, "right");
+                        removeRelativeStyles(reporter, element, style, "bottom");
+                        removeRelativeStyles(reporter, element, style, "left");
+                    }
+                }
+
+                function onObjectLoad() {
+                    // The object has been loaded, which means that the element now is guaranteed to be attached to the DOM.
+                    if (!positionCheckPerformed) {
+                        alterPositionStyles();
+                    }
+
+                    /*jshint validthis: true */
+
+                    function getDocument(element, callback) {
+                        //Opera 12 seem to call the object.onload before the actual document has been created.
+                        //So if it is not present, poll it with an timeout until it is present.
+                        //TODO: Could maybe be handled better with object.onreadystatechange or similar.
+                        if(!element.contentDocument) {
+                            setTimeout(function checkForObjectDocument() {
+                                getDocument(element, callback);
+                            }, 100);
+
+                            return;
                         }
 
-                        var value = style[property];
+                        callback(element.contentDocument);
+                    }
 
-                        if(value !== "auto" && getNumericalValue(value) !== "0") {
-                            reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
-                            element.style[property] = 0;
-                        }
-                    };
+                    //Mutating the object element here seems to fire another load event.
+                    //Mutating the inner document of the object element is fine though.
+                    var objectElement = this;
 
-                    //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
-                    //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
-                    removeRelativeStyles(reporter, element, style, "top");
-                    removeRelativeStyles(reporter, element, style, "right");
-                    removeRelativeStyles(reporter, element, style, "bottom");
-                    removeRelativeStyles(reporter, element, style, "left");
+                    //Create the style element to be added to the object.
+                    getDocument(objectElement, function onObjectDocumentReady(objectDocument) {
+                        //Notify that the element is ready to be listened to.
+                        callback(element);
+                    });
+                }
+
+                // The element may be detached from the DOM, and some browsers does not support style resolving of detached elements.
+                // The alterPositionStyles needs to be delayed until we know the element has been attached to the DOM (which we are sure of when the onObjectLoad has been fired), if style resolution is not possible.
+                if (style.position !== "") {
+                    alterPositionStyles(style);
+                    positionCheckPerformed = true;
                 }
 
                 //Add an object element as a child to the target element that will be listened to for resize events.
@@ -439,110 +463,157 @@ module.exports = function(options) {
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
     function makeDetectable(element, callback) {
-        // Reading properties of elementStyle will result in a forced getComputedStyle for some browsers, so read all values and store them as primitives here.
-        var elementStyle        = getComputedStyle(element);
-        var position            = elementStyle.position;
-        var width               = parseSize(elementStyle.width);
-        var height              = parseSize(elementStyle.height);
-        var top                 = elementStyle.top;
-        var right               = elementStyle.right;
-        var bottom              = elementStyle.bottom;
-        var left                = elementStyle.left;
-        var readyExpandScroll   = false;
-        var readyShrinkScroll   = false;
-        var readyOverall        = false;
-
-        function ready() {
-            if(readyExpandScroll && readyShrinkScroll && readyOverall) {
-                callback(element);
+        function isStyleResolved() {
+            function isPxValue(length) {
+                return length.indexOf("px") !== -1;
             }
+
+            var style = getComputedStyle(element);
+
+            return style.position && isPxValue(style.width) && isPxValue(style.height);
         }
 
-        function mutateDom() {
-            if(position === "static") {
-                element.style.position = "relative";
+        function install() {
+            function getStyle() {
+                // Some browsers only force layouts when actually reading the style properties of the style object, so make sure that they are all read here,
+                // so that the user of the function can be sure that it will perform the layout here, instead of later (important for batching).
+                var style                   = {};
+                var elementStyle            = getComputedStyle(element);
+                style.position              = elementStyle.position;
+                style.width                 = parseSize(elementStyle.width);
+                style.height                = parseSize(elementStyle.height);
+                style.top                   = elementStyle.top;
+                style.right                 = elementStyle.right;
+                style.bottom                = elementStyle.bottom;
+                style.left                  = elementStyle.left;
+                style.widthStyle            = elementStyle.width;
+                style.heightStyle           = elementStyle.height;
+                return style;
+            }
 
-                var removeRelativeStyles = function(reporter, element, value, property) {
-                    function getNumericalValue(value) {
-                        return value.replace(/[^-\d\.]/g, "");
+            // Style is to be retrieved in the first level (before mutating the DOM) so that a forced layout is avoided later.
+            var style = getStyle();
+
+            getState(element).startSizeStyle = {
+                width: style.widthStyle,
+                height: style.heightStyle
+            };
+
+            var readyExpandScroll       = false;
+            var readyShrinkScroll       = false;
+            var readyOverall            = false;
+
+            function ready() {
+                if(readyExpandScroll && readyShrinkScroll && readyOverall) {
+                    callback(element);
+                }
+            }
+
+            function mutateDom() {
+                function alterPositionStyles() {
+                    if(style.position === "static") {
+                        element.style.position = "relative";
+
+                        var removeRelativeStyles = function(reporter, element, style, property) {
+                            function getNumericalValue(value) {
+                                return value.replace(/[^-\d\.]/g, "");
+                            }
+
+                            var value = style[property];
+
+                            if(value !== "auto" && getNumericalValue(value) !== "0") {
+                                reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
+                                element.style[property] = 0;
+                            }
+                        };
+
+                        //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
+                        //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
+                        removeRelativeStyles(reporter, element, style, "top");
+                        removeRelativeStyles(reporter, element, style, "right");
+                        removeRelativeStyles(reporter, element, style, "bottom");
+                        removeRelativeStyles(reporter, element, style, "left");
                     }
+                }
 
-                    if(value !== "auto" && getNumericalValue(value) !== "0") {
-                        reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
-                        element.style[property] = 0;
-                    }
-                };
+                function getContainerCssText(left, top, bottom, right) {
+                    left = (!left ? "0" : (left + "px"));
+                    top = (!top ? "0" : (top + "px"));
+                    bottom = (!bottom ? "0" : (bottom + "px"));
+                    right = (!right ? "0" : (right + "px"));
 
-                //Check so that there are no accidental styles that will make the element styled differently now that is is relative.
-                //If there are any, set them to 0 (this should be okay with the user since the style properties did nothing before [since the element was positioned static] anyway).
-                removeRelativeStyles(reporter, element, top, "top");
-                removeRelativeStyles(reporter, element, right, "right");
-                removeRelativeStyles(reporter, element, bottom, "bottom");
-                removeRelativeStyles(reporter, element, left, "left");
+                    return "position: absolute; left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + "; overflow: scroll; z-index: -1; visibility: hidden;";
+                }
+
+                alterPositionStyles(style);
+
+                var scrollbarWidth          = scrollbarSizes.width;
+                var scrollbarHeight         = scrollbarSizes.height;
+                var containerStyle          = getContainerCssText(-1, -1, -scrollbarHeight, -scrollbarWidth);
+                var shrinkExpandstyle       = getContainerCssText(0, 0, -scrollbarHeight, -scrollbarWidth);
+                var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
+
+                var container               = document.createElement("div");
+                var expand                  = document.createElement("div");
+                var expandChild             = document.createElement("div");
+                var shrink                  = document.createElement("div");
+                var shrinkChild             = document.createElement("div");
+
+                container.style.cssText     = containerStyle;
+                expand.style.cssText        = shrinkExpandstyle;
+                expandChild.style.cssText   = shrinkExpandChildStyle;
+                shrink.style.cssText        = shrinkExpandstyle;
+                shrinkChild.style.cssText   = shrinkExpandChildStyle + " width: 200%; height: 200%;";
+
+                expand.appendChild(expandChild);
+                shrink.appendChild(shrinkChild);
+                container.appendChild(expand);
+                container.appendChild(shrink);
+                element.appendChild(container);
+                getState(element).element = container;
+
+                addEvent(expand, "scroll", function onFirstExpandScroll() {
+                    removeEvent(expand, "scroll", onFirstExpandScroll);
+                    readyExpandScroll = true;
+                    ready();
+                });
+
+                addEvent(shrink, "scroll", function onFirstShrinkScroll() {
+                    removeEvent(shrink, "scroll", onFirstShrinkScroll);
+                    readyShrinkScroll = true;
+                    ready();
+                });
+
+                updateChildSizes(element, style.width, style.height);
             }
 
-            function getContainerCssText(left, top, bottom, right) {
-                left = (!left ? "0" : (left + "px"));
-                top = (!top ? "0" : (top + "px"));
-                bottom = (!bottom ? "0" : (bottom + "px"));
-                right = (!right ? "0" : (right + "px"));
-
-                return "position: absolute; left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + "; overflow: scroll; z-index: -1; visibility: hidden;";
+            function finalizeDomMutation() {
+                storeCurrentSize(element, style.width, style.height);
+                positionScrollbars(element, style.width, style.height);
+                readyOverall = true;
+                ready();
             }
 
-            var scrollbarWidth          = scrollbarSizes.width;
-            var scrollbarHeight         = scrollbarSizes.height;
-            var containerStyle          = getContainerCssText(-1, -1, -scrollbarHeight, -scrollbarWidth);
-            var shrinkExpandstyle       = getContainerCssText(0, 0, -scrollbarHeight, -scrollbarWidth);
-            var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
-
-            var container               = document.createElement("div");
-            var expand                  = document.createElement("div");
-            var expandChild             = document.createElement("div");
-            var shrink                  = document.createElement("div");
-            var shrinkChild             = document.createElement("div");
-
-            container.style.cssText     = containerStyle;
-            expand.style.cssText        = shrinkExpandstyle;
-            expandChild.style.cssText   = shrinkExpandChildStyle;
-            shrink.style.cssText        = shrinkExpandstyle;
-            shrinkChild.style.cssText   = shrinkExpandChildStyle + " width: 200%; height: 200%;";
-
-            expand.appendChild(expandChild);
-            shrink.appendChild(shrinkChild);
-            container.appendChild(expand);
-            container.appendChild(shrink);
-            element.appendChild(container);
-            getState(element).element = container;
-
-            addEvent(expand, "scroll", function onFirstExpandScroll() {
-                removeEvent(expand, "scroll", onFirstExpandScroll);
-                readyExpandScroll = true;
-                ready();
-            });
-
-            addEvent(shrink, "scroll", function onFirstShrinkScroll() {
-                removeEvent(shrink, "scroll", onFirstShrinkScroll);
-                readyShrinkScroll = true;
-                ready();
-            });
-
-            updateChildSizes(element, width, height);
+            if(batchProcessor) {
+                batchProcessor.add(mutateDom);
+                batchProcessor.add(1, finalizeDomMutation);
+            } else {
+                mutateDom();
+                finalizeDomMutation();
+            }
         }
 
-        function finalizeDomMutation() {
-            storeCurrentSize(element, width, height);
-            positionScrollbars(element, width, height);
-            readyOverall = true;
-            ready();
-        }
-
-        if(batchProcessor) {
-            batchProcessor.add(mutateDom);
-            batchProcessor.add(1, finalizeDomMutation);
+        // Only install the strategy if the style has been resolved (this does not always mean that the element is attached).
+        if (isStyleResolved()) {
+            install();
         } else {
-            mutateDom();
-            finalizeDomMutation();
+            // Need to perform polling in order to detect when the element has been attached to the DOM.
+            var timeout = setInterval(function () {
+                if (isStyleResolved()) {
+                    install();
+                    clearTimeout(timeout);
+                }
+            }, 50);
         }
     }
 
@@ -780,6 +851,26 @@ module.exports = function(options) {
             }
         }
 
+        function isCollection(obj) {
+            return Array.isArray(obj) || obj.length !== undefined;
+        }
+
+        function toArray(collection) {
+            if (!Array.isArray(collection)) {
+                var array = [];
+                forEach(elements, function (element) {
+                    array.push(element);
+                });
+                return array;
+            } else {
+                return collection;
+            }
+        }
+
+        function isElement(obj) {
+            return obj && obj.nodeType === 1;
+        }
+
         //Options object may be omitted.
         if(!listener) {
             listener = elements;
@@ -795,8 +886,14 @@ module.exports = function(options) {
             throw new Error("Listener required.");
         }
 
-        if(elements.length === undefined) {
+        if (isElement(elements)) {
+            // A single element has been passed in.
             elements = [elements];
+        } else if (isCollection(elements)) {
+            // Convert collection to array for plugins.
+            elements = toArray(elements);
+        } else {
+            return reporter.error("Invalid arguments. Must be a DOM element or a collection of DOM elements.");
         }
 
         var elementsReady = 0;
@@ -830,6 +927,13 @@ module.exports = function(options) {
                     elementUtils.markBusy(element, false);
                     detectionStrategy.addListener(element, onResizeCallback);
                     addListener(callOnAdd, element, listener);
+
+                    // Since the element size might have changed since the call to "listenTo", we need to check for this change,
+                    // so that a resize event may be emitted.
+                    var style = getComputedStyle(element);
+                    if (stateHandler.getState(element).startSizeStyle.width !== style.width || stateHandler.getState(element).startSizeStyle.height !== style.height) {
+                        onResizeCallback(element);
+                    }
 
                     elementsReady++;
                     if(elementsReady === elements.length) {

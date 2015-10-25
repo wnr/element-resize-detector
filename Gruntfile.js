@@ -49,7 +49,7 @@ module.exports = function(grunt) {
     var config = {
         pkg: grunt.file.readJSON("package.json"),
         banner: "/*!\n" +
-                " * element-resize-detector <%= pkg.version %> (<%= grunt.template.today('yyyy-mm-dd, HH:MM') %>)\n" +
+                " * element-resize-detector <%= pkg.version %>\n" +
                 " * <%= pkg.homepage %>\n" +
                 " * Licensed under <%= pkg.license %>\n" +
                 " */\n",

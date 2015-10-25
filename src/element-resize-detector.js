@@ -127,6 +127,26 @@ module.exports = function(options) {
             }
         }
 
+        function isCollection(obj) {
+            return Array.isArray(obj) || obj.length !== undefined;
+        }
+
+        function toArray(collection) {
+            if (!Array.isArray(collection)) {
+                var array = [];
+                forEach(elements, function (element) {
+                    array.push(element);
+                });
+                return array;
+            } else {
+                return collection;
+            }
+        }
+
+        function isElement(obj) {
+            return obj && obj.nodeType === 1;
+        }
+
         //Options object may be omitted.
         if(!listener) {
             listener = elements;
@@ -142,8 +162,14 @@ module.exports = function(options) {
             throw new Error("Listener required.");
         }
 
-        if(elements.length === undefined) {
+        if (isElement(elements)) {
+            // A single element has been passed in.
             elements = [elements];
+        } else if (isCollection(elements)) {
+            // Convert collection to array for plugins.
+            elements = toArray(elements);
+        } else {
+            return reporter.error("Invalid arguments. Must be a DOM element or a collection of DOM elements.");
         }
 
         var elementsReady = 0;
@@ -177,6 +203,13 @@ module.exports = function(options) {
                     elementUtils.markBusy(element, false);
                     detectionStrategy.addListener(element, onResizeCallback);
                     addListener(callOnAdd, element, listener);
+
+                    // Since the element size might have changed since the call to "listenTo", we need to check for this change,
+                    // so that a resize event may be emitted.
+                    var style = getComputedStyle(element);
+                    if (stateHandler.getState(element).startSizeStyle.width !== style.width || stateHandler.getState(element).startSizeStyle.height !== style.height) {
+                        onResizeCallback(element);
+                    }
 
                     elementsReady++;
                     if(elementsReady === elements.length) {

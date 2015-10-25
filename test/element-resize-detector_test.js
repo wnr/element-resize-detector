@@ -303,7 +303,7 @@ function listenToTest(strategy) {
             });
         }
 
-        it("should call listener if the element is changed synchronously after listenTo", function(done) {
+        it("should call listener on add if options is set to true", function(done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: true,
                 reporter: reporter,
@@ -318,6 +318,50 @@ function listenToTest(strategy) {
                 expect(listener1).toHaveBeenCalledWith($("#test2")[0]);
                 done();
             }, 100);
+        });
+
+        it("should call listener if the element is changed synchronously after listenTo", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            var listener1 = jasmine.createSpy("listener1");
+            erd.listenTo($("#test"), listener1);
+            $("#test").width(200);
+
+            setTimeout(function() {
+                expect(listener1).toHaveBeenCalledWith($("#test")[0]);
+                done();
+            }, 100);
+        });
+
+        it("should be able to install into elements that are detached from the DOM", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            var listener1 = jasmine.createSpy("listener1");
+            var div = document.createElement("div");
+            div.style.width = "100%";
+            div.style.height = "100%";
+            erd.listenTo(div, listener1);
+
+            setTimeout(function () {
+                $("#test")[0].appendChild(div);
+            }, 100);
+
+            setTimeout(function () {
+                $("#test").width(200);
+            }, 200);
+
+            setTimeout(function() {
+                expect(listener1).toHaveBeenCalledWith(div);
+                done();
+            }, 300);
         });
 
         it("should use the option.idHandler if present", function(done) {
@@ -550,7 +594,7 @@ describe("element-resize-detector", function() {
 
     listenToTest("object");
 
-    //Scroll only supported on non-opera browsers.    
+    //Scroll only supported on non-opera browsers.
     if(!window.opera) {
         listenToTest("scroll");
     }

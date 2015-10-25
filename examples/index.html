@@ -53,15 +53,15 @@
                 var height = $(element).height();
                 $("#dim-x").html(width);
                 $("#dim-y").html(height);
-                console.log(width, height);
             }
 
             var container = $("#container");
 
             var erd = elementResizeDetectorMaker({
-                strategy: "scroll"
+                strategy: "scroll",
+                callOnAdd: true
             });
-            erd.listenTo(container, updateDimensions);
+            erd.listenTo([container[0], container[0]], updateDimensions);
 
             container.click(function onContainerClick() {
                 function rand(min, max) {
