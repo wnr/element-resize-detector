@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 1.0.0
+ * element-resize-detector 1.0.1
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -406,12 +406,19 @@ module.exports = function(options) {
     var batchProcessor  = options.batchProcessor;
     var getState        = options.stateHandler.getState;
 
+    // The injected container needs to have a class, so that it may be styled with CSS (pseudo elements).
+    var detectionContainerClass = "erd_scroll_detection_container";
+
     if(!reporter) {
         throw new Error("Missing required dependency: reporter.");
     }
 
     //TODO: Could this perhaps be done at installation time?
     var scrollbarSizes = getScrollbarSizes();
+
+    // Inject the scrollbar styling that prevents them from appearing sometimes in Chrome.
+    var styleId = "erd_scroll_detection_scrollbar_style";
+    injectScrollStyle(styleId, detectionContainerClass);
 
     /**
      * Adds a resize event listener to the element.
@@ -559,6 +566,7 @@ module.exports = function(options) {
                 var shrink                  = document.createElement("div");
                 var shrinkChild             = document.createElement("div");
 
+                container.className         = detectionContainerClass;
                 container.style.cssText     = containerStyle;
                 expand.style.cssText        = shrinkExpandstyle;
                 expandChild.style.cssText   = shrinkExpandChildStyle;
@@ -706,6 +714,26 @@ module.exports = function(options) {
             width: widthSize,
             height: heightSize
         };
+    }
+
+    function injectScrollStyle(styleId, containerClass) {
+        function injectStyle(style, method) {
+            method = method || function (element) {
+                document.head.appendChild(element);
+            };
+
+            var styleElement = document.createElement("style");
+            styleElement.innerHTML = style;
+            styleElement.id = styleId;
+            method(styleElement);
+            return styleElement;
+        }
+
+        if (!document.getElementById(styleId)) {
+            var style = "/* Created by the element-resize-detector library. */\n";
+            style += "." + containerClass + " > div::-webkit-scrollbar { display: none; }";
+            injectStyle(style);
+        }
     }
 
     function uninstall(element) {
