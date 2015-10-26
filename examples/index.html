@@ -61,7 +61,7 @@
                 strategy: "scroll",
                 callOnAdd: true
             });
-            erd.listenTo([container[0], container[0]], updateDimensions);
+            erd.listenTo(container, updateDimensions);
 
             container.click(function onContainerClick() {
                 function rand(min, max) {
