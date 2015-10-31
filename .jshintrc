@@ -1,4 +1,5 @@
 {
+    "expr": true,
     "nonbsp": true,
     "trailing": true,
     "indent": 4,
