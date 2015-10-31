@@ -81,7 +81,8 @@ module.exports = function(options) {
     var strategyOptions = {
         reporter: reporter,
         batchProcessor: batchProcessor,
-        stateHandler: stateHandler
+        stateHandler: stateHandler,
+        idHandler: idHandler
     };
 
     if(desiredStrategy === "scroll" && browserDetector.isLegacyOpera()) {
@@ -176,12 +177,18 @@ module.exports = function(options) {
 
         var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
         var onReadyCallback = getOption(options, "onReady", function noop() {});
+        var debug = getOption(options, "debug", false);
 
         forEach(elements, function attachListenerToElement(element) {
             var id = idHandler.get(element);
 
+            debug && reporter.log("Attaching listener to element", id, element);
+
             if(!elementUtils.isDetectable(element)) {
+                debug && reporter.log(id, "Not detectable.");
                 if(elementUtils.isBusy(element)) {
+                    debug && reporter.log(id, "System busy making it detectable");
+
                     //The element is being prepared to be detectable. Do not make it detectable.
                     //Just add the listener, because the element will soon be detectable.
                     addListener(callOnAdd, element, listener);
@@ -196,9 +203,12 @@ module.exports = function(options) {
                     return;
                 }
 
+                debug && reporter.log(id, "Making detectable...");
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
                 elementUtils.markBusy(element, true);
-                return detectionStrategy.makeDetectable(element, function onElementDetectable(element) {
+                return detectionStrategy.makeDetectable({ debug: debug }, element, function onElementDetectable(element) {
+                    debug && reporter.log(id, "onElementDetectable");
+
                     elementUtils.markAsDetectable(element);
                     elementUtils.markBusy(element, false);
                     detectionStrategy.addListener(element, onResizeCallback);
@@ -224,6 +234,8 @@ module.exports = function(options) {
                     }
                 });
             }
+
+            debug && reporter.log(id, "Already detecable, adding listener.");
 
             //The element has been prepared to be detectable and is ready to be listened to.
             addListener(callOnAdd, element, listener);

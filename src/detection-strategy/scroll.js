@@ -10,6 +10,7 @@ module.exports = function(options) {
     var reporter        = options.reporter;
     var batchProcessor  = options.batchProcessor;
     var getState        = options.stateHandler.getState;
+    var idHandler       = options.idHandler;
 
     // The injected container needs to have a class, so that it may be styled with CSS (pseudo elements).
     var detectionContainerClass = "erd_scroll_detection_container";
@@ -71,10 +72,20 @@ module.exports = function(options) {
     /**
      * Makes an element detectable and ready to be listened for resize events. Will call the callback when the element is ready to be listened for resize changes.
      * @private
+     * @param {object} options Optional options object.
      * @param {element} element The element to make detectable
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
-    function makeDetectable(element, callback) {
+    function makeDetectable(options, element, callback) {
+        if (!callback) {
+            callback = element;
+            element = options;
+            options = null;
+        }
+
+        options = options || {};
+        var debug = options.debug;
+
         function isStyleResolved() {
             function isPxValue(length) {
                 return length.indexOf("px") !== -1;
@@ -103,25 +114,46 @@ module.exports = function(options) {
                 return style;
             }
 
-            // Style is to be retrieved in the first level (before mutating the DOM) so that a forced layout is avoided later.
-            var style = getStyle();
+            function storeStartSize() {
+                var style = getStyle();
+                getState(element).startSizeStyle = {
+                    width: style.widthStyle,
+                    height: style.heightStyle
+                };
+            }
 
-            getState(element).startSizeStyle = {
-                width: style.widthStyle,
-                height: style.heightStyle
-            };
+            debug && reporter.log(idHandler.get(element), "Scroll: Installing scroll elements...");
+
+            storeStartSize();
+
+            debug && reporter.log(idHandler.get(element), "Scroll: Element start size", getState(element).startSizeStyle);
 
             var readyExpandScroll       = false;
             var readyShrinkScroll       = false;
             var readyOverall            = false;
 
             function ready() {
+                debug && reporter.log(idHandler.get(element), "Scroll: Checking readyness. expand", readyExpandScroll, "shrink", readyShrinkScroll, "overall", readyOverall);
+
                 if(readyExpandScroll && readyShrinkScroll && readyOverall) {
+                    debug && reporter.log(idHandler.get(element), "Scroll: Installation finished.");
                     callback(element);
                 }
             }
 
+            function storeStyle() {
+                debug && reporter.log(idHandler.get(element), "Scroll: storeStyle invoked.");
+
+                // Style is to be retrieved in the first level (before mutating the DOM) so that a forced layout is avoided later.
+                var style = getStyle();
+                getState(element).style = style;
+            }
+
             function mutateDom() {
+                debug && reporter.log(idHandler.get(element), "Scroll: mutateDom invoked.");
+
+                var style = getState(element).style;
+
                 function alterPositionStyles() {
                     if(style.position === "static") {
                         element.style.position = "relative";
@@ -201,6 +233,9 @@ module.exports = function(options) {
             }
 
             function finalizeDomMutation() {
+                debug && reporter.log(idHandler.get(element), "Scroll: finalizeDomMutation invoked.");
+
+                var style = getState(element).style;
                 storeCurrentSize(element, style.width, style.height);
                 positionScrollbars(element, style.width, style.height);
                 readyOverall = true;
@@ -208,23 +243,34 @@ module.exports = function(options) {
             }
 
             if(batchProcessor) {
-                batchProcessor.add(mutateDom);
-                batchProcessor.add(1, finalizeDomMutation);
+                batchProcessor.add(0, storeStyle);
+                batchProcessor.add(1, mutateDom);
+                batchProcessor.add(2, finalizeDomMutation);
             } else {
+                storeStyle();
                 mutateDom();
                 finalizeDomMutation();
             }
         }
 
+        debug && reporter.log(idHandler.get(element), "Scroll: Making detectable...");
+
         // Only install the strategy if the style has been resolved (this does not always mean that the element is attached).
         if (isStyleResolved()) {
+            debug && reporter.log(idHandler.get(element), "Scroll: Style resolved");
             install();
         } else {
+            debug && reporter.log(idHandler.get(element), "Scroll: Style not resolved");
+            debug && reporter.log(idHandler.get(element), "Scroll: Polling for style resolution...");
+
             // Need to perform polling in order to detect when the element has been attached to the DOM.
             var timeout = setInterval(function () {
                 if (isStyleResolved()) {
+                    debug && reporter.log(idHandler.get(element), "Scroll: Poll. Style resolved.");
                     install();
                     clearTimeout(timeout);
+                } else {
+                    debug && reporter.log(idHandler.get(element), "Scroll: Poll. Style not resolved.");
                 }
             }, 50);
         }

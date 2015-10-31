@@ -47,10 +47,20 @@ module.exports = function(options) {
     /**
      * Makes an element detectable and ready to be listened for resize events. Will call the callback when the element is ready to be listened for resize changes.
      * @private
+     * @param {object} options Optional options object.
      * @param {element} element The element to make detectable
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
-    function makeDetectable(element, callback) {
+    function makeDetectable(options, element, callback) {
+        if (!callback) {
+            callback = element;
+            element = options;
+            options = null;
+        }
+
+        options = options || {};
+        var debug = options.debug;
+
         function injectObject(element, callback) {
             var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
 
