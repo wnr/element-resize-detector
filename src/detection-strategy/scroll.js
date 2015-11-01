@@ -5,6 +5,8 @@
 
 "use strict";
 
+var forEach = require("../collection-utils").forEach;
+
 module.exports = function(options) {
     options             = options || {};
     var reporter        = options.reporter;
@@ -33,40 +35,13 @@ module.exports = function(options) {
      * @param {function} listener The listener callback to be called for each resize event of the element. The element will be given as a parameter to the listener callback.
      */
     function addListener(element, listener) {
-        var changed = function() {
-            var elementStyle    = getComputedStyle(element);
-            var width           = parseSize(elementStyle.width);
-            var height          = parseSize(elementStyle.height);
+        var listeners = getState(element).listeners;
 
-            // Store the size of the element sync here, so that multiple scroll events may be ignored in the event listeners.
-            // Otherwise the if-check in handleScroll is useless.
-            storeCurrentSize(element, width, height);
-
-            batchProcessor.add(function updateDetectorElements() {
-                updateChildSizes(element, width, height);
-            });
-
-            batchProcessor.add(1, function updateScrollbars() {
-                positionScrollbars(element, width, height);
-                listener(element);
-            });
-        };
-
-        function handleScroll() {
-            var style = getComputedStyle(element);
-            var width = parseSize(style.width);
-            var height = parseSize(style.height);
-
-            if (width !== element.lastWidth || height !== element.lastHeight) {
-                changed();
-            }
+        if (!listeners.push) {
+            throw new Error("Cannot add listener to an element that is not detectable.");
         }
 
-        var expand = getExpandElement(element);
-        var shrink = getShrinkElement(element);
-
-        addEvent(expand, "scroll", handleScroll);
-        addEvent(shrink, "scroll", handleScroll);
+        getState(element).listeners.push(listener);
     }
 
     /**
@@ -122,24 +97,16 @@ module.exports = function(options) {
                 };
             }
 
+            function initListeners() {
+                getState(element).listeners = [];
+            }
+
             debug && reporter.log(idHandler.get(element), "Scroll: Installing scroll elements...");
 
             storeStartSize();
+            initListeners();
 
             debug && reporter.log(idHandler.get(element), "Scroll: Element start size", getState(element).startSizeStyle);
-
-            var readyExpandScroll       = false;
-            var readyShrinkScroll       = false;
-            var readyOverall            = false;
-
-            function ready() {
-                debug && reporter.log(idHandler.get(element), "Scroll: Checking readyness. expand", readyExpandScroll, "shrink", readyShrinkScroll, "overall", readyOverall);
-
-                if(readyExpandScroll && readyShrinkScroll && readyOverall) {
-                    debug && reporter.log(idHandler.get(element), "Scroll: Installation finished.");
-                    callback(element);
-                }
-            }
 
             function storeStyle() {
                 debug && reporter.log(idHandler.get(element), "Scroll: storeStyle invoked.");
@@ -217,16 +184,43 @@ module.exports = function(options) {
                 element.appendChild(container);
                 getState(element).element = container;
 
-                addEvent(expand, "scroll", function onFirstExpandScroll() {
-                    removeEvent(expand, "scroll", onFirstExpandScroll);
-                    readyExpandScroll = true;
-                    ready();
+                function handleScroll() {
+                    function changed() {
+                        var elementStyle    = getComputedStyle(element);
+                        var width           = parseSize(elementStyle.width);
+                        var height          = parseSize(elementStyle.height);
+
+                        // Store the size of the element sync here, so that multiple scroll events may be ignored in the event listeners.
+                        // Otherwise the if-check in handleScroll is useless.
+                        storeCurrentSize(element, width, height);
+
+                        batchProcessor.add(function updateDetectorElements() {
+                            updateChildSizes(element, width, height);
+                        });
+
+                        batchProcessor.add(1, function updateScrollbars() {
+                            positionScrollbars(element, width, height);
+                            forEach(getState(element).listeners, function (listener) {
+                                listener(element);
+                            });
+                        });
+                    };
+
+                    var style = getComputedStyle(element);
+                    var width = parseSize(style.width);
+                    var height = parseSize(style.height);
+
+                    if (width !== element.lastWidth || height !== element.lastHeight) {
+                        changed();
+                    }
+                }
+
+                addEvent(expand, "scroll", function onExpand() {
+                    handleScroll();
                 });
 
-                addEvent(shrink, "scroll", function onFirstShrinkScroll() {
-                    removeEvent(shrink, "scroll", onFirstShrinkScroll);
-                    readyShrinkScroll = true;
-                    ready();
+                addEvent(shrink, "scroll", function onShrink() {
+                    handleScroll();
                 });
 
                 updateChildSizes(element, style.width, style.height);
@@ -238,18 +232,22 @@ module.exports = function(options) {
                 var style = getState(element).style;
                 storeCurrentSize(element, style.width, style.height);
                 positionScrollbars(element, style.width, style.height);
-                readyOverall = true;
-                ready();
+            }
+
+            function ready() {
+                callback(element);
             }
 
             if(batchProcessor) {
                 batchProcessor.add(0, storeStyle);
                 batchProcessor.add(1, mutateDom);
                 batchProcessor.add(2, finalizeDomMutation);
+                batchProcessor.add(3, ready);
             } else {
                 storeStyle();
                 mutateDom();
                 finalizeDomMutation();
+                ready();
             }
         }
 
