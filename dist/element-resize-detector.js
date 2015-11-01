@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 1.0.1
+ * element-resize-detector 1.0.2
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -239,10 +239,20 @@ module.exports = function(options) {
     /**
      * Makes an element detectable and ready to be listened for resize events. Will call the callback when the element is ready to be listened for resize changes.
      * @private
+     * @param {object} options Optional options object.
      * @param {element} element The element to make detectable
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
-    function makeDetectable(element, callback) {
+    function makeDetectable(options, element, callback) {
+        if (!callback) {
+            callback = element;
+            element = options;
+            options = null;
+        }
+
+        options = options || {};
+        var debug = options.debug;
+
         function injectObject(element, callback) {
             var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
 
@@ -400,11 +410,14 @@ module.exports = function(options) {
 
 "use strict";
 
+var forEach = require("../collection-utils").forEach;
+
 module.exports = function(options) {
     options             = options || {};
     var reporter        = options.reporter;
     var batchProcessor  = options.batchProcessor;
     var getState        = options.stateHandler.getState;
+    var idHandler       = options.idHandler;
 
     // The injected container needs to have a class, so that it may be styled with CSS (pseudo elements).
     var detectionContainerClass = "erd_scroll_detection_container";
@@ -427,49 +440,32 @@ module.exports = function(options) {
      * @param {function} listener The listener callback to be called for each resize event of the element. The element will be given as a parameter to the listener callback.
      */
     function addListener(element, listener) {
-        var changed = function() {
-            var elementStyle    = getComputedStyle(element);
-            var width           = parseSize(elementStyle.width);
-            var height          = parseSize(elementStyle.height);
+        var listeners = getState(element).listeners;
 
-            // Store the size of the element sync here, so that multiple scroll events may be ignored in the event listeners.
-            // Otherwise the if-check in handleScroll is useless.
-            storeCurrentSize(element, width, height);
-
-            batchProcessor.add(function updateDetectorElements() {
-                updateChildSizes(element, width, height);
-            });
-
-            batchProcessor.add(1, function updateScrollbars() {
-                positionScrollbars(element, width, height);
-                listener(element);
-            });
-        };
-
-        function handleScroll() {
-            var style = getComputedStyle(element);
-            var width = parseSize(style.width);
-            var height = parseSize(style.height);
-
-            if (width !== element.lastWidth || height !== element.lastHeight) {
-                changed();
-            }
+        if (!listeners.push) {
+            throw new Error("Cannot add listener to an element that is not detectable.");
         }
 
-        var expand = getExpandElement(element);
-        var shrink = getShrinkElement(element);
-
-        addEvent(expand, "scroll", handleScroll);
-        addEvent(shrink, "scroll", handleScroll);
+        getState(element).listeners.push(listener);
     }
 
     /**
      * Makes an element detectable and ready to be listened for resize events. Will call the callback when the element is ready to be listened for resize changes.
      * @private
+     * @param {object} options Optional options object.
      * @param {element} element The element to make detectable
      * @param {function} callback The callback to be called when the element is ready to be listened for resize changes. Will be called with the element as first parameter.
      */
-    function makeDetectable(element, callback) {
+    function makeDetectable(options, element, callback) {
+        if (!callback) {
+            callback = element;
+            element = options;
+            options = null;
+        }
+
+        options = options || {};
+        var debug = options.debug;
+
         function isStyleResolved() {
             function isPxValue(length) {
                 return length.indexOf("px") !== -1;
@@ -498,25 +494,38 @@ module.exports = function(options) {
                 return style;
             }
 
-            // Style is to be retrieved in the first level (before mutating the DOM) so that a forced layout is avoided later.
-            var style = getStyle();
+            function storeStartSize() {
+                var style = getStyle();
+                getState(element).startSizeStyle = {
+                    width: style.widthStyle,
+                    height: style.heightStyle
+                };
+            }
 
-            getState(element).startSizeStyle = {
-                width: style.widthStyle,
-                height: style.heightStyle
-            };
+            function initListeners() {
+                getState(element).listeners = [];
+            }
 
-            var readyExpandScroll       = false;
-            var readyShrinkScroll       = false;
-            var readyOverall            = false;
+            debug && reporter.log(idHandler.get(element), "Scroll: Installing scroll elements...");
 
-            function ready() {
-                if(readyExpandScroll && readyShrinkScroll && readyOverall) {
-                    callback(element);
-                }
+            storeStartSize();
+            initListeners();
+
+            debug && reporter.log(idHandler.get(element), "Scroll: Element start size", getState(element).startSizeStyle);
+
+            function storeStyle() {
+                debug && reporter.log(idHandler.get(element), "Scroll: storeStyle invoked.");
+
+                // Style is to be retrieved in the first level (before mutating the DOM) so that a forced layout is avoided later.
+                var style = getStyle();
+                getState(element).style = style;
             }
 
             function mutateDom() {
+                debug && reporter.log(idHandler.get(element), "Scroll: mutateDom invoked.");
+
+                var style = getState(element).style;
+
                 function alterPositionStyles() {
                     if(style.position === "static") {
                         element.style.position = "relative";
@@ -580,46 +589,91 @@ module.exports = function(options) {
                 element.appendChild(container);
                 getState(element).element = container;
 
-                addEvent(expand, "scroll", function onFirstExpandScroll() {
-                    removeEvent(expand, "scroll", onFirstExpandScroll);
-                    readyExpandScroll = true;
-                    ready();
+                function handleScroll() {
+                    function changed() {
+                        var elementStyle    = getComputedStyle(element);
+                        var width           = parseSize(elementStyle.width);
+                        var height          = parseSize(elementStyle.height);
+
+                        // Store the size of the element sync here, so that multiple scroll events may be ignored in the event listeners.
+                        // Otherwise the if-check in handleScroll is useless.
+                        storeCurrentSize(element, width, height);
+
+                        batchProcessor.add(function updateDetectorElements() {
+                            updateChildSizes(element, width, height);
+                        });
+
+                        batchProcessor.add(1, function updateScrollbars() {
+                            positionScrollbars(element, width, height);
+                            forEach(getState(element).listeners, function (listener) {
+                                listener(element);
+                            });
+                        });
+                    };
+
+                    var style = getComputedStyle(element);
+                    var width = parseSize(style.width);
+                    var height = parseSize(style.height);
+
+                    if (width !== element.lastWidth || height !== element.lastHeight) {
+                        changed();
+                    }
+                }
+
+                addEvent(expand, "scroll", function onExpand() {
+                    handleScroll();
                 });
 
-                addEvent(shrink, "scroll", function onFirstShrinkScroll() {
-                    removeEvent(shrink, "scroll", onFirstShrinkScroll);
-                    readyShrinkScroll = true;
-                    ready();
+                addEvent(shrink, "scroll", function onShrink() {
+                    handleScroll();
                 });
 
                 updateChildSizes(element, style.width, style.height);
             }
 
             function finalizeDomMutation() {
+                debug && reporter.log(idHandler.get(element), "Scroll: finalizeDomMutation invoked.");
+
+                var style = getState(element).style;
                 storeCurrentSize(element, style.width, style.height);
                 positionScrollbars(element, style.width, style.height);
-                readyOverall = true;
-                ready();
+            }
+
+            function ready() {
+                callback(element);
             }
 
             if(batchProcessor) {
-                batchProcessor.add(mutateDom);
-                batchProcessor.add(1, finalizeDomMutation);
+                batchProcessor.add(0, storeStyle);
+                batchProcessor.add(1, mutateDom);
+                batchProcessor.add(2, finalizeDomMutation);
+                batchProcessor.add(3, ready);
             } else {
+                storeStyle();
                 mutateDom();
                 finalizeDomMutation();
+                ready();
             }
         }
 
+        debug && reporter.log(idHandler.get(element), "Scroll: Making detectable...");
+
         // Only install the strategy if the style has been resolved (this does not always mean that the element is attached).
         if (isStyleResolved()) {
+            debug && reporter.log(idHandler.get(element), "Scroll: Style resolved");
             install();
         } else {
+            debug && reporter.log(idHandler.get(element), "Scroll: Style not resolved");
+            debug && reporter.log(idHandler.get(element), "Scroll: Polling for style resolution...");
+
             // Need to perform polling in order to detect when the element has been attached to the DOM.
             var timeout = setInterval(function () {
                 if (isStyleResolved()) {
+                    debug && reporter.log(idHandler.get(element), "Scroll: Poll. Style resolved.");
                     install();
                     clearTimeout(timeout);
+                } else {
+                    debug && reporter.log(idHandler.get(element), "Scroll: Poll. Style not resolved.");
                 }
             }, 50);
         }
@@ -749,7 +803,7 @@ module.exports = function(options) {
     };
 };
 
-},{}],7:[function(require,module,exports){
+},{"../collection-utils":4}],7:[function(require,module,exports){
 "use strict";
 
 var forEach                 = require("./collection-utils").forEach;
@@ -833,7 +887,8 @@ module.exports = function(options) {
     var strategyOptions = {
         reporter: reporter,
         batchProcessor: batchProcessor,
-        stateHandler: stateHandler
+        stateHandler: stateHandler,
+        idHandler: idHandler
     };
 
     if(desiredStrategy === "scroll" && browserDetector.isLegacyOpera()) {
@@ -928,12 +983,18 @@ module.exports = function(options) {
 
         var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
         var onReadyCallback = getOption(options, "onReady", function noop() {});
+        var debug = getOption(options, "debug", false);
 
         forEach(elements, function attachListenerToElement(element) {
             var id = idHandler.get(element);
 
+            debug && reporter.log("Attaching listener to element", id, element);
+
             if(!elementUtils.isDetectable(element)) {
+                debug && reporter.log(id, "Not detectable.");
                 if(elementUtils.isBusy(element)) {
+                    debug && reporter.log(id, "System busy making it detectable");
+
                     //The element is being prepared to be detectable. Do not make it detectable.
                     //Just add the listener, because the element will soon be detectable.
                     addListener(callOnAdd, element, listener);
@@ -948,9 +1009,12 @@ module.exports = function(options) {
                     return;
                 }
 
+                debug && reporter.log(id, "Making detectable...");
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
                 elementUtils.markBusy(element, true);
-                return detectionStrategy.makeDetectable(element, function onElementDetectable(element) {
+                return detectionStrategy.makeDetectable({ debug: debug }, element, function onElementDetectable(element) {
+                    debug && reporter.log(id, "onElementDetectable");
+
                     elementUtils.markAsDetectable(element);
                     elementUtils.markBusy(element, false);
                     detectionStrategy.addListener(element, onResizeCallback);
@@ -976,6 +1040,8 @@ module.exports = function(options) {
                     }
                 });
             }
+
+            debug && reporter.log(id, "Already detecable, adding listener.");
 
             //The element has been prepared to be detectable and is ready to be listened to.
             addListener(callOnAdd, element, listener);
