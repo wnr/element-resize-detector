@@ -204,7 +204,7 @@ module.exports = function(options) {
                                 listener(element);
                             });
                         });
-                    };
+                    }
 
                     var style = getComputedStyle(element);
                     var width = parseSize(style.width);
