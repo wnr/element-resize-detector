@@ -92,7 +92,7 @@ function listenToTest(strategy) {
 
             setTimeout(function() {
                 $("#test").width(300);
-            }, 100);
+            }, 200);
 
             setTimeout(function() {
                 expect(listener).toHaveBeenCalledWith($("#test")[0]);
@@ -128,7 +128,7 @@ function listenToTest(strategy) {
                         setTimeout(function() {
                             expect(listener).toHaveBeenCalledWith($("#test")[0]);
                             done();
-                        }, 100);
+                        }, 200);
                     }
                 }, $("#test")[0], listener);
             });
@@ -150,7 +150,7 @@ function listenToTest(strategy) {
                             expect(listener).toHaveBeenCalledWith($("#test")[0]);
                             expect(listener).toHaveBeenCalledWith($("#test2")[0]);
                             done();
-                        }, 100);
+                        }, 200);
                     }
                 }, $("#test, #test2"), listener);
             });
@@ -263,15 +263,15 @@ function listenToTest(strategy) {
 
             setTimeout(function() {
                 $("#test").width(200);
-            }, 100);
+            }, 200);
 
             setTimeout(function() {
                 expect(listener1).toHaveBeenCalledWith($("#test")[0]);
-            }, 300);
+            }, 400);
 
             setTimeout(function() {
                 $("#test2").width(500);
-            }, 400);
+            }, 600);
 
             setTimeout(function() {
                expect(listener1).toHaveBeenCalledWith($("#test2")[0]);
@@ -299,7 +299,7 @@ function listenToTest(strategy) {
                     var afterAsync = getStyle($("#test")[0]);
                     ensureStyle(before, afterAsync, positonFromStaticToRelative);
                     done();
-                }, 100);
+                }, 200);
             });
         }
 
@@ -317,7 +317,7 @@ function listenToTest(strategy) {
                 expect(listener1).toHaveBeenCalledWith($("#test")[0]);
                 expect(listener1).toHaveBeenCalledWith($("#test2")[0]);
                 done();
-            }, 100);
+            }, 200);
         });
 
         it("should call listener if the element is changed synchronously after listenTo", function(done) {
@@ -334,7 +334,7 @@ function listenToTest(strategy) {
             setTimeout(function() {
                 expect(listener1).toHaveBeenCalledWith($("#test")[0]);
                 done();
-            }, 100);
+            }, 200);
         });
 
         it("should be able to install into elements that are detached from the DOM", function(done) {
@@ -352,16 +352,16 @@ function listenToTest(strategy) {
 
             setTimeout(function () {
                 $("#test")[0].appendChild(div);
-            }, 100);
+            }, 200);
 
             setTimeout(function () {
                 $("#test").width(200);
-            }, 200);
+            }, 400);
 
             setTimeout(function() {
                 expect(listener1).toHaveBeenCalledWith(div);
                 done();
-            }, 300);
+            }, 600);
         });
 
         it("should use the option.idHandler if present", function(done) {
@@ -417,7 +417,7 @@ function listenToTest(strategy) {
             setTimeout(function() {
                 $("#test").width(300);
                 $("#test2").width(500);
-            }, 100);
+            }, 200);
 
             setTimeout(function() {
                expect(listener1).toHaveBeenCalledWith($("#test")[0]);
@@ -468,7 +468,7 @@ describe("element-resize-detector", function() {
                 listener.calls.reset();
                 listener2.calls.reset();
                 $("#test").width(300);
-            }, 100);
+            }, 200);
 
             setTimeout(function() {
                 expect(listener).toHaveBeenCalledWith($("#test")[0]);
@@ -495,7 +495,7 @@ describe("element-resize-detector", function() {
             setTimeout(function() {
                 erd.removeListener($testElem[0], listenerNotCall);
                 $testElem.width(300);
-            }, 100);
+            }, 200);
 
             setTimeout(function() {
                 expect(listenerCall).toHaveBeenCalled();
@@ -522,7 +522,7 @@ describe("element-resize-detector", function() {
             setTimeout(function() {
                 erd.removeAllListeners($testElem[0]);
                 $testElem.width(300);
-            }, 100);
+            }, 200);
 
             setTimeout(function() {
                 expect(listener1).not.toHaveBeenCalled();
@@ -556,7 +556,7 @@ describe("element-resize-detector", function() {
                 // detector element should be removed
                 expect($testElem[0].childNodes.length).toBe(0);
                 $testElem.width(300);
-            }, 100);
+            }, 200);
 
             setTimeout(function() {
                 expect(listener).not.toHaveBeenCalled();
@@ -583,7 +583,7 @@ describe("element-resize-detector", function() {
                 // detector element should be removed
                 expect($testElem[0].childNodes.length).toBe(0);
                 $testElem.width(300);
-            }, 100);
+            }, 200);
 
             setTimeout(function() {
                 expect(listener).not.toHaveBeenCalled();
