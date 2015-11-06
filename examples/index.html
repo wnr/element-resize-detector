@@ -49,8 +49,9 @@
     <script>
         $(function onDomReady() {
             function updateDimensions(element) {
-                var width = $(element).width();
-                var height = $(element).height();
+                var style = getComputedStyle(element);
+                var width = parseInt(style.width);
+                var height = parseInt(style.height);
                 $("#dim-x").html(width);
                 $("#dim-y").html(height);
             }
