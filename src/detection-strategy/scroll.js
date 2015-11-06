@@ -167,7 +167,7 @@ module.exports = function(options) {
 
                 var scrollbarWidth          = scrollbarSizes.width;
                 var scrollbarHeight         = scrollbarSizes.height;
-                var containerStyle          = getContainerCssText(-1, -1, -scrollbarHeight, -scrollbarWidth);
+                var containerStyle          = getContainerCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
                 var shrinkExpandstyle       = getContainerCssText(0, 0, -scrollbarHeight, -scrollbarWidth);
                 var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
 
@@ -308,17 +308,28 @@ module.exports = function(options) {
         return getState(element).element.childNodes[1];
     }
 
+    function getWidthOffset() {
+        return 2 * scrollbarSizes.width + 1;
+    }
+
+    function getHeightOffset() {
+        return 2 * scrollbarSizes.height + 1;
+    }
+
     function getExpandWidth(width) {
-        return width + 10 + scrollbarSizes.width;
+        return width + 10 + getWidthOffset();
     }
 
     function getExpandHeight(height) {
-        return height + 10 + scrollbarSizes.height;
+        return height + 10 + getHeightOffset();
     }
 
-    // TODO: Shrink size should also take scrollbars into account.
-    function getShrinkSize(size) {
-        return size * 2;
+    function getShrinkWidth(width) {
+        return width * 2 + getWidthOffset();
+    }
+
+    function getShrinkHeight(height) {
+        return height * 2 + getHeightOffset();
     }
 
     function updateChildSizes(element, width, height) {
@@ -339,8 +350,8 @@ module.exports = function(options) {
         var shrink          = getShrinkElement(element);
         var expandWidth     = getExpandWidth(width);
         var expandHeight    = getExpandHeight(height);
-        var shrinkWidth     = getShrinkSize(width);
-        var shrinkHeight    = getShrinkSize(height);
+        var shrinkWidth     = getShrinkWidth(width);
+        var shrinkHeight    = getShrinkHeight(height);
         expand.scrollLeft   = expandWidth;
         expand.scrollTop    = expandHeight;
         shrink.scrollLeft   = shrinkWidth;
