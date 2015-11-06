@@ -32,6 +32,7 @@ var scrollStrategyMaker     = require("./detection-strategy/scroll.js");
  * @property {reporter} reporter    A custom reporter that handles reporting logs, warnings and errors.
                                     If not provided, a default id handler will be used.
                                     If set to false, then nothing will be reported.
+ * @property {boolean} debug        If set to true, the the system will report debug messages as default for the listenTo method.
  */
 
 /**
@@ -69,6 +70,7 @@ module.exports = function(options) {
     //Options to be used as default for the listenTo function.
     var globalOptions = {};
     globalOptions.callOnAdd     = !!getOption(options, "callOnAdd", true);
+    globalOptions.debug         = !!getOption(options, "debug", false);
 
     var eventListenerHandler    = listenerHandlerMaker(idHandler);
     var elementUtils            = elementUtilsMaker({
@@ -177,7 +179,7 @@ module.exports = function(options) {
 
         var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
         var onReadyCallback = getOption(options, "onReady", function noop() {});
-        var debug = getOption(options, "debug", false);
+        var debug = getOption(options, "debug", globalOptions.debug);
 
         forEach(elements, function attachListenerToElement(element) {
             var id = idHandler.get(element);
