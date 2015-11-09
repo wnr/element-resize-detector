@@ -204,7 +204,7 @@ module.exports = function(options) {
                         storeCurrentSize(element, width, height);
 
                         batchProcessor.add(function updateDetectorElements() {
-                            if (debug) {
+                            if (options.debug) {
                                 var style = getComputedStyle(element);
                                 var w = parseSize(style.width);
                                 var h = parseSize(style.height);
