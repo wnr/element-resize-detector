@@ -10,11 +10,7 @@ Include the script in the browser:
 ```html
 <script src="node_modules/element-resize-detector/dist/element-resize-detector.min.js"></script>
 ```
-<<<<<<< HEAD
-This will create a global function ```elementResizeDetectorMaker```, which is the maker function that makes an element resize detector instance.
-=======
 This will create a global function `elementResieDetectorMaker`, which is the maker function that makes an element resize detector instance.
->>>>>>> d19d7f34653a99d3b23765d685ffa278eef5be68
 
 You can also `require` it like so:
 ```js
