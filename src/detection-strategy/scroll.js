@@ -389,27 +389,48 @@ module.exports = function(options) {
             callback(element);
         }
 
-        function install(done) {
-            debug("Installing scroll elements...");
-            initListeners();
+        function install() {
+            function normalInstall(done) {
+                debug("Installing scroll elements...");
+                initListeners();
 
-            if (batchProcessor) {
-                batchProcessor.add(0, storeStyle);
-                batchProcessor.add(1, mutateDom);
-                batchProcessor.add(2, finalizeDomMutation);
-                batchProcessor.add(3, done);
+                if (batchProcessor) {
+                    batchProcessor.add(0, storeStyle);
+                    batchProcessor.add(1, mutateDom);
+                    batchProcessor.add(2, finalizeDomMutation);
+                    batchProcessor.add(3, done);
+                } else {
+                    storeStyle();
+                    mutateDom();
+                    finalizeDomMutation();
+                    done();
+                }
+            }
+
+            if (isUnrendered(element)) {
+                debug("Element is unrendered");
+                // We can't store the start size of the element is it is not rendered. Storing the start size in the batch processor does not make sense,
+                // since the storage will be executed in sync with the detection installation (which means that there is no installation gap).
+                if (batchProcessor) {
+                    batchProcessor.add(-1, renderElement.bind(null, element));
+                } else {
+                    renderElement(element);
+                }
+                normalInstall(function () {
+                    unrenderElement(element);
+                    ready();
+                });
             } else {
-                storeStyle();
-                mutateDom();
-                finalizeDomMutation();
-                done();
+                debug("Installing as normal");
+                // Store the start size of the element so that it is possible to detect if the element has changed size during initialization of the listeners.
+                storeStartSize();
+                normalInstall(ready);
             }
         }
 
         debug("Making detectable...");
 
-        // Only install the strategy if the style has been resolved (this does not always mean that the element is attached).
-        // TODO: Could be detached and then unrendered.
+        // Only install the strategy if the element is attached.
         if (isDetached(element)) {
             debug("Element is detached");
             debug("Polling until element is attached...");
@@ -417,34 +438,15 @@ module.exports = function(options) {
             // Need to perform polling in order to detect when the element has been attached to the DOM.
             var timeout = setInterval(function () {
                 if (!isDetached(element)) {
-                    debug("Poll. Attached.");
-                    // Store the start size of the element so that it is possible to detect if the element has changed size during initialization of the listeners.
-                    storeStartSize();
-                    install(ready);
                     clearTimeout(timeout);
+                    debug("Poll. Attached.");
+                    install();
                 } else {
                     debug("Poll. Detached.");
                 }
             }, 50);
-
-        } else if (isUnrendered(element)) {
-            debug("Element is unrendered");
-            // We can't store the start size of the element is it is not rendered. Storing the start size in the batch processor does not make sense,
-            // since the storage will be executed in sync with the detection installation (which means that there is no installation gap).
-            if (batchProcessor) {
-                batchProcessor.add(-1, renderElement.bind(null, element));
-            } else {
-                renderElement(element);
-            }
-            install(function () {
-                unrenderElement(element);
-                ready();
-            });
         } else {
-            debug("Installing as normal");
-            // Store the start size of the element so that it is possible to detect if the element has changed size during initialization of the listeners.
-            storeStartSize();
-            install(ready);
+            install();
         }
     }
 
