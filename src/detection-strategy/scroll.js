@@ -100,7 +100,10 @@ module.exports = function(options) {
         }
 
         function isDetached(element) {
-            return !getComputedStyle(element).position; // TODO: This does not work in FF. Should probably traverse tree to see if document is the parent node.
+            function isInDocument(element) {
+                return element === element.ownerDocument.body || element.ownerDocument.body.contains(element);
+            }
+            return !isInDocument(element);
         }
 
         function isUnrendered(element) {
@@ -413,7 +416,7 @@ module.exports = function(options) {
 
             // Need to perform polling in order to detect when the element has been attached to the DOM.
             var timeout = setInterval(function () {
-                if (!isDetached()) {
+                if (!isDetached(element)) {
                     debug("Poll. Attached.");
                     // Store the start size of the element so that it is possible to detect if the element has changed size during initialization of the listeners.
                     storeStartSize();
