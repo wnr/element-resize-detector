@@ -143,14 +143,6 @@ module.exports = function(options) {
             element.style.display = getState(element).previousDisplay;
         }
 
-        function parseSize(size) {
-            var size = parseFloat(size.replace(/px/, ""));
-            if (isNaN(size)) {
-                return null;
-            }
-            return size;
-        }
-
         function getStyle() {
             // Some browsers only force layouts when actually reading the style properties of the style object, so make sure that they are all read here,
             // so that the user of the function can be sure that it will perform the layout here, instead of later (important for batching).
