@@ -132,17 +132,6 @@ module.exports = function(options) {
             return getComputedStyle(element).width === "auto";
         }
 
-        // TODO: To be removed.
-        function isStyleResolved() {
-            function isPxValue(length) {
-                return length.indexOf("px") !== -1;
-            }
-
-            var style = getComputedStyle(element);
-
-            return style.position && isPxValue(style.width) && isPxValue(style.height);
-        }
-
         function renderElement() {
             debug("Rendering element");
             getState(element).previousDisplay = getComputedStyle(element).display;
