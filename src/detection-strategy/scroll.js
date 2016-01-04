@@ -14,6 +14,19 @@ module.exports = function(options) {
     var getState        = options.stateHandler.getState;
     var idHandler       = options.idHandler;
 
+    if(!reporter) {
+        throw new Error("Missing required dependency: reporter.");
+    }
+
+    //TODO: Could this perhaps be done at installation time?
+    var scrollbarSizes = getScrollbarSizes();
+
+    // Inject the scrollbar styling that prevents them from appearing sometimes in Chrome.
+    // The injected container needs to have a class, so that it may be styled with CSS (pseudo elements).
+    var styleId = "erd_scroll_detection_scrollbar_style";
+    var detectionContainerClass = "erd_scroll_detection_container";
+    injectScrollStyle(styleId, detectionContainerClass);
+
     function getScrollbarSizes() {
         var width = 500;
         var height = 500;
@@ -53,10 +66,19 @@ module.exports = function(options) {
         }
 
         if (!document.getElementById(styleId)) {
+            var containerAnimationClass = containerClass + "_animation";
+            var containerAnimationActiveClass = containerClass + "_animation_active";
             var style = "/* Created by the element-resize-detector library. */\n";
-            style += "." + containerClass + " > div::-webkit-scrollbar { display: none; }";
+            style += "." + containerClass + " > div::-webkit-scrollbar { display: none; }\n\n";
+            style += "." + containerAnimationActiveClass + " { -webkit-animation-duration: 0.1s; animation-duration: 0.1s; -webkit-animation-name: " + containerAnimationClass + "; animation-name: " + containerAnimationClass + "; }\n";
+            style += "@-webkit-keyframes " + containerAnimationClass +  " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }\n";
+            style += "@keyframes " + containerAnimationClass +          " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }";
             injectStyle(style);
         }
+    }
+
+    function addAnimationClass(element) {
+        element.className += " " + detectionContainerClass + "_animation_active";
     }
 
     /**
@@ -121,13 +143,13 @@ module.exports = function(options) {
             return style.position && isPxValue(style.width) && isPxValue(style.height);
         }
 
-        function renderElement(element) {
+        function renderElement() {
             debug("Rendering element");
             getState(element).previousDisplay = getComputedStyle(element).display;
             element.style.display = "block";
         }
 
-        function unrenderElement(element) {
+        function unrenderElement() {
             debug("Unrendering element");
             element.style.display = getState(element).previousDisplay;
         }
@@ -286,40 +308,57 @@ module.exports = function(options) {
                 }
             }
 
-            function handleScroll() {
-                function changed() {
-                    var elementStyle    = getComputedStyle(element);
-                    var width           = parseSize(elementStyle.width);
-                    var height          = parseSize(elementStyle.height);
+            function updateDetectorElements() {
+                var elementStyle    = getComputedStyle(element);
+                var width           = parseSize(elementStyle.width);
+                var height          = parseSize(elementStyle.height);
 
-                    debug("Storing current size", width, height);
+                debug("Storing current size", width, height);
 
-                    // Store the size of the element sync here, so that multiple scroll events may be ignored in the event listeners.
-                    // Otherwise the if-check in handleScroll is useless.
-                    storeCurrentSize(element, width, height);
+                // Store the size of the element sync here, so that multiple scroll events may be ignored in the event listeners.
+                // Otherwise the if-check in handleScroll is useless.
+                storeCurrentSize(element, width, height);
 
-                    batchProcessor.add(function updateDetectorElements() {
-                        if (options.debug) {
-                            var style = getComputedStyle(element);
-                            var w = parseSize(style.width);
-                            var h = parseSize(style.height);
+                batchProcessor.add(function updateDetectorElements() {
+                    if (options.debug) {
+                        var style = getComputedStyle(element);
+                        var w = parseSize(style.width);
+                        var h = parseSize(style.height);
 
-                            if (w !== width || h !== height) {
-                                reporter.warn(idHandler.get(element), "Scroll: Size changed before updating detector elements.");
-                            }
+                        if (w !== width || h !== height) {
+                            reporter.warn(idHandler.get(element), "Scroll: Size changed before updating detector elements.");
                         }
+                    }
 
-                        updateChildSizes(element, width, height);
-                    });
+                    updateChildSizes(element, width, height);
+                });
 
-                    batchProcessor.add(1, function updateScrollbars() {
-                        positionScrollbars(element, width, height);
-                        forEach(getState(element).listeners, function (listener) {
-                            listener(element);
-                        });
+                batchProcessor.add(1, function updateScrollbars() {
+                    positionScrollbars(element, width, height);
+                    forEach(getState(element).listeners, function (listener) {
+                        listener(element);
                     });
+                });
+            }
+
+            function handleRender() {
+                debug("startanimation triggered.");
+
+                if (isUnrendered(element)) {
+                    debug("Ignoring since element is still unrendered...");
+                    return;
                 }
 
+                debug("Element rendered.");
+                var expand = getExpandElement(element);
+                var shrink = getShrinkElement(element);
+                if (expand.scrollLeft === 0 || expand.scrollTop === 0 || shrink.scrollLeft === 0 || shrink.scrollTop === 0) {
+                    debug("Scrollbars out of sync. Updating detector elements...");
+                    updateDetectorElements();
+                }
+            }
+
+            function handleScroll() {
                 debug("Scroll detected.");
 
                 var style = getComputedStyle(element);
@@ -334,7 +373,7 @@ module.exports = function(options) {
 
                 if (width !== element.lastWidth || height !== element.lastHeight) {
                     debug("Element size changed.");
-                    changed();
+                    updateDetectorElements();
                 }
             }
 
@@ -366,6 +405,11 @@ module.exports = function(options) {
             element.appendChild(container);
             getState(element).element = container;
 
+            addAnimationClass(container);
+            container.addEventListener("animationstart", function () {
+                handleRender();
+            });
+
             addEvent(expand, "scroll", function onExpand() {
                 handleScroll();
             });
@@ -390,41 +434,46 @@ module.exports = function(options) {
         }
 
         function install() {
-            function normalInstall(done) {
-                debug("Installing scroll elements...");
-                initListeners();
+            debug("Installing scroll elements...");
+            initListeners();
+
+            if (isUnrendered(element)) {
+                debug("Installing: unrendered");
+
+                // We can't store the start size of the element is it is not rendered. Storing the start size in the batch processor does not make sense,
+                // since the storage will be executed in sync with the detection installation (which means that there is no installation gap).
+
+                if (batchProcessor) {
+                    batchProcessor.add(0, renderElement);
+                    batchProcessor.add(1, storeStyle);
+                    batchProcessor.add(2, mutateDom);
+                    batchProcessor.add(3, finalizeDomMutation);
+                    batchProcessor.add(4, unrenderElement);
+                    batchProcessor.add(5, ready);
+                } else {
+                    renderElement();
+                    storeStyle();
+                    mutateDom();
+                    finalizeDomMutation();
+                    unrenderElement();
+                    ready();
+                }
+            } else {
+                debug("Installing: normal");
+                // Store the start size of the element so that it is possible to detect if the element has changed size during initialization of the listeners.
+                storeStartSize();
 
                 if (batchProcessor) {
                     batchProcessor.add(0, storeStyle);
                     batchProcessor.add(1, mutateDom);
                     batchProcessor.add(2, finalizeDomMutation);
-                    batchProcessor.add(3, done);
+                    batchProcessor.add(3, ready);
                 } else {
                     storeStyle();
                     mutateDom();
                     finalizeDomMutation();
-                    done();
-                }
-            }
-
-            if (isUnrendered(element)) {
-                debug("Element is unrendered");
-                // We can't store the start size of the element is it is not rendered. Storing the start size in the batch processor does not make sense,
-                // since the storage will be executed in sync with the detection installation (which means that there is no installation gap).
-                if (batchProcessor) {
-                    batchProcessor.add(-1, renderElement.bind(null, element));
-                } else {
-                    renderElement(element);
-                }
-                normalInstall(function () {
-                    unrenderElement(element);
                     ready();
-                });
-            } else {
-                debug("Installing as normal");
-                // Store the start size of the element so that it is possible to detect if the element has changed size during initialization of the listeners.
-                storeStartSize();
-                normalInstall(ready);
+                }
             }
         }
 
@@ -455,19 +504,6 @@ module.exports = function(options) {
         element.removeChild(state.element);
         delete state.element;
     }
-
-    if(!reporter) {
-        throw new Error("Missing required dependency: reporter.");
-    }
-
-    //TODO: Could this perhaps be done at installation time?
-    var scrollbarSizes = getScrollbarSizes();
-
-    // Inject the scrollbar styling that prevents them from appearing sometimes in Chrome.
-    // The injected container needs to have a class, so that it may be styled with CSS (pseudo elements).
-    var styleId = "erd_scroll_detection_scrollbar_style";
-    var detectionContainerClass = "erd_scroll_detection_container";
-    injectScrollStyle(styleId, detectionContainerClass);
 
     return {
         makeDetectable: makeDetectable,
