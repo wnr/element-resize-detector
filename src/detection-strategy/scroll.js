@@ -154,25 +154,25 @@ module.exports = function(options) {
         function getStyle() {
             // Some browsers only force layouts when actually reading the style properties of the style object, so make sure that they are all read here,
             // so that the user of the function can be sure that it will perform the layout here, instead of later (important for batching).
-            var style                   = {};
             var elementStyle            = getComputedStyle(element);
+            var style                   = {};
             style.position              = elementStyle.position;
-            style.width                 = parseSize(elementStyle.width);
-            style.height                = parseSize(elementStyle.height);
+            style.width                 = element.offsetWidth;
+            style.height                = element.offsetHeight;
             style.top                   = elementStyle.top;
             style.right                 = elementStyle.right;
             style.bottom                = elementStyle.bottom;
             style.left                  = elementStyle.left;
-            style.widthStyle            = elementStyle.width;
-            style.heightStyle           = elementStyle.height;
+            style.widthCSS              = elementStyle.width;
+            style.heightCSS             = elementStyle.height;
             return style;
         }
 
         function storeStartSize() {
             var style = getStyle();
             getState(element).startSizeStyle = {
-                width: style.widthStyle,
-                height: style.heightStyle
+                width: style.widthCSS,
+                height: style.heightCSS
             };
             debug("Element start size", getState(element).startSizeStyle);
         }
@@ -342,9 +342,8 @@ module.exports = function(options) {
             }
 
             function updateDetectorElements() {
-                var elementStyle    = getComputedStyle(element);
-                var width           = parseSize(elementStyle.width);
-                var height          = parseSize(elementStyle.height);
+                var width           = element.offsetWidth;
+                var height          = element.offsetHeight;
 
                 debug("Storing current size", width, height);
 
@@ -354,9 +353,8 @@ module.exports = function(options) {
 
                 batchProcessor.add(function updateDetectorElements() {
                     if (options.debug) {
-                        var style = getComputedStyle(element);
-                        var w = parseSize(style.width);
-                        var h = parseSize(style.height);
+                        var w = element.offsetWidth;
+                        var h = element.offsetHeight;
 
                         if (w !== width || h !== height) {
                             reporter.warn(idHandler.get(element), "Scroll: Size changed before updating detector elements.");
@@ -398,15 +396,14 @@ module.exports = function(options) {
             function handleScroll() {
                 debug("Scroll detected.");
 
-                var style = getComputedStyle(element);
-                var width = parseSize(style.width);
-                var height = parseSize(style.height);
-
-                if (width === null || height === null) {
+                if (isUnrendered(element)) {
                     // Element is still unrendered. Skip this scroll event.
                     debug("Scroll event fired while unrendered. Ignoring...");
                     return;
                 }
+
+                var width = element.offsetWidth;
+                var height = element.offsetHeight;
 
                 if (width !== element.lastWidth || height !== element.lastHeight) {
                     debug("Element size changed.");
