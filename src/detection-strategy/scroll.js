@@ -486,7 +486,7 @@ module.exports = function(options) {
             getState(element).onRendered = function () {
                 debug("Element is now attached");
                 install();
-            }
+            };
         } else {
             install();
         }
