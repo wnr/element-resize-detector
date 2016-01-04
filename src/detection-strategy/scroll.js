@@ -252,6 +252,67 @@ module.exports = function(options) {
             shrink.scrollTop    = shrinkHeight;
         }
 
+        function injectElements() {
+            function getContainerCssText(left, top, bottom, right) {
+                left = (!left ? "0" : (left + "px"));
+                top = (!top ? "0" : (top + "px"));
+                bottom = (!bottom ? "0" : (bottom + "px"));
+                right = (!right ? "0" : (right + "px"));
+
+                return "position: absolute; left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + "; overflow: scroll; z-index: -1; visibility: hidden;";
+            }
+
+            function addEvent(el, name, cb) {
+                if (el.attachEvent) {
+                    el.attachEvent("on" + name, cb);
+                } else {
+                    el.addEventListener(name, cb);
+                }
+            }
+
+            debug("Injecting elements");
+
+            var scrollbarWidth          = scrollbarSizes.width;
+            var scrollbarHeight         = scrollbarSizes.height;
+            var containerStyle          = getContainerCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
+            var shrinkExpandstyle       = getContainerCssText(0, 0, -scrollbarHeight, -scrollbarWidth);
+            var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
+
+            var container               = document.createElement("div");
+            var expand                  = document.createElement("div");
+            var expandChild             = document.createElement("div");
+            var shrink                  = document.createElement("div");
+            var shrinkChild             = document.createElement("div");
+
+            container.className         = detectionContainerClass;
+            container.style.cssText     = containerStyle;
+            expand.style.cssText        = shrinkExpandstyle;
+            expandChild.style.cssText   = shrinkExpandChildStyle;
+            shrink.style.cssText        = shrinkExpandstyle;
+            shrinkChild.style.cssText   = shrinkExpandChildStyle + " width: 200%; height: 200%;";
+
+            expand.appendChild(expandChild);
+            shrink.appendChild(shrinkChild);
+            container.appendChild(expand);
+            container.appendChild(shrink);
+            element.appendChild(container);
+            getState(element).element = container;
+
+            addAnimationClass(container);
+
+            addEvent(container, "animationstart", function onAnimationStart () {
+                getState(element).onRendered && getState(element).onRendered();
+            });
+
+            addEvent(expand, "scroll", function onExpandScroll() {
+                getState(element).onExpand && getState(element).onExpand();
+            });
+
+            addEvent(shrink, "scroll", function onShrinkScroll() {
+                getState(element).onShrink && getState(element).onShrink();
+            });
+        }
+
         function mutateDom() {
             debug("mutateDom invoked.");
 
@@ -283,29 +344,12 @@ module.exports = function(options) {
                 }
             }
 
-            function getContainerCssText(left, top, bottom, right) {
-                left = (!left ? "0" : (left + "px"));
-                top = (!top ? "0" : (top + "px"));
-                bottom = (!bottom ? "0" : (bottom + "px"));
-                right = (!right ? "0" : (right + "px"));
-
-                return "position: absolute; left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + "; overflow: scroll; z-index: -1; visibility: hidden;";
-            }
-
             function updateChildSizes(element, width, height) {
                 var expandChild             = getExpandChildElement(element);
                 var expandWidth             = getExpandWidth(width);
                 var expandHeight            = getExpandHeight(height);
                 expandChild.style.width     = expandWidth + "px";
                 expandChild.style.height    = expandHeight + "px";
-            }
-
-            function addEvent(el, name, cb) {
-                if (el.attachEvent) {
-                    el.attachEvent("on" + name, cb);
-                } else {
-                    el.addEventListener(name, cb);
-                }
             }
 
             function updateDetectorElements() {
@@ -336,9 +380,13 @@ module.exports = function(options) {
                 batchProcessor.add(1, function updateScrollbars() {
                     positionScrollbars(element, width, height);
                     forEach(getState(element).listeners, function (listener) {
-                        listener(element);
+                        listener(element); // TODO: Should this be here?
                     });
                 });
+            }
+
+            function areElementsInjected() {
+                return !!getState(element).element;
             }
 
             function handleRender() {
@@ -379,44 +427,14 @@ module.exports = function(options) {
 
             alterPositionStyles(style);
 
-            var scrollbarWidth          = scrollbarSizes.width;
-            var scrollbarHeight         = scrollbarSizes.height;
-            var containerStyle          = getContainerCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
-            var shrinkExpandstyle       = getContainerCssText(0, 0, -scrollbarHeight, -scrollbarWidth);
-            var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
+            if (!areElementsInjected()) {
+                debug("Elements not injected, injecting...");
+                injectElements();
+            }
 
-            var container               = document.createElement("div");
-            var expand                  = document.createElement("div");
-            var expandChild             = document.createElement("div");
-            var shrink                  = document.createElement("div");
-            var shrinkChild             = document.createElement("div");
-
-            container.className         = detectionContainerClass;
-            container.style.cssText     = containerStyle;
-            expand.style.cssText        = shrinkExpandstyle;
-            expandChild.style.cssText   = shrinkExpandChildStyle;
-            shrink.style.cssText        = shrinkExpandstyle;
-            shrinkChild.style.cssText   = shrinkExpandChildStyle + " width: 200%; height: 200%;";
-
-            expand.appendChild(expandChild);
-            shrink.appendChild(shrinkChild);
-            container.appendChild(expand);
-            container.appendChild(shrink);
-            element.appendChild(container);
-            getState(element).element = container;
-
-            addAnimationClass(container);
-            container.addEventListener("animationstart", function () {
-                handleRender();
-            });
-
-            addEvent(expand, "scroll", function onExpand() {
-                handleScroll();
-            });
-
-            addEvent(shrink, "scroll", function onShrink() {
-                handleScroll();
-            });
+            getState(element).onRendered = handleRender;
+            getState(element).onExpand = handleScroll;
+            getState(element).onShrink = handleScroll;
 
             updateChildSizes(element, style.width, style.height);
         }
@@ -482,18 +500,15 @@ module.exports = function(options) {
         // Only install the strategy if the element is attached.
         if (isDetached(element)) {
             debug("Element is detached");
-            debug("Polling until element is attached...");
 
-            // Need to perform polling in order to detect when the element has been attached to the DOM.
-            var timeout = setInterval(function () {
-                if (!isDetached(element)) {
-                    clearTimeout(timeout);
-                    debug("Poll. Attached.");
-                    install();
-                } else {
-                    debug("Poll. Detached.");
-                }
-            }, 50);
+            injectElements();
+
+            debug("Waiting until element is attached...");
+
+            getState(element).onRendered = function () {
+                debug("Element is now attached");
+                install();
+            }
         } else {
             install();
         }
