@@ -137,6 +137,7 @@ module.exports = function(options) {
             if (!container) {
                 throw new Error("Cannot find container element");
             }
+            // Do not check the height since the container element has an explicit height (0px).
             return getComputedStyle(container).width === "auto";
         }
 
@@ -193,7 +194,7 @@ module.exports = function(options) {
         }
 
         function getExpandElement(element) {
-            return getState(element).container.childNodes[0];
+            return getState(element).container.childNodes[0].childNodes[0];
         }
 
         function getExpandChildElement(element) {
@@ -201,7 +202,7 @@ module.exports = function(options) {
         }
 
         function getShrinkElement(element) {
-            return getState(element).container.childNodes[1];
+            return getState(element).container.childNodes[0].childNodes[1];
         }
 
         function getWidthOffset() {
@@ -241,73 +242,39 @@ module.exports = function(options) {
             shrink.scrollTop    = shrinkHeight;
         }
 
-        function injectElements() {
-            function getContainerCssText(left, top, bottom, right) {
-                left = (!left ? "0" : (left + "px"));
-                top = (!top ? "0" : (top + "px"));
-                bottom = (!bottom ? "0" : (bottom + "px"));
-                right = (!right ? "0" : (right + "px"));
-
-                return "position: absolute; left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + "; overflow: scroll; z-index: -1; visibility: hidden;";
+        function addEvent(el, name, cb) {
+            if (el.attachEvent) {
+                el.attachEvent("on" + name, cb);
+            } else {
+                el.addEventListener(name, cb);
             }
-
-            function addEvent(el, name, cb) {
-                if (el.attachEvent) {
-                    el.attachEvent("on" + name, cb);
-                } else {
-                    el.addEventListener(name, cb);
-                }
-            }
-
-            debug("Injecting elements");
-
-            var scrollbarWidth          = scrollbarSizes.width;
-            var scrollbarHeight         = scrollbarSizes.height;
-            var containerStyle          = getContainerCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
-            var shrinkExpandstyle       = getContainerCssText(0, 0, -scrollbarHeight, -scrollbarWidth);
-            var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
-
-            var container               = document.createElement("div");
-            var expand                  = document.createElement("div");
-            var expandChild             = document.createElement("div");
-            var shrink                  = document.createElement("div");
-            var shrinkChild             = document.createElement("div");
-
-            container.className         = detectionContainerClass;
-            container.style.cssText     = containerStyle;
-            expand.style.cssText        = shrinkExpandstyle;
-            expandChild.style.cssText   = shrinkExpandChildStyle;
-            shrink.style.cssText        = shrinkExpandstyle;
-            shrinkChild.style.cssText   = shrinkExpandChildStyle + " width: 200%; height: 200%;";
-
-            expand.appendChild(expandChild);
-            shrink.appendChild(shrinkChild);
-            container.appendChild(expand);
-            container.appendChild(shrink);
-            element.appendChild(container);
-            getState(element).container = container;
-
-            addAnimationClass(container);
-
-            addEvent(container, "animationstart", function onAnimationStart () {
-                getState(element).onRendered && getState(element).onRendered();
-            });
-
-            addEvent(expand, "scroll", function onExpandScroll() {
-                getState(element).onExpand && getState(element).onExpand();
-            });
-
-            addEvent(shrink, "scroll", function onShrinkScroll() {
-                getState(element).onShrink && getState(element).onShrink();
-            });
         }
 
-        function mutateDom() {
-            debug("mutateDom invoked.");
+        function injectContainerElement() {
+            var container = getState(element).container;
 
-            var style = getState(element).style;
+            if (!container) {
+                // The injected container should not have a width defined in it's style, since the width is used to detect if the element is rendered or not,
+                // by checking style.width === auto, which doesn't work if the container got an explicit width defined.
+                container                   = document.createElement("div");
+                container.className         = detectionContainerClass;
+                container.style.cssText     = "visibility: hidden; height: 0px; overflow: none; z-index: -1; overflow: scroll;";
+                getState(element).container = container;
+                addAnimationClass(container);
+                element.appendChild(container);
 
+                addEvent(container, "animationstart", function onAnimationStart () {
+                    getState(element).onRendered && getState(element).onRendered();
+                });
+            }
+
+            return container;
+        }
+
+        function injectScrollElements() {
             function alterPositionStyles() {
+                var style = getState(element).style;
+
                 if(style.position === "static") {
                     element.style.position = "relative";
 
@@ -332,6 +299,62 @@ module.exports = function(options) {
                     removeRelativeStyles(reporter, element, style, "left");
                 }
             }
+
+            function getContainerCssText(left, top, bottom, right) {
+                left = (!left ? "0" : (left + "px"));
+                top = (!top ? "0" : (top + "px"));
+                bottom = (!bottom ? "0" : (bottom + "px"));
+                right = (!right ? "0" : (right + "px"));
+
+                return "position: absolute; left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + "; overflow: scroll; z-index: -1; visibility: hidden;";
+            }
+
+            debug("Injecting elements");
+
+            alterPositionStyles();
+
+            var rootContainer = getState(element).container;
+
+            if (!rootContainer) {
+                rootContainer = injectContainerElement();
+            }
+
+            var scrollbarWidth          = scrollbarSizes.width;
+            var scrollbarHeight         = scrollbarSizes.height;
+            var containerStyle          = getContainerCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
+            var shrinkExpandstyle       = getContainerCssText(0, 0, -scrollbarHeight, -scrollbarWidth);
+            var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
+
+            var container               = document.createElement("div");
+            var expand                  = document.createElement("div");
+            var expandChild             = document.createElement("div");
+            var shrink                  = document.createElement("div");
+            var shrinkChild             = document.createElement("div");
+
+            container.className         = detectionContainerClass;
+            container.style.cssText     = containerStyle;
+            expand.style.cssText        = shrinkExpandstyle;
+            expandChild.style.cssText   = shrinkExpandChildStyle;
+            shrink.style.cssText        = shrinkExpandstyle;
+            shrinkChild.style.cssText   = shrinkExpandChildStyle + " width: 200%; height: 200%;";
+
+            expand.appendChild(expandChild);
+            shrink.appendChild(shrinkChild);
+            container.appendChild(expand);
+            container.appendChild(shrink);
+            rootContainer.appendChild(container);
+
+            addEvent(expand, "scroll", function onExpandScroll() {
+                getState(element).onExpand && getState(element).onExpand();
+            });
+
+            addEvent(shrink, "scroll", function onShrinkScroll() {
+                getState(element).onShrink && getState(element).onShrink();
+            });
+        }
+
+        function mutateDom() {
+            debug("mutateDom invoked.");
 
             function updateChildSizes(element, width, height) {
                 var expandChild             = getExpandChildElement(element);
@@ -416,17 +439,13 @@ module.exports = function(options) {
                 }
             }
 
-            alterPositionStyles(style);
-
-            if (!areElementsInjected()) {
-                debug("Elements not injected, injecting...");
-                injectElements();
-            }
+            injectScrollElements();
 
             getState(element).onRendered = handleRender;
             getState(element).onExpand = handleScroll;
             getState(element).onShrink = handleScroll;
 
+            var style = getState(element).style;
             updateChildSizes(element, style.width, style.height);
         }
 
@@ -452,8 +471,8 @@ module.exports = function(options) {
                 if (getState(element).style.widthCSS === "auto" || getState(element).style.heightCSS === "auto") {
                     debug("Element is either inline or unrendered. Taking slow path...");
 
-                    // Inject the elements since the injected element is needed in order to check if the target element is unrendered or not.
-                    injectElements();
+                    // Inject the container element since the injected element is needed in order to check if the target element is unrendered or not.
+                    injectContainerElement();
 
                     batchProcessor.add(1, function takeInlineOrUnrenderedPath() {
                         if (isUnrendered(element)) {
@@ -483,11 +502,10 @@ module.exports = function(options) {
 
         debug("Making detectable...");
 
-        // Only install the strategy if the element is attached.
         if (isDetached(element)) {
             debug("Element is detached");
 
-            injectElements();
+            injectContainerElement();
 
             debug("Waiting until element is attached...");
 
