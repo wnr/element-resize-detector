@@ -341,7 +341,7 @@ module.exports = function(options) {
                 expandChild.style.height    = expandHeight + "px";
             }
 
-            function updateDetectorElements() {
+            function updateDetectorElements(done) {
                 var width           = element.offsetWidth;
                 var height          = element.offsetHeight;
 
@@ -351,7 +351,7 @@ module.exports = function(options) {
                 // Otherwise the if-check in handleScroll is useless.
                 storeCurrentSize(element, width, height);
 
-                batchProcessor.add(function updateDetectorElements() {
+                batchProcessor.add(0, function performUpdateChildSizes() {
                     if (options.debug) {
                         var w = element.offsetWidth;
                         var h = element.offsetHeight;
@@ -366,10 +366,11 @@ module.exports = function(options) {
 
                 batchProcessor.add(1, function updateScrollbars() {
                     positionScrollbars(element, width, height);
-                    forEach(getState(element).listeners, function (listener) {
-                        listener(element); // TODO: Should this be here?
-                    });
                 });
+
+                if (done) {
+                    batchProcessor.add(2, done);
+                }
             }
 
             function areElementsInjected() {
@@ -407,7 +408,11 @@ module.exports = function(options) {
 
                 if (width !== element.lastWidth || height !== element.lastHeight) {
                     debug("Element size changed.");
-                    updateDetectorElements();
+                    updateDetectorElements(function notifyListeners() {
+                        forEach(getState(element).listeners, function (listener) {
+                            listener(element);
+                        });
+                    });
                 }
             }
 
