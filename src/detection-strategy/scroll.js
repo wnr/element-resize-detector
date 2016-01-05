@@ -14,7 +14,11 @@ module.exports = function(options) {
     var getState        = options.stateHandler.getState;
     var idHandler       = options.idHandler;
 
-    if(!reporter) {
+    if (!batchProcessor) {
+        throw new Error("Missing required dependency: batchProcessor");
+    }
+
+    if (!reporter) {
         throw new Error("Missing required dependency: reporter.");
     }
 
@@ -439,37 +443,21 @@ module.exports = function(options) {
                 // We can't store the start size of the element is it is not rendered. Storing the start size in the batch processor does not make sense,
                 // since the storage will be executed in sync with the detection installation (which means that there is no installation gap).
 
-                if (batchProcessor) {
-                    batchProcessor.add(0, renderElement);
-                    batchProcessor.add(1, storeStyle);
-                    batchProcessor.add(2, mutateDom);
-                    batchProcessor.add(3, finalizeDomMutation);
-                    batchProcessor.add(4, unrenderElement);
-                    batchProcessor.add(5, ready);
-                } else {
-                    renderElement();
-                    storeStyle();
-                    mutateDom();
-                    finalizeDomMutation();
-                    unrenderElement();
-                    ready();
-                }
+                batchProcessor.add(0, renderElement);
+                batchProcessor.add(1, storeStyle);
+                batchProcessor.add(2, mutateDom);
+                batchProcessor.add(3, finalizeDomMutation);
+                batchProcessor.add(4, unrenderElement);
+                batchProcessor.add(5, ready);
             } else {
                 debug("Installing: normal");
                 // Store the start size of the element so that it is possible to detect if the element has changed size during initialization of the listeners.
                 storeStartSize();
 
-                if (batchProcessor) {
-                    batchProcessor.add(0, storeStyle);
-                    batchProcessor.add(1, mutateDom);
-                    batchProcessor.add(2, finalizeDomMutation);
-                    batchProcessor.add(3, ready);
-                } else {
-                    storeStyle();
-                    mutateDom();
-                    finalizeDomMutation();
-                    ready();
-                }
+                batchProcessor.add(0, storeStyle);
+                batchProcessor.add(1, mutateDom);
+                batchProcessor.add(2, finalizeDomMutation);
+                batchProcessor.add(3, ready);
             }
         }
 
