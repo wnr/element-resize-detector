@@ -218,10 +218,13 @@ module.exports = function(options) {
 
                     // Since the element size might have changed since the call to "listenTo", we need to check for this change,
                     // so that a resize event may be emitted.
-                    // Having the startSizeStyle object is optional (since it does not make sense in some cases such as unrendered elements), so check for its existance before.
-                    var style = getComputedStyle(element);
-                    if (stateHandler.getState(element).startSizeStyle && (stateHandler.getState(element).startSizeStyle.width !== style.width || stateHandler.getState(element).startSizeStyle.height !== style.height)) {
-                        onResizeCallback(element);
+                    // Having the startSize object is optional (since it does not make sense in some cases such as unrendered elements), so check for its existance before.
+                    if (stateHandler.getState(element).startSize) {
+                        var width = element.offsetWidth;
+                        var height = element.offsetHeight;
+                        if (stateHandler.getState(element).startSize.width !== width || stateHandler.getState(element).startSize.height !== height) {
+                            onResizeCallback(element);
+                        }
                     }
 
                     elementsReady++;

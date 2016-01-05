@@ -170,11 +170,11 @@ module.exports = function(options) {
 
         function storeStartSize() {
             var style = getStyle();
-            getState(element).startSizeStyle = {
-                width: style.widthCSS,
-                height: style.heightCSS
+            getState(element).startSize = {
+                width: style.width,
+                height: style.height
             };
-            debug("Element start size", getState(element).startSizeStyle);
+            debug("Element start size", getState(element).startSize);
         }
 
         function initListeners() {
@@ -440,6 +440,7 @@ module.exports = function(options) {
         function install() {
             debug("Installing...");
             initListeners();
+            storeStartSize();
 
             batchProcessor.add(-1, storeStyle);
             batchProcessor.add(0, function decideInstallPath() {
