@@ -133,7 +133,11 @@ module.exports = function(options) {
         }
 
         function isUnrendered(element) {
-            return getComputedStyle(element).width === "auto";
+            var container = getState(element).container;
+            if (!container) {
+                throw new Error("Cannot find container element");
+            }
+            return getComputedStyle(container).width === "auto";
         }
 
         function renderElement() {
@@ -189,7 +193,7 @@ module.exports = function(options) {
         }
 
         function getExpandElement(element) {
-            return getState(element).element.childNodes[0];
+            return getState(element).container.childNodes[0];
         }
 
         function getExpandChildElement(element) {
@@ -197,7 +201,7 @@ module.exports = function(options) {
         }
 
         function getShrinkElement(element) {
-            return getState(element).element.childNodes[1];
+            return getState(element).container.childNodes[1];
         }
 
         function getWidthOffset() {
@@ -281,7 +285,7 @@ module.exports = function(options) {
             container.appendChild(expand);
             container.appendChild(shrink);
             element.appendChild(container);
-            getState(element).element = container;
+            getState(element).container = container;
 
             addAnimationClass(container);
 
@@ -369,7 +373,7 @@ module.exports = function(options) {
             }
 
             function areElementsInjected() {
-                return !!getState(element).element;
+                return !!getState(element).container;
             }
 
             function handleRender() {
@@ -434,31 +438,41 @@ module.exports = function(options) {
         }
 
         function install() {
-            debug("Installing scroll elements...");
+            debug("Installing...");
             initListeners();
 
-            if (isUnrendered(element)) {
-                debug("Installing: unrendered");
+            batchProcessor.add(-1, storeStyle);
+            batchProcessor.add(0, function decideInstallPath() {
+                if (getState(element).style.widthCSS === "auto" || getState(element).style.heightCSS === "auto") {
+                    debug("Element is either inline or unrendered. Taking slow path...");
 
-                // We can't store the start size of the element is it is not rendered. Storing the start size in the batch processor does not make sense,
-                // since the storage will be executed in sync with the detection installation (which means that there is no installation gap).
+                    // Inject the elements since the injected element is needed in order to check if the target element is unrendered or not.
+                    injectElements();
 
-                batchProcessor.add(0, renderElement);
-                batchProcessor.add(1, storeStyle);
-                batchProcessor.add(2, mutateDom);
-                batchProcessor.add(3, finalizeDomMutation);
-                batchProcessor.add(4, unrenderElement);
-                batchProcessor.add(5, ready);
-            } else {
-                debug("Installing: normal");
-                // Store the start size of the element so that it is possible to detect if the element has changed size during initialization of the listeners.
-                storeStartSize();
-
-                batchProcessor.add(0, storeStyle);
-                batchProcessor.add(1, mutateDom);
-                batchProcessor.add(2, finalizeDomMutation);
-                batchProcessor.add(3, ready);
-            }
+                    batchProcessor.add(1, function takeInlineOrUnrenderedPath() {
+                        if (isUnrendered(element)) {
+                            debug("Element is unrendered.");
+                            // TODO: Instead of rendering/unrendering the element, maybe its enough to wait for the element to get rendered with the animationstart event.
+                            batchProcessor.add(2, renderElement);
+                            batchProcessor.add(3, storeStyle);
+                            batchProcessor.add(4, mutateDom);
+                            batchProcessor.add(5, finalizeDomMutation);
+                            batchProcessor.add(6, unrenderElement);
+                            batchProcessor.add(7, ready);
+                        } else {
+                            debug("Element is inline.");
+                            batchProcessor.add(2, mutateDom);
+                            batchProcessor.add(3, finalizeDomMutation);
+                            batchProcessor.add(4, ready);
+                        }
+                    });
+                } else {
+                    debug("Installing: normal.");
+                    batchProcessor.add(1, mutateDom);
+                    batchProcessor.add(2, finalizeDomMutation);
+                    batchProcessor.add(3, ready);
+                }
+            });
         }
 
         debug("Making detectable...");
@@ -481,9 +495,10 @@ module.exports = function(options) {
     }
 
     function uninstall(element) {
+        //TODO: This should also delete the added state object of the element.
         var state = getState(element);
-        element.removeChild(state.element);
-        delete state.element;
+        element.removeChild(state.container);
+        delete state.container;
     }
 
     return {
