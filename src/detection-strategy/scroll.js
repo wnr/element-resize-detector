@@ -300,13 +300,13 @@ module.exports = function(options) {
                 }
             }
 
-            function getContainerCssText(left, top, bottom, right) {
+            function getTopBottomBottomRightCssText(left, top, bottom, right) {
                 left = (!left ? "0" : (left + "px"));
                 top = (!top ? "0" : (top + "px"));
                 bottom = (!bottom ? "0" : (bottom + "px"));
                 right = (!right ? "0" : (right + "px"));
 
-                return "position: absolute; left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + "; overflow: scroll; z-index: -1; visibility: hidden;";
+                return "left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + ";";
             }
 
             debug("Injecting elements");
@@ -321,9 +321,11 @@ module.exports = function(options) {
 
             var scrollbarWidth          = scrollbarSizes.width;
             var scrollbarHeight         = scrollbarSizes.height;
-            var containerStyle          = getContainerCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
-            var shrinkExpandstyle       = getContainerCssText(0, 0, -scrollbarHeight, -scrollbarWidth);
-            var shrinkExpandChildStyle  = "position: absolute; left: 0; top: 0;";
+            var containerStyle          = "position: absolute; overflow: scroll; z-index: -1; visibility: hidden; " + getTopBottomBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
+            var expandStyle             = "position: absolute; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%;";
+            var shrinkStyle             = "position: absolute; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%;";
+            var expandChildStyle        = "position: absolute; left: 0; top: 0;";
+            var shrinkChildStyle        = "position: absolute; width: 200%; height: 200%;";
 
             var container               = document.createElement("div");
             var expand                  = document.createElement("div");
@@ -333,10 +335,10 @@ module.exports = function(options) {
 
             container.className         = detectionContainerClass;
             container.style.cssText     = containerStyle;
-            expand.style.cssText        = shrinkExpandstyle;
-            expandChild.style.cssText   = shrinkExpandChildStyle;
-            shrink.style.cssText        = shrinkExpandstyle;
-            shrinkChild.style.cssText   = shrinkExpandChildStyle + " width: 200%; height: 200%;";
+            expand.style.cssText        = expandStyle;
+            expandChild.style.cssText   = expandChildStyle;
+            shrink.style.cssText        = shrinkStyle;
+            shrinkChild.style.cssText   = shrinkChildStyle;
 
             expand.appendChild(expandChild);
             shrink.appendChild(shrinkChild);
