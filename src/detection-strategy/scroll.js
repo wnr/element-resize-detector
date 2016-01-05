@@ -133,11 +133,8 @@ module.exports = function(options) {
         }
 
         function isUnrendered(element) {
-            var container = getState(element).container;
-            if (!container) {
-                throw new Error("Cannot find container element");
-            }
-            // Do not check the height since the container element has an explicit height (0px).
+            // Check the absolute positioned container since the top level container is display: inline.
+            var container = getState(element).container.childNodes[0];
             return getComputedStyle(container).width === "auto";
         }
 
@@ -254,11 +251,9 @@ module.exports = function(options) {
             var container = getState(element).container;
 
             if (!container) {
-                // The injected container should not have a width defined in it's style, since the width is used to detect if the element is rendered or not,
-                // by checking style.width === auto, which doesn't work if the container got an explicit width defined.
                 container                   = document.createElement("div");
                 container.className         = detectionContainerClass;
-                container.style.cssText     = "visibility: hidden; height: 0px; overflow: none; z-index: -1; overflow: scroll;";
+                container.style.cssText     = "visibility: hidden; display: inline; width: 0px; height: 0px; overflow: none; z-index: -1; overflow: scroll;";
                 getState(element).container = container;
                 addAnimationClass(container);
                 element.appendChild(container);
@@ -355,8 +350,8 @@ module.exports = function(options) {
             });
         }
 
-        function mutateDom() {
-            debug("mutateDom invoked.");
+        function registerListenersAndPositionElements() {
+            debug("registerListenersAndPositionElements invoked.");
 
             function updateChildSizes(element, width, height) {
                 var expandChild             = getExpandChildElement(element);
@@ -441,8 +436,6 @@ module.exports = function(options) {
                 }
             }
 
-            injectScrollElements();
-
             getState(element).onRendered = handleRender;
             getState(element).onExpand = handleScroll;
             getState(element).onShrink = handleScroll;
@@ -473,8 +466,9 @@ module.exports = function(options) {
                 if (getState(element).style.widthCSS === "auto" || getState(element).style.heightCSS === "auto") {
                     debug("Element is either inline or unrendered. Taking slow path...");
 
-                    // Inject the container element since the injected element is needed in order to check if the target element is unrendered or not.
+                    // Inject the elements since they are needed needed in order to check if the target element is unrendered or not.
                     injectContainerElement();
+                    injectScrollElements();
 
                     batchProcessor.add(1, function takeInlineOrUnrenderedPath() {
                         if (isUnrendered(element)) {
@@ -482,22 +476,23 @@ module.exports = function(options) {
                             // TODO: Instead of rendering/unrendering the element, maybe its enough to wait for the element to get rendered with the animationstart event.
                             batchProcessor.add(2, renderElement);
                             batchProcessor.add(3, storeStyle);
-                            batchProcessor.add(4, mutateDom);
+                            batchProcessor.add(4, registerListenersAndPositionElements);
                             batchProcessor.add(5, finalizeDomMutation);
                             batchProcessor.add(6, unrenderElement);
                             batchProcessor.add(7, ready);
                         } else {
                             debug("Element is inline.");
-                            batchProcessor.add(2, mutateDom);
+                            batchProcessor.add(2, registerListenersAndPositionElements);
                             batchProcessor.add(3, finalizeDomMutation);
                             batchProcessor.add(4, ready);
                         }
                     });
                 } else {
                     debug("Installing: normal.");
-                    batchProcessor.add(1, mutateDom);
-                    batchProcessor.add(2, finalizeDomMutation);
-                    batchProcessor.add(3, ready);
+                    batchProcessor.add(1, injectScrollElements);
+                    batchProcessor.add(2, registerListenersAndPositionElements);
+                    batchProcessor.add(3, finalizeDomMutation);
+                    batchProcessor.add(4, ready);
                 }
             });
         }
