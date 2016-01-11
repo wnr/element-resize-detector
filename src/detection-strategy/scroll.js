@@ -191,7 +191,7 @@ module.exports = function(options) {
         }
 
         function getExpandElement(element) {
-            return getState(element).container.childNodes[0].childNodes[0];
+            return getState(element).container.childNodes[0].childNodes[0].childNodes[0];
         }
 
         function getExpandChildElement(element) {
@@ -199,7 +199,7 @@ module.exports = function(options) {
         }
 
         function getShrinkElement(element) {
-            return getState(element).container.childNodes[0].childNodes[1];
+            return getState(element).container.childNodes[0].childNodes[0].childNodes[1];
         }
 
         function getWidthOffset() {
@@ -314,32 +314,45 @@ module.exports = function(options) {
                 rootContainer = injectContainerElement();
             }
 
+            // Due to this WebKit bug https://bugs.webkit.org/show_bug.cgi?id=80808 (currently fixed in Blink, but still present in WebKit browsers such as Safari),
+            // we need to inject two containers, one that is width/height 100% and another that is left/top -1px so that the final container always is 1x1 pixels bigger than
+            // the targeted element.
+            // When the bug is resolved, "containerContainer" may be removed.
+
+            // The outer container can occasionally be less wide than the targeted when inside inline elements element in WebKit (see https://bugs.webkit.org/show_bug.cgi?id=152980).
+            // This should be no problem since the inner container either way makes sure the injected scroll elements are at least 1x1 px.
+
             var scrollbarWidth          = scrollbarSizes.width;
             var scrollbarHeight         = scrollbarSizes.height;
+            var containerContainerStyle = "position: absolute; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%; left: 0px; top: 0px;";
             var containerStyle          = "position: absolute; overflow: scroll; z-index: -1; visibility: hidden; " + getTopBottomBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
             var expandStyle             = "position: absolute; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%;";
             var shrinkStyle             = "position: absolute; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%;";
             var expandChildStyle        = "position: absolute; left: 0; top: 0;";
             var shrinkChildStyle        = "position: absolute; width: 200%; height: 200%;";
 
+            var containerContainer      = document.createElement("div");
             var container               = document.createElement("div");
             var expand                  = document.createElement("div");
             var expandChild             = document.createElement("div");
             var shrink                  = document.createElement("div");
             var shrinkChild             = document.createElement("div");
 
-            container.className         = detectionContainerClass;
-            container.style.cssText     = containerStyle;
-            expand.style.cssText        = expandStyle;
-            expandChild.style.cssText   = expandChildStyle;
-            shrink.style.cssText        = shrinkStyle;
-            shrinkChild.style.cssText   = shrinkChildStyle;
+            containerContainer.style.cssText    = containerContainerStyle;
+            containerContainer.className        = detectionContainerClass;
+            container.className                 = detectionContainerClass;
+            container.style.cssText             = containerStyle;
+            expand.style.cssText                = expandStyle;
+            expandChild.style.cssText           = expandChildStyle;
+            shrink.style.cssText                = shrinkStyle;
+            shrinkChild.style.cssText           = shrinkChildStyle;
 
             expand.appendChild(expandChild);
             shrink.appendChild(shrinkChild);
             container.appendChild(expand);
             container.appendChild(shrink);
-            rootContainer.appendChild(container);
+            containerContainer.appendChild(container);
+            rootContainer.appendChild(containerContainer);
 
             addEvent(expand, "scroll", function onExpandScroll() {
                 getState(element).onExpand && getState(element).onExpand();
