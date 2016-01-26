@@ -135,7 +135,7 @@ module.exports = function(options) {
         function isUnrendered(element) {
             // Check the absolute positioned container since the top level container is display: inline.
             var container = getState(element).container.childNodes[0];
-            return getComputedStyle(container).width === "auto";
+            return getComputedStyle(container).width.indexOf("px") === -1; //Can only compute pixel value when rendered.
         }
 
         function renderElement() {
@@ -186,8 +186,8 @@ module.exports = function(options) {
         }
 
         function storeCurrentSize(element, width, height) {
-            element.lastWidth   = width;
-            element.lastHeight  = height;
+            getState(element).lastWidth = width;
+            getState(element).lastHeight  = height;
         }
 
         function getExpandElement(element) {
@@ -410,6 +410,19 @@ module.exports = function(options) {
                 return !!getState(element).container;
             }
 
+            function notifyListenersIfNeeded() {
+                var state = getState(element);
+                // Don't notify the if the current size is the start size, or if it already has been notified.
+                if ((state.lastWidth !== state.startSize.width && state.lastWidth !== state.lastNotifiedWidth) || (state.lastHeight !== state.startSize.height && state.lastHeight !== state.lastNotifiedHeight)) {
+                    debug("Current size not notified, notifying...");
+                    state.lastNotifiedWidth = state.lastWidth;
+                    state.lastNotifiedHeight = state.lastHeight;
+                    forEach(getState(element).listeners, function (listener) {
+                        listener(element);
+                    });
+                }
+            }
+
             function handleRender() {
                 debug("startanimation triggered.");
 
@@ -423,7 +436,7 @@ module.exports = function(options) {
                 var shrink = getShrinkElement(element);
                 if (expand.scrollLeft === 0 || expand.scrollTop === 0 || shrink.scrollLeft === 0 || shrink.scrollTop === 0) {
                     debug("Scrollbars out of sync. Updating detector elements...");
-                    updateDetectorElements();
+                    updateDetectorElements(notifyListenersIfNeeded);
                 }
             }
 
@@ -441,11 +454,9 @@ module.exports = function(options) {
 
                 if (width !== element.lastWidth || height !== element.lastHeight) {
                     debug("Element size changed.");
-                    updateDetectorElements(function notifyListeners() {
-                        forEach(getState(element).listeners, function (listener) {
-                            listener(element);
-                        });
-                    });
+                    updateDetectorElements(notifyListenersIfNeeded);
+                } else {
+                    debug("Element size has not changed (" + width + "x" + height + ").");
                 }
             }
 
@@ -476,11 +487,10 @@ module.exports = function(options) {
 
             batchProcessor.add(-1, storeStyle);
             batchProcessor.add(0, function decideInstallPath() {
-                if (getState(element).style.widthCSS === "auto" || getState(element).style.heightCSS === "auto") {
+                if (false && (getState(element).style.widthCSS === "auto" || getState(element).style.heightCSS === "auto")) {
                     debug("Element is either inline or unrendered. Taking slow path...");
 
                     // Inject the elements since they are needed needed in order to check if the target element is unrendered or not.
-                    injectContainerElement();
                     injectScrollElements();
 
                     batchProcessor.add(1, function takeInlineOrUnrenderedPath() {
