@@ -170,6 +170,7 @@ module.exports = function(options) {
             elements = [elements];
         } else if (isCollection(elements)) {
             // Convert collection to array for plugins.
+            // TODO: May want to check so that all the elements in the collection are valid elements.
             elements = toArray(elements);
         } else {
             return reporter.error("Invalid arguments. Must be a DOM element or a collection of DOM elements.");
