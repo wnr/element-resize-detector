@@ -365,33 +365,6 @@ function listenToTest(strategy) {
             }, 200);
         });
 
-        it("should be able to install into elements that are detached from the DOM", function(done) {
-            var erd = elementResizeDetectorMaker({
-                callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
-            });
-
-            var listener1 = jasmine.createSpy("listener1");
-            var div = document.createElement("div");
-            div.style.width = "100%";
-            div.style.height = "100%";
-            erd.listenTo(div, listener1);
-
-            setTimeout(function () {
-                $("#test")[0].appendChild(div);
-            }, 200);
-
-            setTimeout(function () {
-                $("#test").width(200);
-            }, 400);
-
-            setTimeout(function() {
-                expect(listener1).toHaveBeenCalledWith(div);
-                done();
-            }, 600);
-        });
-
         it("should use the option.idHandler if present", function(done) {
             var ID_ATTR = "some-fancy-id-attr";
 
@@ -453,6 +426,65 @@ function listenToTest(strategy) {
                expect(listener2).toHaveBeenCalledWith($("#test2")[0]);
                done();
             }, 600);
+        });
+
+        it("should be able to install into elements that are detached from the DOM", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            var listener1 = jasmine.createSpy("listener1");
+            var div = document.createElement("div");
+            div.style.width = "100%";
+            div.style.height = "100%";
+            erd.listenTo(div, listener1);
+
+            setTimeout(function () {
+                $("#test")[0].appendChild(div);
+            }, 200);
+
+            setTimeout(function () {
+                $("#test").width(200);
+            }, 400);
+
+            setTimeout(function() {
+                expect(listener1).toHaveBeenCalledWith(div);
+                done();
+            }, 600);
+        });
+
+        it("should detect resizes caused by padding and font-size changes", function (done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            var listener = jasmine.createSpy("listener");
+            $("#test").html("test");
+            $("#test").css("padding", "0px");
+            $("#test").css("font-size", "16px");
+
+            erd.listenTo($("#test"), listener);
+
+            $("#test").css("padding", "10px");
+
+            setTimeout(function() {
+                expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                listener.calls.reset();
+                $("#test").css("font-size", "20px");
+            }, 200);
+
+            setTimeout(function() {
+                expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                done();
+            }, 400);
+        });
+
+        describe("should work for unrendered elements", function () {
+
         });
     });
 }
@@ -571,12 +603,15 @@ describe("element-resize-detector", function() {
         });
     });
 
-    listenToTest("object");
-    removalTest("object");
+    // listenToTest("object");
+    // removalTest("object");
+    //
+    // //Scroll only supported on non-opera browsers.
+    // if(!window.opera) {
+    //     listenToTest("scroll");
+    //     removalTest("scroll");
+    // }
 
-    //Scroll only supported on non-opera browsers.
-    if(!window.opera) {
-        listenToTest("scroll");
-        removalTest("scroll");
-    }
+    listenToTest("scroll");
+    removalTest("scroll");
 });
