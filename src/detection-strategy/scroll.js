@@ -485,39 +485,11 @@ module.exports = function(options) {
             initListeners();
             storeStartSize();
 
-            batchProcessor.add(-1, storeStyle);
-            batchProcessor.add(0, function decideInstallPath() {
-                if (false && (getState(element).style.widthCSS === "auto" || getState(element).style.heightCSS === "auto")) {
-                    debug("Element is either inline or unrendered. Taking slow path...");
-
-                    // Inject the elements since they are needed needed in order to check if the target element is unrendered or not.
-                    injectScrollElements();
-
-                    batchProcessor.add(1, function takeInlineOrUnrenderedPath() {
-                        if (isUnrendered(element)) {
-                            debug("Element is unrendered.");
-                            // TODO: Instead of rendering/unrendering the element, maybe its enough to wait for the element to get rendered with the animationstart event.
-                            batchProcessor.add(2, renderElement);
-                            batchProcessor.add(3, storeStyle);
-                            batchProcessor.add(4, registerListenersAndPositionElements);
-                            batchProcessor.add(5, finalizeDomMutation);
-                            batchProcessor.add(6, unrenderElement);
-                            batchProcessor.add(7, ready);
-                        } else {
-                            debug("Element is inline.");
-                            batchProcessor.add(2, registerListenersAndPositionElements);
-                            batchProcessor.add(3, finalizeDomMutation);
-                            batchProcessor.add(4, ready);
-                        }
-                    });
-                } else {
-                    debug("Installing: normal.");
-                    batchProcessor.add(1, injectScrollElements);
-                    batchProcessor.add(2, registerListenersAndPositionElements);
-                    batchProcessor.add(3, finalizeDomMutation);
-                    batchProcessor.add(4, ready);
-                }
-            });
+            batchProcessor.add(0, storeStyle);
+            batchProcessor.add(1, injectScrollElements);
+            batchProcessor.add(2, registerListenersAndPositionElements);
+            batchProcessor.add(3, finalizeDomMutation);
+            batchProcessor.add(4, ready);
         }
 
         debug("Making detectable...");
