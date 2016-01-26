@@ -548,6 +548,29 @@ function listenToTest(strategy) {
                 }, 300);
             });
         });
+
+        it("should handle inline elements correctly", function (done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            $("#test").html("<span id=\"inner\">test</span>");
+
+            var listener = jasmine.createSpy("listener");
+            erd.listenTo($("#inner"), listener);
+
+            setTimeout(function () {
+                expect(listener).not.toHaveBeenCalled();
+                $("#inner").append("testing testing");
+            }, 100);
+
+            setTimeout(function () {
+                expect(listener).toHaveBeenCalledWith($("#inner")[0]);
+                done();
+            }, 200);
+        });
     });
 }
 
