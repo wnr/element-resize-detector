@@ -483,8 +483,70 @@ function listenToTest(strategy) {
             }, 400);
         });
 
-        describe("should work for unrendered elements", function () {
+        describe("should handle unrendered elements correctly", function (done) {
+            it("when installing", function (done) {
+                var erd = elementResizeDetectorMaker({
+                    callOnAdd: false,
+                    reporter: reporter,
+                    strategy: strategy
+                });
 
+                $("#test").html("<div id=\"inner\"></div>");
+                $("#test").css("display", "none");
+
+                var listener = jasmine.createSpy("listener");
+                erd.listenTo($("#inner"), listener);
+
+                setTimeout(function () {
+                    expect(listener).not.toHaveBeenCalled();
+                    $("#test").css("display", "");
+                }, 100);
+
+                setTimeout(function () {
+                    expect(listener).toHaveBeenCalledWith($("#inner")[0]);
+                    listener.calls.reset();
+                    $("#inner").width("300px");
+                }, 200);
+
+                setTimeout(function () {
+                    expect(listener).toHaveBeenCalledWith($("#inner")[0]);
+                    listener.calls.reset();
+                    done();
+                }, 300);
+            });
+
+            it("when element gets unrendered after installation", function (done) {
+                var erd = elementResizeDetectorMaker({
+                    callOnAdd: false,
+                    reporter: reporter,
+                    strategy: strategy
+                });
+
+                // The div is rendered to begin with.
+                $("#test").html("<div id=\"inner\"></div>");
+
+                var listener = jasmine.createSpy("listener");
+                erd.listenTo($("#inner"), listener);
+
+                // The it gets unrendered, and it changes width.
+                setTimeout(function () {
+                    expect(listener).not.toHaveBeenCalled();
+                    $("#test").css("display", "none");
+                    $("#inner").width("300px");
+                }, 100);
+
+                // Render the element again.
+                setTimeout(function () {
+                    expect(listener).not.toHaveBeenCalled();
+                    $("#test").css("display", "");
+                }, 200);
+
+                // ERD should detect that the element has changed size as soon as it gets rendered again.
+                setTimeout(function () {
+                    expect(listener).toHaveBeenCalledWith($("#inner")[0]);
+                    done();
+                }, 300);
+            });
         });
     });
 }
