@@ -500,19 +500,19 @@ function listenToTest(strategy) {
                 setTimeout(function () {
                     expect(listener).not.toHaveBeenCalled();
                     $("#test").css("display", "");
-                }, 100);
-
-                setTimeout(function () {
-                    expect(listener).toHaveBeenCalledWith($("#inner")[0]);
-                    listener.calls.reset();
-                    $("#inner").width("300px");
                 }, 200);
 
                 setTimeout(function () {
                     expect(listener).toHaveBeenCalledWith($("#inner")[0]);
                     listener.calls.reset();
+                    $("#inner").width("300px");
+                }, 400);
+
+                setTimeout(function () {
+                    expect(listener).toHaveBeenCalledWith($("#inner")[0]);
+                    listener.calls.reset();
                     done();
-                }, 300);
+                }, 600);
             });
 
             it("when element gets unrendered after installation", function (done) {
