@@ -138,17 +138,6 @@ module.exports = function(options) {
             return getComputedStyle(container).width.indexOf("px") === -1; //Can only compute pixel value when rendered.
         }
 
-        function renderElement() {
-            debug("Rendering element");
-            getState(element).previousDisplay = getComputedStyle(element).display;
-            element.style.display = "block";
-        }
-
-        function unrenderElement() {
-            debug("Unrendering element");
-            element.style.display = getState(element).previousDisplay;
-        }
-
         function getStyle() {
             // Some browsers only force layouts when actually reading the style properties of the style object, so make sure that they are all read here,
             // so that the user of the function can be sure that it will perform the layout here, instead of later (important for batching).
