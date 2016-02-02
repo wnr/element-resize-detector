@@ -365,6 +365,51 @@ function listenToTest(strategy) {
             }, 200);
         });
 
+        it("should not emit resize when listenTo is called", function (done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            var listener1 = jasmine.createSpy("listener1");
+            erd.listenTo($("#test"), listener1);
+
+            setTimeout(function() {
+                expect(listener1).not.toHaveBeenCalledWith($("#test")[0]);
+                done();
+            }, 200);
+        });
+
+        it("should not emit resize event even though the element is back to its start size", function (done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            var listener = jasmine.createSpy("listener1");
+            $("#test").width(200);
+            erd.listenTo($("#test"), listener);
+
+            setTimeout(function() {
+                expect(listener).not.toHaveBeenCalledWith($("#test")[0]);
+                listener.calls.reset();
+                $("#test").width(100);
+            }, 200);
+
+            setTimeout(function() {
+                expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                listener.calls.reset();
+                $("#test").width(200);
+            }, 400);
+
+            setTimeout(function() {
+                expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                done();
+            }, 600);
+        });
+
         it("should use the option.idHandler if present", function(done) {
             var ID_ATTR = "some-fancy-id-attr";
 
