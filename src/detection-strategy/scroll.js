@@ -121,7 +121,13 @@ module.exports = function(options) {
             if (options.debug) {
                 var args = Array.prototype.slice.call(arguments);
                 args.unshift(idHandler.get(element), "Scroll: ");
-                reporter.log.apply(null, args);
+                if (reporter.log.apply) {
+                    reporter.log.apply(null, args);
+                } else {
+                    for (var i = 0; i < args.length; i++) {
+                        reporter.log(args[i]);
+                    }
+                }
             }
         }
 
