@@ -229,10 +229,12 @@ module.exports = function(options) {
         }
 
         function addEvent(el, name, cb) {
-            if (el.attachEvent) {
+            if (el.addEventListener) {
+                el.addEventListener(name, cb);
+            } else if(el.attachEvent) {
                 el.attachEvent("on" + name, cb);
             } else {
-                el.addEventListener(name, cb);
+                return reporter.error("[scroll] Don't know how to add event listeners.");
             }
         }
 
