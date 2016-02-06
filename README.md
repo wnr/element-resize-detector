@@ -63,3 +63,12 @@ This library is using the two approaches (scroll and object) as first described 
 The scroll based approach implementation was based on Marc J's implementation [https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js).
 
 Please note that both approaches have been heavily reworked for better performance and robustness.
+
+## Changelog
+
+#### 1.1.0
+
+* Supporting inline elements
+* Event-based solution for detecting attached/rendered events so that detached/unrendered elements can be listened to without polling
+* Now all changes that affects the offset size of an element are properly detected (such as padding and font-size).
+* Scroll is stabilized, and is the preferred strategy to use. The object strategy will be deprecated (and is currently only used for some legacy browsers such as IE9 and Opera 12).
