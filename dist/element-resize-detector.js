@@ -20,40 +20,37 @@ module.exports = function batchProcessorMaker(options) {
         asyncProcess = true;
     }
 
-    var batch;
-    var batchSize;
-    var topLevel;
-    var bottomLevel;
-
-    clearBatch();
-
+    var batch = Batch();
     var asyncFrameHandler;
+    var isProcessing = false;
 
     function addFunction(level, fn) {
-        if(!fn) {
-            fn = level;
-            level = 0;
-        }
-
-        if(level > topLevel) {
-            topLevel = level;
-        } else if(level < bottomLevel) {
-            bottomLevel = level;
-        }
-
-        if(!batch[level]) {
-            batch[level] = [];
-        }
-
-        if(autoProcess && asyncProcess && batchSize === 0) {
+        if(!isProcessing && autoProcess && asyncProcess && batch.size() === 0) {
+            // Since this is async, it is guaranteed to be executed after that the fn is added to the batch.
+            // This needs to be done before, since we're checking the size of the batch to be 0.
             processBatchAsync();
         }
 
-        batch[level].push(fn);
-        batchSize++;
+        batch.add(level, fn);
+    }
+
+    function processBatch() {
+        // Save the current batch, and create a new batch so that incoming functions are not added into the currently processing batch.
+        // Continue processing until the top-level batch is empty (functions may be added to the new batch while processing, and so on).
+        isProcessing = true;
+        while (batch.size()) {
+            var processingBatch = batch;
+            batch = Batch();
+            processingBatch.process();
+        }
+        isProcessing = false;
     }
 
     function forceProcessBatch(localAsyncProcess) {
+        if (isProcessing) {
+            return;
+        }
+
         if(localAsyncProcess === undefined) {
             localAsyncProcess = asyncProcess;
         }
@@ -70,18 +67,6 @@ module.exports = function batchProcessorMaker(options) {
         }
     }
 
-    function processBatch() {
-        for(var level = bottomLevel; level <= topLevel; level++) {
-            var fns = batch[level];
-
-            for(var i = 0; i < fns.length; i++) {
-                var fn = fns[i];
-                fn();
-            }
-        }
-        clearBatch();
-    }
-
     function processBatchAsync() {
         asyncFrameHandler = requestFrame(processBatch);
     }
@@ -95,13 +80,13 @@ module.exports = function batchProcessorMaker(options) {
 
     function cancelFrame(listener) {
         // var cancel = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.clearTimeout;
-        var cancel = window.clearTimeout;
+        var cancel = clearTimeout;
         return cancel(listener);
     }
 
     function requestFrame(callback) {
         // var raf = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || function(fn) { return window.setTimeout(fn, 20); };
-        var raf = function(fn) { return window.setTimeout(fn, 0); };
+        var raf = function(fn) { return setTimeout(fn, 0); };
         return raf(callback);
     }
 
@@ -110,6 +95,55 @@ module.exports = function batchProcessorMaker(options) {
         force: forceProcessBatch
     };
 };
+
+function Batch() {
+    var batch       = {};
+    var size        = 0;
+    var topLevel    = 0;
+    var bottomLevel = 0;
+
+    function add(level, fn) {
+        if(!fn) {
+            fn = level;
+            level = 0;
+        }
+
+        if(level > topLevel) {
+            topLevel = level;
+        } else if(level < bottomLevel) {
+            bottomLevel = level;
+        }
+
+        if(!batch[level]) {
+            batch[level] = [];
+        }
+
+        batch[level].push(fn);
+        size++;
+    }
+
+    function process() {
+        for(var level = bottomLevel; level <= topLevel; level++) {
+            var fns = batch[level];
+
+            for(var i = 0; i < fns.length; i++) {
+                var fn = fns[i];
+                fn();
+            }
+        }
+    }
+
+    function getSize() {
+        return size;
+    }
+
+    return {
+        add: add,
+        process: process,
+        size: getSize
+    };
+}
+
 },{"./utils":2}],2:[function(require,module,exports){
 "use strict";
 
@@ -528,7 +562,13 @@ module.exports = function(options) {
             if (options.debug) {
                 var args = Array.prototype.slice.call(arguments);
                 args.unshift(idHandler.get(element), "Scroll: ");
-                reporter.log.apply(null, args);
+                if (reporter.log.apply) {
+                    reporter.log.apply(null, args);
+                } else {
+                    for (var i = 0; i < args.length; i++) {
+                        reporter.log(args[i]);
+                    }
+                }
             }
         }
 
@@ -636,10 +676,12 @@ module.exports = function(options) {
         }
 
         function addEvent(el, name, cb) {
-            if (el.attachEvent) {
+            if (el.addEventListener) {
+                el.addEventListener(name, cb);
+            } else if(el.attachEvent) {
                 el.attachEvent("on" + name, cb);
             } else {
-                el.addEventListener(name, cb);
+                return reporter.error("[scroll] Don't know how to add event listeners.");
             }
         }
 
@@ -649,7 +691,7 @@ module.exports = function(options) {
             if (!container) {
                 container                   = document.createElement("div");
                 container.className         = detectionContainerClass;
-                container.style.cssText     = "visibility: hidden; display: inline; width: 0px; height: 0px; overflow: none; z-index: -1; overflow: scroll;";
+                container.style.cssText     = "visibility: hidden; display: inline; width: 0px; height: 0px; z-index: -1; overflow: hidden;";
                 getState(element).container = container;
                 addAnimationClass(container);
                 element.appendChild(container);
@@ -720,8 +762,8 @@ module.exports = function(options) {
 
             var scrollbarWidth          = scrollbarSizes.width;
             var scrollbarHeight         = scrollbarSizes.height;
-            var containerContainerStyle = "position: absolute; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%; left: 0px; top: 0px;";
-            var containerStyle          = "position: absolute; overflow: scroll; z-index: -1; visibility: hidden; " + getTopBottomBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
+            var containerContainerStyle = "position: absolute; overflow: hidden; z-index: -1; visibility: hidden; width: 100%; height: 100%; left: 0px; top: 0px;";
+            var containerStyle          = "position: absolute; overflow: hidden; z-index: -1; visibility: hidden; " + getTopBottomBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
             var expandStyle             = "position: absolute; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%;";
             var shrinkStyle             = "position: absolute; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%;";
             var expandChildStyle        = "position: absolute; left: 0; top: 0;";
@@ -1415,7 +1457,14 @@ module.exports = function(quiet) {
             //The proxy is needed to be able to call the method with the console context,
             //since we cannot use bind.
             reporter[name] = function reporterProxy() {
-                console[name].apply(console, arguments);
+                var f = console[name];
+                if (f.apply) { //IE9 does not support console.log.apply :)
+                    f.apply(console, arguments);
+                } else {
+                    for (var i = 0; i < arguments.length; i++) {
+                        f(arguments[i]);
+                    }
+                }
             };
         };
 
