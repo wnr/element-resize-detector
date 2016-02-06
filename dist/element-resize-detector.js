@@ -1067,9 +1067,14 @@ module.exports = function(options) {
         idHandler: idHandler
     };
 
-    if(desiredStrategy === "scroll" && browserDetector.isLegacyOpera()) {
-        reporter.warn("Scroll strategy is not supported on legacy Opera. Changing to object strategy.");
-        desiredStrategy = "object";
+    if(desiredStrategy === "scroll") {
+        if (browserDetector.isLegacyOpera()) {
+            reporter.warn("Scroll strategy is not supported on legacy Opera. Changing to object strategy.");
+            desiredStrategy = "object";
+        } else if (browserDetector.isIE(9)) {
+            reporter.warn("Scroll strategy is not supported on IE9. Changing to object strategy.");
+            desiredStrategy = "object";
+        }
     }
 
     if(desiredStrategy === "scroll") {
