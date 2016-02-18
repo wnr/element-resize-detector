@@ -78,7 +78,7 @@ var reporter = {
 $("body").prepend("<div id=fixtures></div>");
 
 function listenToTest(strategy) {
-    describe("listenTo (" + strategy + ")", function() {
+    describe("[" + strategy + "] listenTo", function() {
         it("should be able to attach a listener to an element", function(done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
@@ -303,21 +303,49 @@ function listenToTest(strategy) {
             });
         }
 
-        it("should call listener on add if options is set to true", function(done) {
-            var erd = elementResizeDetectorMaker({
-                callOnAdd: true,
-                reporter: reporter,
-                strategy: strategy
+        describe("options.callOnAdd", function() {
+            it("should be true default and call all functions when listenTo succeeds", function(done) {
+                var erd = elementResizeDetectorMaker({
+                    reporter: reporter,
+                    strategy: strategy
+                });
+
+                var listener = jasmine.createSpy("listener");
+                var listener2 = jasmine.createSpy("listener2");
+
+                erd.listenTo($("#test")[0], listener);
+                erd.listenTo($("#test")[0], listener2);
+
+                setTimeout(function() {
+                    expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                    expect(listener2).toHaveBeenCalledWith($("#test")[0]);
+                    listener.calls.reset();
+                    listener2.calls.reset();
+                    $("#test").width(300);
+                }, 200);
+
+                setTimeout(function() {
+                    expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                    expect(listener2).toHaveBeenCalledWith($("#test")[0]);
+                    done();
+                }, 400);
             });
 
-            var listener1 = jasmine.createSpy("listener1");
-            erd.listenTo($("#test, #test2"), listener1);
+            it("should call listener multiple times when listening to multiple elements", function(done) {
+                var erd = elementResizeDetectorMaker({
+                    reporter: reporter,
+                    strategy: strategy
+                });
 
-            setTimeout(function() {
-                expect(listener1).toHaveBeenCalledWith($("#test")[0]);
-                expect(listener1).toHaveBeenCalledWith($("#test2")[0]);
-                done();
-            }, 200);
+                var listener1 = jasmine.createSpy("listener1");
+                erd.listenTo($("#test, #test2"), listener1);
+
+                setTimeout(function() {
+                    expect(listener1).toHaveBeenCalledWith($("#test")[0]);
+                    expect(listener1).toHaveBeenCalledWith($("#test2")[0]);
+                    done();
+                }, 200);
+            });
         });
 
         it("should call listener if the element is changed synchronously after listenTo", function(done) {
@@ -337,7 +365,7 @@ function listenToTest(strategy) {
             }, 200);
         });
 
-        it("should be able to install into elements that are detached from the DOM", function(done) {
+        it("should not emit resize when listenTo is called", function (done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
                 reporter: reporter,
@@ -345,21 +373,39 @@ function listenToTest(strategy) {
             });
 
             var listener1 = jasmine.createSpy("listener1");
-            var div = document.createElement("div");
-            div.style.width = "100%";
-            div.style.height = "100%";
-            erd.listenTo(div, listener1);
+            erd.listenTo($("#test"), listener1);
 
-            setTimeout(function () {
-                $("#test")[0].appendChild(div);
+            setTimeout(function() {
+                expect(listener1).not.toHaveBeenCalledWith($("#test")[0]);
+                done();
+            }, 200);
+        });
+
+        it("should not emit resize event even though the element is back to its start size", function (done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            var listener = jasmine.createSpy("listener1");
+            $("#test").width(200);
+            erd.listenTo($("#test"), listener);
+
+            setTimeout(function() {
+                expect(listener).not.toHaveBeenCalledWith($("#test")[0]);
+                listener.calls.reset();
+                $("#test").width(100);
             }, 200);
 
-            setTimeout(function () {
+            setTimeout(function() {
+                expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                listener.calls.reset();
                 $("#test").width(200);
             }, 400);
 
             setTimeout(function() {
-                expect(listener1).toHaveBeenCalledWith(div);
+                expect(listener).toHaveBeenCalledWith($("#test")[0]);
                 done();
             }, 600);
         });
@@ -426,6 +472,243 @@ function listenToTest(strategy) {
                done();
             }, 600);
         });
+
+        it("should be able to install into elements that are detached from the DOM", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            var listener1 = jasmine.createSpy("listener1");
+            var div = document.createElement("div");
+            div.style.width = "100%";
+            div.style.height = "100%";
+            erd.listenTo(div, listener1);
+
+            setTimeout(function () {
+                $("#test")[0].appendChild(div);
+            }, 200);
+
+            setTimeout(function () {
+                $("#test").width(200);
+            }, 400);
+
+            setTimeout(function() {
+                expect(listener1).toHaveBeenCalledWith(div);
+                done();
+            }, 600);
+        });
+
+        it("should detect resizes caused by padding and font-size changes", function (done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            var listener = jasmine.createSpy("listener");
+            $("#test").html("test");
+            $("#test").css("padding", "0px");
+            $("#test").css("font-size", "16px");
+
+            erd.listenTo($("#test"), listener);
+
+            $("#test").css("padding", "10px");
+
+            setTimeout(function() {
+                expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                listener.calls.reset();
+                $("#test").css("font-size", "20px");
+            }, 200);
+
+            setTimeout(function() {
+                expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                done();
+            }, 400);
+        });
+
+        describe("should handle unrendered elements correctly", function (done) {
+            it("when installing", function (done) {
+                var erd = elementResizeDetectorMaker({
+                    callOnAdd: false,
+                    reporter: reporter,
+                    strategy: strategy
+                });
+
+                $("#test").html("<div id=\"inner\"></div>");
+                $("#test").css("display", "none");
+
+                var listener = jasmine.createSpy("listener");
+                erd.listenTo($("#inner"), listener);
+
+                setTimeout(function () {
+                    expect(listener).not.toHaveBeenCalled();
+                    $("#test").css("display", "");
+                }, 200);
+
+                setTimeout(function () {
+                    expect(listener).toHaveBeenCalledWith($("#inner")[0]);
+                    listener.calls.reset();
+                    $("#inner").width("300px");
+                }, 400);
+
+                setTimeout(function () {
+                    expect(listener).toHaveBeenCalledWith($("#inner")[0]);
+                    listener.calls.reset();
+                    done();
+                }, 600);
+            });
+
+            it("when element gets unrendered after installation", function (done) {
+                var erd = elementResizeDetectorMaker({
+                    callOnAdd: false,
+                    reporter: reporter,
+                    strategy: strategy
+                });
+
+                // The div is rendered to begin with.
+                $("#test").html("<div id=\"inner\"></div>");
+
+                var listener = jasmine.createSpy("listener");
+                erd.listenTo($("#inner"), listener);
+
+                // The it gets unrendered, and it changes width.
+                setTimeout(function () {
+                    expect(listener).not.toHaveBeenCalled();
+                    $("#test").css("display", "none");
+                    $("#inner").width("300px");
+                }, 100);
+
+                // Render the element again.
+                setTimeout(function () {
+                    expect(listener).not.toHaveBeenCalled();
+                    $("#test").css("display", "");
+                }, 200);
+
+                // ERD should detect that the element has changed size as soon as it gets rendered again.
+                setTimeout(function () {
+                    expect(listener).toHaveBeenCalledWith($("#inner")[0]);
+                    done();
+                }, 300);
+            });
+        });
+
+        it("should handle inline elements correctly", function (done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            $("#test").html("<span id=\"inner\">test</span>");
+
+            var listener = jasmine.createSpy("listener");
+            erd.listenTo($("#inner"), listener);
+
+            setTimeout(function () {
+                expect(listener).not.toHaveBeenCalled();
+                $("#inner").append("testing testing");
+            }, 100);
+
+            setTimeout(function () {
+                expect(listener).toHaveBeenCalledWith($("#inner")[0]);
+                done();
+            }, 200);
+        });
+    });
+}
+
+function removalTest(strategy) {
+    describe("[" + strategy + "] resizeDetector.removeListener", function() {
+        it("should remove listener from element", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                strategy: strategy
+            });
+
+            var $testElem = $("#test");
+
+            var listenerCall    = jasmine.createSpy("listener");
+            var listenerNotCall = jasmine.createSpy("listener");
+
+            erd.listenTo($testElem[0], listenerCall);
+            erd.listenTo($testElem[0], listenerNotCall);
+
+            setTimeout(function() {
+                erd.removeListener($testElem[0], listenerNotCall);
+                $testElem.width(300);
+            }, 200);
+
+            setTimeout(function() {
+                expect(listenerCall).toHaveBeenCalled();
+                expect(listenerNotCall).not.toHaveBeenCalled();
+                done();
+            }, 400);
+        });
+    });
+
+    describe("[" + strategy + "] resizeDetector.removeAllListeners", function() {
+        it("should remove all listeners from element", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                strategy: strategy
+            });
+
+            var $testElem = $("#test");
+
+            var listener1 = jasmine.createSpy("listener");
+            var listener2 = jasmine.createSpy("listener");
+
+            erd.listenTo($testElem[0], listener1);
+            erd.listenTo($testElem[0], listener2);
+
+            setTimeout(function() {
+                erd.removeAllListeners($testElem[0]);
+                $testElem.width(300);
+            }, 200);
+
+            setTimeout(function() {
+                expect(listener1).not.toHaveBeenCalled();
+                expect(listener2).not.toHaveBeenCalled();
+                done();
+            }, 400);
+        });
+
+        it("should work for elements that don't have the detector installed", function() {
+            var erd = elementResizeDetectorMaker({
+                strategy: strategy
+            });
+            var $testElem = $("#test");
+            expect(erd.removeAllListeners.bind(erd, $testElem[0])).not.toThrow();
+        });
+    });
+
+    describe("[" + strategy + "] resizeDetector.uninstall", function() {
+        it("should completely remove detector from element", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                strategy: strategy
+            });
+
+            var $testElem = $("#test");
+
+            var listener = jasmine.createSpy("listener");
+
+            erd.listenTo($testElem[0], listener);
+
+            setTimeout(function() {
+                erd.uninstall($testElem[0]);
+                // detector element should be removed
+                expect($testElem[0].childNodes.length).toBe(0);
+                $testElem.width(300);
+            }, 200);
+
+            setTimeout(function() {
+                expect(listener).not.toHaveBeenCalled();
+                done();
+            }, 400);
+        });
     });
 }
 
@@ -450,152 +733,15 @@ describe("element-resize-detector", function() {
         });
     });
 
-    describe("options.callOnAdd", function() {
-        it("should be true default and call all functions when listenTo succeeds", function(done) {
-            var erd = elementResizeDetectorMaker({
-                reporter: reporter
-            });
+    // listenToTest("object");
+    // removalTest("object");
+    //
+    // //Scroll only supported on non-opera browsers.
+    // if(!window.opera) {
+    //     listenToTest("scroll");
+    //     removalTest("scroll");
+    // }
 
-            var listener = jasmine.createSpy("listener");
-            var listener2 = jasmine.createSpy("listener2");
-
-            erd.listenTo($("#test")[0], listener);
-            erd.listenTo($("#test")[0], listener2);
-
-            setTimeout(function() {
-                expect(listener).toHaveBeenCalledWith($("#test")[0]);
-                expect(listener2).toHaveBeenCalledWith($("#test")[0]);
-                listener.calls.reset();
-                listener2.calls.reset();
-                $("#test").width(300);
-            }, 200);
-
-            setTimeout(function() {
-                expect(listener).toHaveBeenCalledWith($("#test")[0]);
-                expect(listener2).toHaveBeenCalledWith($("#test")[0]);
-                done();
-            }, 400);
-        });
-    });
-
-    describe("resizeDetector.removeListener", function() {
-        it("should remove listener from element", function(done) {
-            var erd = elementResizeDetectorMaker({
-                callOnAdd: false
-            });
-
-            var $testElem = $("#test");
-
-            var listenerCall    = jasmine.createSpy("listener");
-            var listenerNotCall = jasmine.createSpy("listener");
-
-            erd.listenTo($testElem[0], listenerCall);
-            erd.listenTo($testElem[0], listenerNotCall);
-
-            setTimeout(function() {
-                erd.removeListener($testElem[0], listenerNotCall);
-                $testElem.width(300);
-            }, 200);
-
-            setTimeout(function() {
-                expect(listenerCall).toHaveBeenCalled();
-                expect(listenerNotCall).not.toHaveBeenCalled();
-                done();
-            }, 400);
-        });
-    });
-
-    describe("resizeDetector.removeAllListeners", function() {
-        it("should remove all listeners from element", function(done) {
-            var erd = elementResizeDetectorMaker({
-                callOnAdd: false
-            });
-
-            var $testElem = $("#test");
-
-            var listener1 = jasmine.createSpy("listener");
-            var listener2 = jasmine.createSpy("listener");
-
-            erd.listenTo($testElem[0], listener1);
-            erd.listenTo($testElem[0], listener2);
-
-            setTimeout(function() {
-                erd.removeAllListeners($testElem[0]);
-                $testElem.width(300);
-            }, 200);
-
-            setTimeout(function() {
-                expect(listener1).not.toHaveBeenCalled();
-                expect(listener2).not.toHaveBeenCalled();
-                done();
-            }, 400);
-        });
-
-        it("should work for elements that don't have the detector installed", function() {
-            var erd = elementResizeDetectorMaker();
-            var $testElem = $("#test");
-            expect(erd.removeAllListeners.bind(erd, $testElem[0])).not.toThrow();
-        });
-    });
-
-    describe("resizeDetector.uninstall - object strategy", function() {
-        it("should completely remove detector from element", function(done) {
-            var erd = elementResizeDetectorMaker({
-                callOnAdd: false,
-                strategy: "object"
-            });
-
-            var $testElem = $("#test");
-
-            var listener = jasmine.createSpy("listener");
-
-            erd.listenTo($testElem[0], listener);
-
-            setTimeout(function() {
-                erd.uninstall($testElem[0]);
-                // detector element should be removed
-                expect($testElem[0].childNodes.length).toBe(0);
-                $testElem.width(300);
-            }, 200);
-
-            setTimeout(function() {
-                expect(listener).not.toHaveBeenCalled();
-                done();
-            }, 400);
-        });
-    });
-
-    describe("resizeDetector.uninstall - scroll strategy", function() {
-        it("should completely remove detector from element", function(done) {
-            var erd = elementResizeDetectorMaker({
-                callOnAdd: false,
-                strategy: "scroll"
-            });
-
-            var $testElem = $("#test");
-
-            var listener = jasmine.createSpy("listener");
-
-            erd.listenTo($testElem[0], listener);
-
-            setTimeout(function() {
-                erd.uninstall($testElem[0]);
-                // detector element should be removed
-                expect($testElem[0].childNodes.length).toBe(0);
-                $testElem.width(300);
-            }, 200);
-
-            setTimeout(function() {
-                expect(listener).not.toHaveBeenCalled();
-                done();
-            }, 400);
-        });
-    });
-
-    listenToTest("object");
-
-    //Scroll only supported on non-opera browsers.
-    if(!window.opera) {
-        listenToTest("scroll");
-    }
+    listenToTest("scroll");
+    removalTest("scroll");
 });

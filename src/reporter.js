@@ -23,7 +23,14 @@ module.exports = function(quiet) {
             //The proxy is needed to be able to call the method with the console context,
             //since we cannot use bind.
             reporter[name] = function reporterProxy() {
-                console[name].apply(console, arguments);
+                var f = console[name];
+                if (f.apply) { //IE9 does not support console.log.apply :)
+                    f.apply(console, arguments);
+                } else {
+                    for (var i = 0; i < arguments.length; i++) {
+                        f(arguments[i]);
+                    }
+                }
             };
         };
 

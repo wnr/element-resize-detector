@@ -87,9 +87,14 @@ module.exports = function(options) {
         idHandler: idHandler
     };
 
-    if(desiredStrategy === "scroll" && browserDetector.isLegacyOpera()) {
-        reporter.warn("Scroll strategy is not supported on legacy Opera. Changing to object strategy.");
-        desiredStrategy = "object";
+    if(desiredStrategy === "scroll") {
+        if (browserDetector.isLegacyOpera()) {
+            reporter.warn("Scroll strategy is not supported on legacy Opera. Changing to object strategy.");
+            desiredStrategy = "object";
+        } else if (browserDetector.isIE(9)) {
+            reporter.warn("Scroll strategy is not supported on IE9. Changing to object strategy.");
+            desiredStrategy = "object";
+        }
     }
 
     if(desiredStrategy === "scroll") {
@@ -170,6 +175,7 @@ module.exports = function(options) {
             elements = [elements];
         } else if (isCollection(elements)) {
             // Convert collection to array for plugins.
+            // TODO: May want to check so that all the elements in the collection are valid elements.
             elements = toArray(elements);
         } else {
             return reporter.error("Invalid arguments. Must be a DOM element or a collection of DOM elements.");
@@ -218,9 +224,13 @@ module.exports = function(options) {
 
                     // Since the element size might have changed since the call to "listenTo", we need to check for this change,
                     // so that a resize event may be emitted.
-                    var style = getComputedStyle(element);
-                    if (stateHandler.getState(element).startSizeStyle.width !== style.width || stateHandler.getState(element).startSizeStyle.height !== style.height) {
-                        onResizeCallback(element);
+                    // Having the startSize object is optional (since it does not make sense in some cases such as unrendered elements), so check for its existance before.
+                    if (stateHandler.getState(element).startSize) {
+                        var width = element.offsetWidth;
+                        var height = element.offsetHeight;
+                        if (stateHandler.getState(element).startSize.width !== width || stateHandler.getState(element).startSize.height !== height) {
+                            onResizeCallback(element);
+                        }
                     }
 
                     elementsReady++;
