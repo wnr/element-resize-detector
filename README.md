@@ -52,12 +52,6 @@ Removes all listeners from the element, but does not completely remove the detec
 ### uninstall(element)
 Completely removes the detector and all listeners.
 
-## Known issues
-These are known issues (that are planned to be fixed in next release).
-
-* It is not supported to listen to `display: inline` elements.
-* Listening to elements with padding is not recommended. One can instead wrap the element desired to listen to with another element that has no padding and listen to it instead.
-
 ## Caveats
 
 1. If the element has `position: static` it will be changed to `position: relative`. Any unintentional `top/right/bottom/left/z-index` styles will therefore be applied and absolute positioned children will be positioned relative to the element.
