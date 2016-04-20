@@ -1,5 +1,5 @@
 # element-resize-detector
-Super-optimized cross-browser resize listener for elements.
+Super-optimized cross-browser resize listener for elements. Up to 37x faster than related approaches (read section 5 of the [article](http://arxiv.org/pdf/1511.01223v1.pdf)).
 
 ```
 npm install element-resize-detector
@@ -20,9 +20,11 @@ var elementResizeDetectorMaker = require("element-resize-detector");
 ### Create instance
 ```js
 // With default options (will use the object-based approach).
+// The object-based approach is deprecated, and will be removed in v2.
 var erd = elementResizeDetectorMaker();
 
-// With the experimental scroll-based approach.
+// With the ultra fast scroll-based approach.
+// This will be the default in v2.
 var erdUltraFast = elementResizeDetectorMaker({
   strategy: "scroll" //<- For ultra performance.
 });
