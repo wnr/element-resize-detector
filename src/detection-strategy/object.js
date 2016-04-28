@@ -71,7 +71,7 @@ module.exports = function(options) {
 
             // The element may not yet be attached to the DOM, and therefore the style object may be empty in some browsers.
             // Since the style object is a reference, it will be updated as soon as the element is attached to the DOM.
-            var style = getComputedStyle(element);
+            var style = window.getComputedStyle(element);
             var width = element.offsetWidth;
             var height = element.offsetHeight;
 
