@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 1.1.1
+ * element-resize-detector 1.1.2
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -453,6 +453,7 @@ module.exports = function(options) {
     var reporter        = options.reporter;
     var batchProcessor  = options.batchProcessor;
     var getState        = options.stateHandler.getState;
+    var hasState        = options.stateHandler.hasState;
     var idHandler       = options.idHandler;
 
     if (!batchProcessor) {
@@ -617,6 +618,11 @@ module.exports = function(options) {
 
         function storeStyle() {
             debug("storeStyle invoked.");
+            if (!getState(element)) {
+                debug("Aborting because element has been uninstalled");
+                return;
+            }
+
             var style = getStyle();
             getState(element).style = style;
         }
@@ -744,6 +750,11 @@ module.exports = function(options) {
 
             debug("Injecting elements");
 
+            if (!getState(element)) {
+                debug("Aborting because element has been uninstalled");
+                return;
+            }
+
             alterPositionStyles();
 
             var rootContainer = getState(element).container;
@@ -802,8 +813,6 @@ module.exports = function(options) {
         }
 
         function registerListenersAndPositionElements() {
-            debug("registerListenersAndPositionElements invoked.");
-
             function updateChildSizes(element, width, height) {
                 var expandChild             = getExpandChildElement(element);
                 var expandWidth             = getExpandWidth(width);
@@ -913,6 +922,13 @@ module.exports = function(options) {
                 }
             }
 
+            debug("registerListenersAndPositionElements invoked.");
+
+            if (!getState(element)) {
+                debug("Aborting because element has been uninstalled");
+                return;
+            }
+
             getState(element).onRendered = handleRender;
             getState(element).onExpand = handleScroll;
             getState(element).onShrink = handleScroll;
@@ -923,6 +939,11 @@ module.exports = function(options) {
 
         function finalizeDomMutation() {
             debug("finalizeDomMutation invoked.");
+
+            if (!getState(element)) {
+                debug("Aborting because element has been uninstalled");
+                return;
+            }
 
             var style = getState(element).style;
             storeCurrentSize(element, style.width, style.height);
@@ -964,10 +985,15 @@ module.exports = function(options) {
     }
 
     function uninstall(element) {
-        //TODO: This should also delete the added state object of the element.
         var state = getState(element);
+
+        if (state.busy) {
+            // Uninstall has been called while the element is being prepared.
+            // Right between the sync code and async batch.
+            return;
+        }
+
         element.removeChild(state.container);
-        delete state.container;
     }
 
     return {
@@ -1024,9 +1050,16 @@ module.exports = function(options) {
     options = options || {};
 
     //idHandler is currently not an option to the listenTo function, so it should not be added to globalOptions.
-    var idHandler = options.idHandler;
+    var idHandler;
 
-    if(!idHandler) {
+    if (options.idHandler) {
+        // To maintain compatability with idHandler.get(element, readonly), make sure to wrap the given idHandler
+        // so that readonly flag always is true when it's used here. This may be removed next major version bump.
+        idHandler = {
+            get: function (element) { options.idHandler.get(element, true); },
+            set: options.idHandler.set
+        };
+    } else {
         var idGenerator = idGeneratorMaker();
         var defaultIdHandler = idHandlerMaker({
             idGenerator: idGenerator,
@@ -1089,7 +1122,7 @@ module.exports = function(options) {
     //Also, same elements can occur in the elements list in the listenTo function.
     //With this map, the ready callbacks can be synchronized between the calls
     //so that the ready callback can always be called when an element is ready - even if
-    //it wasn't installed from the function intself.
+    //it wasn't installed from the function itself.
     var onReadyCallbacks = {};
 
     /**
@@ -1168,6 +1201,11 @@ module.exports = function(options) {
         var debug = getOption(options, "debug", globalOptions.debug);
 
         forEach(elements, function attachListenerToElement(element) {
+            if (!stateHandler.getState(element)) {
+                stateHandler.initState(element);
+                idHandler.set(element);
+            }
+
             var id = idHandler.get(element);
 
             debug && reporter.log("Attaching listener to element", id, element);
@@ -1197,32 +1235,38 @@ module.exports = function(options) {
                 return detectionStrategy.makeDetectable({ debug: debug }, element, function onElementDetectable(element) {
                     debug && reporter.log(id, "onElementDetectable");
 
-                    elementUtils.markAsDetectable(element);
-                    elementUtils.markBusy(element, false);
-                    detectionStrategy.addListener(element, onResizeCallback);
-                    addListener(callOnAdd, element, listener);
+                    if (stateHandler.getState(element)) {
+                        elementUtils.markAsDetectable(element);
+                        elementUtils.markBusy(element, false);
+                        detectionStrategy.addListener(element, onResizeCallback);
+                        addListener(callOnAdd, element, listener);
 
-                    // Since the element size might have changed since the call to "listenTo", we need to check for this change,
-                    // so that a resize event may be emitted.
-                    // Having the startSize object is optional (since it does not make sense in some cases such as unrendered elements), so check for its existance before.
-                    if (stateHandler.getState(element).startSize) {
-                        var width = element.offsetWidth;
-                        var height = element.offsetHeight;
-                        if (stateHandler.getState(element).startSize.width !== width || stateHandler.getState(element).startSize.height !== height) {
-                            onResizeCallback(element);
+                        // Since the element size might have changed since the call to "listenTo", we need to check for this change,
+                        // so that a resize event may be emitted.
+                        // Having the startSize object is optional (since it does not make sense in some cases such as unrendered elements), so check for its existance before.
+                        if (stateHandler.getState(element).startSize) {
+                            var width = element.offsetWidth;
+                            var height = element.offsetHeight;
+                            if (stateHandler.getState(element).startSize.width !== width || stateHandler.getState(element).startSize.height !== height) {
+                                onResizeCallback(element);
+                            }
                         }
+
+                        if(onReadyCallbacks[id]) {
+                            forEach(onReadyCallbacks[id], function(callback) {
+                                callback();
+                            });
+                        }
+                    } else {
+                        // The element has been unisntalled before being detectable.
+                        debug && reporter.log(id, "Element uninstalled before being detectable.");
                     }
+
+                    delete onReadyCallbacks[id];
 
                     elementsReady++;
                     if(elementsReady === elements.length) {
                         onReadyCallback();
-                    }
-
-                    if(onReadyCallbacks[id]) {
-                        forEach(onReadyCallbacks[id], function(callback) {
-                            callback();
-                        });
-                        delete onReadyCallbacks[id];
                     }
                 });
             }
@@ -1276,7 +1320,8 @@ module.exports = function(options) {
      * @returns {boolean} True or false depending on if the element is detectable or not.
      */
     function isDetectable(element) {
-        return !!getState(element).isDetectable;
+        var state = getState(element);
+        return state && !!state.isDetectable;
     }
 
     /**
@@ -1344,39 +1389,44 @@ module.exports = function(options) {
     var getState        = options.stateHandler.getState;
 
     /**
-     * Gets the resize detector id of the element. If the element does not have an id, one will be assigned to the element.
+     * Gets the resize detector id of the element.
      * @public
      * @param {element} element The target element to get the id of.
-     * @param {boolean?} readonly An id will not be assigned to the element if the readonly parameter is true. Default is false.
-     * @returns {string|number} The id of the element.
+     * @returns {string|number|null} The id of the element. Null if it has no id.
      */
-    function getId(element, readonly) {
-        if(!readonly && !hasId(element)) {
-            setId(element);
+    function getId(element) {
+        var state = getState(element);
+
+        if (state && state.id !== undefined) {
+            return state.id;
         }
 
-        return getState(element).id;
+        return null;
     }
 
+    /**
+     * Sets the resize detector id of the element. Requires the element to have a resize detector state initialized.
+     * @public
+     * @param {element} element The target element to set the id of.
+     * @returns {string|number|null} The id of the element.
+     */
     function setId(element) {
+        var state = getState(element);
+
+        if (!state) {
+            throw new Error("setId required the element to have a resize detection state.");
+        }
+
         var id = idGenerator.generate();
 
-        getState(element).id = id;
+        state.id = id;
 
         return id;
     }
 
-    function hasId(element) {
-        return getState(element).id !== undefined;
-    }
-
-    function removeId(element) {
-        delete getState(element).id;
-    }
-
     return {
         get: getId,
-        remove: removeId
+        set: setId
     };
 };
 
@@ -1491,7 +1541,7 @@ function initState(element) {
 }
 
 function getState(element) {
-    return element[prop] || initState(element);
+    return element[prop];
 }
 
 function cleanState(element) {
