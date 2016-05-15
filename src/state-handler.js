@@ -8,7 +8,7 @@ function initState(element) {
 }
 
 function getState(element) {
-    return element[prop] || initState(element);
+    return element[prop];
 }
 
 function cleanState(element) {

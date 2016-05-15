@@ -10,7 +10,8 @@ module.exports = function(options) {
      * @returns {boolean} True or false depending on if the element is detectable or not.
      */
     function isDetectable(element) {
-        return !!getState(element).isDetectable;
+        var state = getState(element);
+        return state && !!state.isDetectable;
     }
 
     /**

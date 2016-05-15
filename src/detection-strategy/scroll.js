@@ -12,6 +12,7 @@ module.exports = function(options) {
     var reporter        = options.reporter;
     var batchProcessor  = options.batchProcessor;
     var getState        = options.stateHandler.getState;
+    var hasState        = options.stateHandler.hasState;
     var idHandler       = options.idHandler;
 
     if (!batchProcessor) {
@@ -176,6 +177,11 @@ module.exports = function(options) {
 
         function storeStyle() {
             debug("storeStyle invoked.");
+            if (!getState(element)) {
+                debug("Aborting because element has been uninstalled");
+                return;
+            }
+
             var style = getStyle();
             getState(element).style = style;
         }
@@ -303,6 +309,11 @@ module.exports = function(options) {
 
             debug("Injecting elements");
 
+            if (!getState(element)) {
+                debug("Aborting because element has been uninstalled");
+                return;
+            }
+
             alterPositionStyles();
 
             var rootContainer = getState(element).container;
@@ -361,8 +372,6 @@ module.exports = function(options) {
         }
 
         function registerListenersAndPositionElements() {
-            debug("registerListenersAndPositionElements invoked.");
-
             function updateChildSizes(element, width, height) {
                 var expandChild             = getExpandChildElement(element);
                 var expandWidth             = getExpandWidth(width);
@@ -472,6 +481,13 @@ module.exports = function(options) {
                 }
             }
 
+            debug("registerListenersAndPositionElements invoked.");
+
+            if (!getState(element)) {
+                debug("Aborting because element has been uninstalled");
+                return;
+            }
+
             getState(element).onRendered = handleRender;
             getState(element).onExpand = handleScroll;
             getState(element).onShrink = handleScroll;
@@ -482,6 +498,11 @@ module.exports = function(options) {
 
         function finalizeDomMutation() {
             debug("finalizeDomMutation invoked.");
+
+            if (!getState(element)) {
+                debug("Aborting because element has been uninstalled");
+                return;
+            }
 
             var style = getState(element).style;
             storeCurrentSize(element, style.width, style.height);
@@ -523,10 +544,15 @@ module.exports = function(options) {
     }
 
     function uninstall(element) {
-        //TODO: This should also delete the added state object of the element.
         var state = getState(element);
+
+        if (state.busy) {
+            // Uninstall has been called while the element is being prepared.
+            // Right between the sync code and async batch.
+            return;
+        }
+
         element.removeChild(state.container);
-        delete state.container;
     }
 
     return {

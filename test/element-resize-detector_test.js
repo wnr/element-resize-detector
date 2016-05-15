@@ -414,20 +414,29 @@ function listenToTest(strategy) {
             var ID_ATTR = "some-fancy-id-attr";
 
             var idHandler = {
-                get: function(element) {
+                get: function(element, readonly) {
                     if(element[ID_ATTR] === undefined) {
-                        var id;
-
-                        if($(element).attr("id") === "test") {
-                            id = "test+1";
-                        } else if($(element).attr("id") === "test2") {
-                            id = "test2+2";
+                        if (readonly) {
+                            return null;
                         }
 
-                        $(element).attr(ID_ATTR, id);
+                        this.set(element);
                     }
 
                     return $(element).attr(ID_ATTR);
+                },
+                set: function (element) {
+                    var id;
+
+                    if($(element).attr("id") === "test") {
+                        id = "test+1";
+                    } else if($(element).attr("id") === "test2") {
+                        id = "test2+2";
+                    }
+
+                    $(element).attr(ID_ATTR, id);
+
+                    return id;
                 }
             };
 
@@ -708,6 +717,18 @@ function removalTest(strategy) {
                 expect(listener).not.toHaveBeenCalled();
                 done();
             }, 400);
+        });
+
+        it("should be able to call uninstall directly after listenTo", function () {
+            var erd = elementResizeDetectorMaker({
+                strategy: strategy
+            });
+
+            var $testElem = $("#test");
+            var listener = jasmine.createSpy("listener");
+
+            erd.listenTo($testElem[0], listener);
+            expect(erd.uninstall.bind(erd, $testElem[0])).not.toThrow();
         });
     });
 }

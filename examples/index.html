@@ -60,7 +60,8 @@
 
             var erd = elementResizeDetectorMaker({
                 strategy: "scroll",
-                callOnAdd: true
+                callOnAdd: true,
+                debug: true
             });
             erd.listenTo(container, updateDimensions);
 

@@ -44,9 +44,16 @@ module.exports = function(options) {
     options = options || {};
 
     //idHandler is currently not an option to the listenTo function, so it should not be added to globalOptions.
-    var idHandler = options.idHandler;
+    var idHandler;
 
-    if(!idHandler) {
+    if (options.idHandler) {
+        // To maintain compatability with idHandler.get(element, readonly), make sure to wrap the given idHandler
+        // so that readonly flag always is true when it's used here. This may be removed next major version bump.
+        idHandler = {
+            get: function (element) { options.idHandler.get(element, true); },
+            set: options.idHandler.set
+        };
+    } else {
         var idGenerator = idGeneratorMaker();
         var defaultIdHandler = idHandlerMaker({
             idGenerator: idGenerator,
@@ -109,7 +116,7 @@ module.exports = function(options) {
     //Also, same elements can occur in the elements list in the listenTo function.
     //With this map, the ready callbacks can be synchronized between the calls
     //so that the ready callback can always be called when an element is ready - even if
-    //it wasn't installed from the function intself.
+    //it wasn't installed from the function itself.
     var onReadyCallbacks = {};
 
     /**
@@ -188,6 +195,11 @@ module.exports = function(options) {
         var debug = getOption(options, "debug", globalOptions.debug);
 
         forEach(elements, function attachListenerToElement(element) {
+            if (!stateHandler.getState(element)) {
+                stateHandler.initState(element);
+                idHandler.set(element);
+            }
+
             var id = idHandler.get(element);
 
             debug && reporter.log("Attaching listener to element", id, element);
@@ -217,32 +229,38 @@ module.exports = function(options) {
                 return detectionStrategy.makeDetectable({ debug: debug }, element, function onElementDetectable(element) {
                     debug && reporter.log(id, "onElementDetectable");
 
-                    elementUtils.markAsDetectable(element);
-                    elementUtils.markBusy(element, false);
-                    detectionStrategy.addListener(element, onResizeCallback);
-                    addListener(callOnAdd, element, listener);
+                    if (stateHandler.getState(element)) {
+                        elementUtils.markAsDetectable(element);
+                        elementUtils.markBusy(element, false);
+                        detectionStrategy.addListener(element, onResizeCallback);
+                        addListener(callOnAdd, element, listener);
 
-                    // Since the element size might have changed since the call to "listenTo", we need to check for this change,
-                    // so that a resize event may be emitted.
-                    // Having the startSize object is optional (since it does not make sense in some cases such as unrendered elements), so check for its existance before.
-                    if (stateHandler.getState(element).startSize) {
-                        var width = element.offsetWidth;
-                        var height = element.offsetHeight;
-                        if (stateHandler.getState(element).startSize.width !== width || stateHandler.getState(element).startSize.height !== height) {
-                            onResizeCallback(element);
+                        // Since the element size might have changed since the call to "listenTo", we need to check for this change,
+                        // so that a resize event may be emitted.
+                        // Having the startSize object is optional (since it does not make sense in some cases such as unrendered elements), so check for its existance before.
+                        if (stateHandler.getState(element).startSize) {
+                            var width = element.offsetWidth;
+                            var height = element.offsetHeight;
+                            if (stateHandler.getState(element).startSize.width !== width || stateHandler.getState(element).startSize.height !== height) {
+                                onResizeCallback(element);
+                            }
                         }
+
+                        if(onReadyCallbacks[id]) {
+                            forEach(onReadyCallbacks[id], function(callback) {
+                                callback();
+                            });
+                        }
+                    } else {
+                        // The element has been unisntalled before being detectable.
+                        debug && reporter.log(id, "Element uninstalled before being detectable.");
                     }
+
+                    delete onReadyCallbacks[id];
 
                     elementsReady++;
                     if(elementsReady === elements.length) {
                         onReadyCallback();
-                    }
-
-                    if(onReadyCallbacks[id]) {
-                        forEach(onReadyCallbacks[id], function(callback) {
-                            callback();
-                        });
-                        delete onReadyCallbacks[id];
                     }
                 });
             }
