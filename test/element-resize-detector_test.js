@@ -528,7 +528,7 @@ function listenToTest(strategy) {
             }, 400);
         });
 
-        describe("should handle unrendered elements correctly", function (done) {
+        describe("should handle unrendered elements correctly", function () {
             it("when installing", function (done) {
                 var erd = elementResizeDetectorMaker({
                     callOnAdd: false,
