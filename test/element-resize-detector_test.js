@@ -708,6 +708,7 @@ function removalTest(strategy) {
 
             setTimeout(function() {
                 erd.uninstall($testElem[0]);
+                erd.uninstall($testElem[0]);
                 // detector element should be removed
                 expect($testElem[0].childNodes.length).toBe(0);
                 $testElem.width(300);
