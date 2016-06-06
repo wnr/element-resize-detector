@@ -546,7 +546,7 @@ module.exports = function(options) {
     function uninstall(element) {
         var state = getState(element);
 
-        if (state.busy) {
+        if (!state || state.busy) {
             // Uninstall has been called while the element is being prepared.
             // Right between the sync code and async batch.
             return;
