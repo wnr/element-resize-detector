@@ -47,12 +47,6 @@ function getStyle(element) {
     return clone(style);
 }
 
-var ensureStyle = ensureMapEqual;
-
-function positonFromStaticToRelative(key, before, after) {
-    return key === "position" && before === "static" && after === "relative";
-}
-
 function getAttributes(element) {
     var attrs = {};
     _.forEach(element.attributes, function(attr) {
@@ -289,15 +283,20 @@ function listenToTest(strategy) {
                     strategy: strategy
                 });
 
-                var before = getStyle($("#test")[0]);
+                function ignoreStyleChange(key, before, after) {
+                    return  (key === "position" && before === "static" && after === "relative") ||
+                            (/^(top|right|bottom|left)$/.test(key) && before === "auto" && after === "0px");
+                }
+
+                var beforeComputedStyle = getStyle($("#test")[0]);
                 erd.listenTo($("#test")[0], _.noop);
-                var after = getStyle($("#test")[0]);
-                ensureStyle(before, after, positonFromStaticToRelative);
+                var afterComputedStyle = getStyle($("#test")[0]);
+                ensureMapEqual(beforeComputedStyle, afterComputedStyle, ignoreStyleChange);
 
                 //Test styles async since making an element listenable is async.
                 setTimeout(function() {
-                    var afterAsync = getStyle($("#test")[0]);
-                    ensureStyle(before, afterAsync, positonFromStaticToRelative);
+                    var afterComputedStyleAsync = getStyle($("#test")[0]);
+                    ensureMapEqual(beforeComputedStyle, afterComputedStyleAsync, ignoreStyleChange);
                     done();
                 }, 200);
             });
@@ -708,7 +707,6 @@ function removalTest(strategy) {
 
             setTimeout(function() {
                 erd.uninstall($testElem[0]);
-                erd.uninstall($testElem[0]);
                 // detector element should be removed
                 expect($testElem[0].childNodes.length).toBe(0);
                 $testElem.width(300);
@@ -729,6 +727,21 @@ function removalTest(strategy) {
             var listener = jasmine.createSpy("listener");
 
             erd.listenTo($testElem[0], listener);
+            expect(erd.uninstall.bind(erd, $testElem[0])).not.toThrow();
+        });
+
+        it("should be able to call uninstall on non-erd elements", function () {
+            var erd = elementResizeDetectorMaker({
+                strategy: strategy
+            });
+
+            var $testElem = $("#test");
+
+            expect(erd.uninstall.bind(erd, $testElem[0])).not.toThrow();
+
+            var listener = jasmine.createSpy("listener");
+            erd.listenTo($testElem[0], listener);
+            expect(erd.uninstall.bind(erd, $testElem[0])).not.toThrow();
             expect(erd.uninstall.bind(erd, $testElem[0])).not.toThrow();
         });
     });

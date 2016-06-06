@@ -546,7 +546,12 @@ module.exports = function(options) {
     function uninstall(element) {
         var state = getState(element);
 
-        if (!state || state.busy) {
+        if (!state) {
+            // Uninstall has been called on a non-erd element.
+            return;
+        }
+
+        if (state.busy) {
             // Uninstall has been called while the element is being prepared.
             // Right between the sync code and async batch.
             return;
