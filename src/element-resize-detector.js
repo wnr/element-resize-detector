@@ -14,6 +14,26 @@ var stateHandler            = require("./state-handler");
 var objectStrategyMaker     = require("./detection-strategy/object.js");
 var scrollStrategyMaker     = require("./detection-strategy/scroll.js");
 
+function isCollection(obj) {
+    return Array.isArray(obj) || obj.length !== undefined;
+}
+
+function toArray(collection) {
+    if (!Array.isArray(collection)) {
+        var array = [];
+        forEach(collection, function (obj) {
+            array.push(obj);
+        });
+        return array;
+    } else {
+        return collection;
+    }
+}
+
+function isElement(obj) {
+    return obj && obj.nodeType === 1;
+}
+
 /**
  * @typedef idHandler
  * @type {object}
@@ -142,26 +162,6 @@ module.exports = function(options) {
             }
         }
 
-        function isCollection(obj) {
-            return Array.isArray(obj) || obj.length !== undefined;
-        }
-
-        function toArray(collection) {
-            if (!Array.isArray(collection)) {
-                var array = [];
-                forEach(elements, function (element) {
-                    array.push(element);
-                });
-                return array;
-            } else {
-                return collection;
-            }
-        }
-
-        function isElement(obj) {
-            return obj && obj.nodeType === 1;
-        }
-
         //Options object may be omitted.
         if(!listener) {
             listener = elements;
@@ -277,10 +277,27 @@ module.exports = function(options) {
         }
     }
 
-    function uninstall(element) {
-      eventListenerHandler.removeAllListeners(element);
-      detectionStrategy.uninstall(element);
-      stateHandler.cleanState(element);
+    function uninstall(elements) {
+        if(!elements) {
+            return reporter.error("At least one element is required.");
+        }
+
+        if (isElement(elements)) {
+            // A single element has been passed in.
+            elements = [elements];
+        } else if (isCollection(elements)) {
+            // Convert collection to array for plugins.
+            // TODO: May want to check so that all the elements in the collection are valid elements.
+            elements = toArray(elements);
+        } else {
+            return reporter.error("Invalid arguments. Must be a DOM element or a collection of DOM elements.");
+        }
+
+        forEach(elements, function (element) {
+            eventListenerHandler.removeAllListeners(element);
+            detectionStrategy.uninstall(element);
+            stateHandler.cleanState(element);
+        });
     }
 
     return {

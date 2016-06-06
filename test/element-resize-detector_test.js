@@ -718,6 +718,30 @@ function removalTest(strategy) {
             }, 400);
         });
 
+        it("should completely remove detector from multiple elements", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                strategy: strategy
+            });
+
+            var listener = jasmine.createSpy("listener");
+
+            erd.listenTo($("#test, #test2"), listener);
+
+            setTimeout(function() {
+                erd.uninstall($("#test, #test2"));
+                // detector element should be removed
+                expect($("#test")[0].childNodes.length).toBe(0);
+                expect($("#test2")[0].childNodes.length).toBe(0);
+                $("#test, #test2").width(300);
+            }, 200);
+
+            setTimeout(function() {
+                expect(listener).not.toHaveBeenCalled();
+                done();
+            }, 400);
+        });
+
         it("should be able to call uninstall directly after listenTo", function () {
             var erd = elementResizeDetectorMaker({
                 strategy: strategy
