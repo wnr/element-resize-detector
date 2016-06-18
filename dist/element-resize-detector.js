@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 1.1.3
+ * element-resize-detector 1.1.4
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -478,10 +478,10 @@ module.exports = function(options) {
         var height = 500;
 
         var child = document.createElement("div");
-        child.style.cssText = "position: absolute; width: " + width*2 + "px; height: " + height*2 + "px; visibility: hidden;";
+        child.style.cssText = "position: absolute; width: " + width*2 + "px; height: " + height*2 + "px; visibility: hidden; margin: 0; padding: 0;";
 
         var container = document.createElement("div");
-        container.style.cssText = "position: absolute; width: " + width + "px; height: " + height + "px; overflow: scroll; visibility: none; top: " + -width*3 + "px; left: " + -height*3 + "px; visibility: hidden;";
+        container.style.cssText = "position: absolute; width: " + width + "px; height: " + height + "px; overflow: scroll; visibility: none; top: " + -width*3 + "px; left: " + -height*3 + "px; visibility: hidden; margin: 0; padding: 0;";
 
         container.appendChild(child);
 
@@ -697,7 +697,7 @@ module.exports = function(options) {
             if (!container) {
                 container                   = document.createElement("div");
                 container.className         = detectionContainerClass;
-                container.style.cssText     = "visibility: hidden; display: inline; width: 0px; height: 0px; z-index: -1; overflow: hidden;";
+                container.style.cssText     = "visibility: hidden; display: inline; width: 0px; height: 0px; z-index: -1; overflow: hidden; margin: 0; padding: 0;";
                 getState(element).container = container;
                 addAnimationClass(container);
                 element.appendChild(container);
@@ -739,7 +739,7 @@ module.exports = function(options) {
                 }
             }
 
-            function getTopBottomBottomRightCssText(left, top, bottom, right) {
+            function getLeftTopBottomRightCssText(left, top, bottom, right) {
                 left = (!left ? "0" : (left + "px"));
                 top = (!top ? "0" : (top + "px"));
                 bottom = (!bottom ? "0" : (bottom + "px"));
@@ -774,7 +774,7 @@ module.exports = function(options) {
             var scrollbarWidth          = scrollbarSizes.width;
             var scrollbarHeight         = scrollbarSizes.height;
             var containerContainerStyle = "position: absolute; overflow: hidden; z-index: -1; visibility: hidden; width: 100%; height: 100%; left: 0px; top: 0px;";
-            var containerStyle          = "position: absolute; overflow: hidden; z-index: -1; visibility: hidden; " + getTopBottomBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
+            var containerStyle          = "position: absolute; overflow: hidden; z-index: -1; visibility: hidden; " + getLeftTopBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
             var expandStyle             = "position: absolute; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%;";
             var shrinkStyle             = "position: absolute; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%;";
             var expandChildStyle        = "position: absolute; left: 0; top: 0;";
