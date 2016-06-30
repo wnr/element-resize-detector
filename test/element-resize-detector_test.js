@@ -624,6 +624,28 @@ function listenToTest(strategy) {
                 done();
             }, 200);
         });
+
+        it("should handle dir=rtl correctly", function (done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                reporter: reporter,
+                strategy: strategy
+            });
+
+            var listener = jasmine.createSpy("listener");
+
+            $("#test")[0].dir = "rtl";
+            erd.listenTo($("#test")[0], listener);
+
+            setTimeout(function() {
+                $("#test").width(300);
+            }, 200);
+
+            setTimeout(function() {
+                expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                done();
+            }, 400);
+        });
     });
 }
 
