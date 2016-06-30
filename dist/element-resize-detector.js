@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 1.1.4
+ * element-resize-detector 1.1.5
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
@@ -696,6 +696,7 @@ module.exports = function(options) {
 
             if (!container) {
                 container                   = document.createElement("div");
+                container.dir               = "ltr"; // Some browsers choke on the resize system being rtl, so force it to ltr. #https://github.com/wnr/element-resize-detector/issues/56
                 container.className         = detectionContainerClass;
                 container.style.cssText     = "visibility: hidden; display: inline; width: 0px; height: 0px; z-index: -1; overflow: hidden; margin: 0; padding: 0;";
                 getState(element).container = container;
