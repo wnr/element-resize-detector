@@ -68,6 +68,29 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.1.5
+
+* Fixed an issue with having parent elements `dir=RTL`.
+
+#### 1.1.4
+
+* Added extra safety styles to injected elements to make them more resilient to global CSS affecting them.
+
+#### 1.1.3
+
+* Now `uninstall` supports being called with elements that haven't been initialized. `uninstall` simply ignores non-erd elements.
+* `uninstall` now also supports a collection of elements.
+
+#### 1.1.2
+
+* Fixed so that `uninstall` may be called directly after a `listenTo` call.
+* Fixed a typo in the readme.
+* Fixed an invalid test.
+
+#### 1.1.1
+
+* Using `window.getComputedStyle` instead of relying on the method being available in the global scope. This enables this library to be used in simulated browser environments such as jsdom.
+
 #### 1.1.0
 
 * Supporting inline elements
