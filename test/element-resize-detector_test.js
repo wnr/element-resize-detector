@@ -50,7 +50,7 @@ function getStyle(element) {
 function getAttributes(element) {
     var attrs = {};
     _.forEach(element.attributes, function(attr) {
-        attrs[attr.nodeName] = attr.nodeValue;
+        attrs[attr.nodeName] = attr.value;
     });
     return attrs;
 }
@@ -602,27 +602,51 @@ function listenToTest(strategy) {
             });
         });
 
-        it("should handle inline elements correctly", function (done) {
-            var erd = elementResizeDetectorMaker({
-                callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
+        describe("inline elements", function () {
+            it("should be listenable", function (done) {
+                var erd = elementResizeDetectorMaker({
+                    callOnAdd: false,
+                    reporter: reporter,
+                    strategy: strategy
+                });
+
+                $("#test").html("<span id=\"inner\">test</span>");
+
+                var listener = jasmine.createSpy("listener");
+                erd.listenTo($("#inner"), listener);
+
+                setTimeout(function () {
+                    expect(listener).not.toHaveBeenCalled();
+                    $("#inner").append("testing testing");
+                }, 100);
+
+                setTimeout(function () {
+                    expect(listener).toHaveBeenCalledWith($("#inner")[0]);
+                    done();
+                }, 200);
             });
 
-            $("#test").html("<span id=\"inner\">test</span>");
+            it("should not get altered dimensions", function (done) {
+                var erd = elementResizeDetectorMaker({
+                    callOnAdd: false,
+                    reporter: reporter,
+                    strategy: strategy
+                });
 
-            var listener = jasmine.createSpy("listener");
-            erd.listenTo($("#inner"), listener);
+                $("#test").html("<span id=\"inner\"></span>");
 
-            setTimeout(function () {
-                expect(listener).not.toHaveBeenCalled();
-                $("#inner").append("testing testing");
-            }, 100);
+                var widthBefore = $("#inner").width();
+                var heightBefore = $("#inner").height();
 
-            setTimeout(function () {
-                expect(listener).toHaveBeenCalledWith($("#inner")[0]);
-                done();
-            }, 200);
+                var listener = jasmine.createSpy("listener");
+                erd.listenTo($("#inner"), listener);
+
+                setTimeout(function () {
+                    expect($("#inner").width()).toEqual(widthBefore);
+                    expect($("#inner").height()).toEqual(heightBefore);
+                    done();
+                }, 100);
+            });
         });
 
         it("should handle dir=rtl correctly", function (done) {

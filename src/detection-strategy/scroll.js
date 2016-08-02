@@ -255,7 +255,6 @@ module.exports = function(options) {
 
             if (!container) {
                 container                   = document.createElement("div");
-                container.dir               = "ltr"; // Some browsers choke on the resize system being rtl, so force it to ltr. #https://github.com/wnr/element-resize-detector/issues/56
                 container.className         = detectionContainerClass;
                 container.style.cssText     = "visibility: hidden; display: inline; width: 0px; height: 0px; z-index: -1; overflow: hidden; margin: 0; padding: 0;";
                 getState(element).container = container;
@@ -346,6 +345,10 @@ module.exports = function(options) {
             var expandChild             = document.createElement("div");
             var shrink                  = document.createElement("div");
             var shrinkChild             = document.createElement("div");
+
+            // Some browsers choke on the resize system being rtl, so force it to ltr. https://github.com/wnr/element-resize-detector/issues/56
+            // However, dir should not be set on the top level container as it alters the dimensions of the target element in some browsers.
+            containerContainer.dir              = "ltr";
 
             containerContainer.style.cssText    = containerContainerStyle;
             containerContainer.className        = detectionContainerClass;
