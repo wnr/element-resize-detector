@@ -50,6 +50,7 @@ module.exports = function(grunt) {
         pkg: grunt.file.readJSON("package.json"),
         banner: "/*!\n" +
                 " * element-resize-detector <%= pkg.version %>\n" +
+                " * Copyright (c) 2016 Lucas Wiener\n" +
                 " * <%= pkg.homepage %>\n" +
                 " * Licensed under <%= pkg.license %>\n" +
                 " */\n",
