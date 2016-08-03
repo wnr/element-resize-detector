@@ -68,6 +68,10 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.1.6
+
+* Fixed an issue with the resize detector changing the dimensions of the target element in some browsers (e.g., IE and FireFox).
+
 #### 1.1.5
 
 * Fixed an issue with having parent elements `dir=RTL`.
