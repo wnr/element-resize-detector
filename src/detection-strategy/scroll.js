@@ -412,7 +412,15 @@ module.exports = function(options) {
                 // Otherwise the if-check in handleScroll is useless.
                 storeCurrentSize(element, width, height);
 
+                // Since we delay the processing of the batch, there is a risk that uninstall has been called before the batch gets to execute.
+                // Since there is no way to cancel the fn executions, we need to add an uninstall guard to all fns of the batch.
+
                 batchProcessor.add(0, function performUpdateChildSizes() {
+                    if (!getState(element)) {
+                        debug("Aborting because element has been uninstalled");
+                        return;
+                    }
+
                     if (options.debug) {
                         var w = element.offsetWidth;
                         var h = element.offsetHeight;
@@ -426,11 +434,23 @@ module.exports = function(options) {
                 });
 
                 batchProcessor.add(1, function updateScrollbars() {
+                    if (!getState(element)) {
+                        debug("Aborting because element has been uninstalled");
+                        return;
+                    }
+
                     positionScrollbars(element, width, height);
                 });
 
                 if (done) {
-                    batchProcessor.add(2, done);
+                    batchProcessor.add(2, function () {
+                        if (!getState(element)) {
+                            debug("Aborting because element has been uninstalled");
+                            return;
+                        }
+
+                        done();
+                    });
                 }
             }
 
