@@ -68,6 +68,10 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.1.7
+
+* Fixed some rare issues with uninstalling elements while preparing/resizing.
+
 #### 1.1.6
 
 * Fixed an issue with the resize detector changing the dimensions of the target element in some browsers (e.g., IE and FireFox).
