@@ -2,9 +2,6 @@
 
 "use strict";
 
-//This messed with tests in IE8.
-//jasmine.getFixtures().fixturesPath = "/base/test/";
-
 function ensureMapEqual(before, after, ignore) {
     var beforeKeys = _.keys(before);
     var afterKeys = _.keys(after);
@@ -297,6 +294,7 @@ function listenToTest(strategy) {
                 setTimeout(function() {
                     var afterComputedStyleAsync = getStyle($("#test")[0]);
                     ensureMapEqual(beforeComputedStyle, afterComputedStyleAsync, ignoreStyleChange);
+                    expect(true).toEqual(true); // Needed so that jasmine does not warn about no expects in the test (the actual expects are in the ensureMapEqual).
                     done();
                 }, 200);
             });
@@ -842,14 +840,14 @@ describe("element-resize-detector", function() {
 
     describe("elementResizeDetectorMaker", function() {
         it("should be globally defined", function() {
-            expect(elementResizeDetectorMaker).toBeFunction();
+            expect(elementResizeDetectorMaker).toBeDefined();
         });
 
         it("should create an element-resize-detector instance", function() {
             var erd = elementResizeDetectorMaker();
 
-            expect(erd).toBeObject();
-            expect(erd).toHaveMethod("listenTo");
+            expect(erd).toBeDefined();
+            expect(erd.listenTo).toBeDefined();
         });
     });
 

@@ -23,8 +23,6 @@
     "grunt-contrib-uglify": "^0.7.0",
     "grunt-karma": "^0.10.1",
     "jasmine-core": "^2.2.0",
-    "jasmine-expect": "^2.0.0-beta1",
-    "jasmine-jquery": "^2.0.6",
     "jquery": "^1.11.2",
     "karma": "^0.12.31",
     "karma-chrome-launcher": "^0.1.7",
