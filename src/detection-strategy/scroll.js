@@ -86,6 +86,34 @@ module.exports = function(options) {
         element.className += " " + detectionContainerClass + "_animation_active";
     }
 
+    function addEvent(el, name, cb) {
+        if (el.addEventListener) {
+            el.addEventListener(name, cb);
+        } else if(el.attachEvent) {
+            el.attachEvent("on" + name, cb);
+        } else {
+            return reporter.error("[scroll] Don't know how to add event listeners.");
+        }
+    }
+
+    function removeEvent(el, name, cb) {
+        if (el.removeEventListener) {
+            el.removeEventListener(name, cb);
+        } else if(el.detachEvent) {
+            el.detachEvent("on" + name, cb);
+        } else {
+            return reporter.error("[scroll] Don't know how to remove event listeners.");
+        }
+    }
+
+    function getExpandElement(element) {
+        return getState(element).container.childNodes[0].childNodes[0].childNodes[0];
+    }
+
+    function getShrinkElement(element) {
+        return getState(element).container.childNodes[0].childNodes[0].childNodes[1];
+    }
+
     /**
      * Adds a resize event listener to the element.
      * @public
@@ -191,16 +219,8 @@ module.exports = function(options) {
             getState(element).lastHeight  = height;
         }
 
-        function getExpandElement(element) {
-            return getState(element).container.childNodes[0].childNodes[0].childNodes[0];
-        }
-
         function getExpandChildElement(element) {
             return getExpandElement(element).childNodes[0];
-        }
-
-        function getShrinkElement(element) {
-            return getState(element).container.childNodes[0].childNodes[0].childNodes[1];
         }
 
         function getWidthOffset() {
@@ -238,16 +258,6 @@ module.exports = function(options) {
             expand.scrollTop    = expandHeight;
             shrink.scrollLeft   = shrinkWidth;
             shrink.scrollTop    = shrinkHeight;
-        }
-
-        function addEvent(el, name, cb) {
-            if (el.addEventListener) {
-                el.addEventListener(name, cb);
-            } else if(el.attachEvent) {
-                el.attachEvent("on" + name, cb);
-            } else {
-                return reporter.error("[scroll] Don't know how to add event listeners.");
-            }
         }
 
         function injectContainerElement() {
@@ -366,13 +376,21 @@ module.exports = function(options) {
             containerContainer.appendChild(container);
             rootContainer.appendChild(containerContainer);
 
-            addEvent(expand, "scroll", function onExpandScroll() {
+            function onExpandScroll() {
                 getState(element).onExpand && getState(element).onExpand();
-            });
+            }
 
-            addEvent(shrink, "scroll", function onShrinkScroll() {
+            function onShrinkScroll() {
                 getState(element).onShrink && getState(element).onShrink();
-            });
+            }
+
+            addEvent(expand, "scroll", onExpandScroll);
+            addEvent(shrink, "scroll", onShrinkScroll);
+
+            // Store the event handlers here so that they may be removed when uninstall is called.
+            // Se uninstall function for an explanation why it is needed.
+            getState(element).onExpandScroll = onExpandScroll;
+            getState(element).onShrinkScroll = onShrinkScroll;
         }
 
         function registerListenersAndPositionElements() {
@@ -558,8 +576,13 @@ module.exports = function(options) {
         if (state.busy) {
             // Uninstall has been called while the element is being prepared.
             // Right between the sync code and async batch.
+            // So no elements have been injected, and no event handlers have been registered.
             return;
         }
+
+        // We need to remove the event listeners, because otherwise the event might fire on an uninstall element which results in an error when trying to get the state of the element.
+        removeEvent(getExpandElement(element), "scroll", state.onExpandScroll);
+        removeEvent(getShrinkElement(element), "scroll", state.onShrinkScroll);
 
         element.removeChild(state.container);
     }

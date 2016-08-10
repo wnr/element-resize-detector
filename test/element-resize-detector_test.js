@@ -800,6 +800,21 @@ function removalTest(strategy) {
             expect(erd.uninstall.bind(erd, $testElem[0])).not.toThrow();
         });
 
+        it("should be able to call uninstall directly async after listenTo", function (done) {
+            var erd = elementResizeDetectorMaker({
+                strategy: strategy
+            });
+
+            var $testElem = $("#test");
+            var listener = jasmine.createSpy("listener");
+
+            erd.listenTo($testElem[0], listener);
+            setTimeout(function () {
+                expect(erd.uninstall.bind(erd, $testElem[0])).not.toThrow();
+                done();
+            }, 0);
+        });
+
         it("should be able to call uninstall on non-erd elements", function () {
             var erd = elementResizeDetectorMaker({
                 strategy: strategy
