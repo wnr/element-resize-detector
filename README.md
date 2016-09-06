@@ -68,6 +68,10 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.1.8
+
+* Fixed a compatability issue with `options.idHandler.get`.
+
 #### 1.1.7
 
 * Fixed some rare issues with uninstalling elements while preparing/resizing.

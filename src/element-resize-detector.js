@@ -70,7 +70,7 @@ module.exports = function(options) {
         // To maintain compatability with idHandler.get(element, readonly), make sure to wrap the given idHandler
         // so that readonly flag always is true when it's used here. This may be removed next major version bump.
         idHandler = {
-            get: function (element) { options.idHandler.get(element, true); },
+            get: function (element) { return options.idHandler.get(element, true); },
             set: options.idHandler.set
         };
     } else {

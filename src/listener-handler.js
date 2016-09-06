@@ -10,7 +10,13 @@ module.exports = function(idHandler) {
      * @returns All listeners for the given element.
      */
     function getListeners(element) {
-        return eventListeners[idHandler.get(element)] || [];
+        var id = idHandler.get(element);
+
+        if (id === undefined) {
+            return [];
+        }
+
+        return eventListeners[id] || [];
     }
 
     /**
@@ -40,7 +46,7 @@ module.exports = function(idHandler) {
     }
 
     function removeAllListeners(element) {
-      var listeners = eventListeners[idHandler.get(element)];
+      var listeners = getListeners(element);
       if (!listeners) { return; }
       listeners.length = 0;
     }
