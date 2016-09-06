@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 1.1.7
+ * element-resize-detector 1.1.8
  * Copyright (c) 2016 Lucas Wiener
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
@@ -1129,7 +1129,7 @@ module.exports = function(options) {
         // To maintain compatability with idHandler.get(element, readonly), make sure to wrap the given idHandler
         // so that readonly flag always is true when it's used here. This may be removed next major version bump.
         idHandler = {
-            get: function (element) { options.idHandler.get(element, true); },
+            get: function (element) { return options.idHandler.get(element, true); },
             set: options.idHandler.set
         };
     } else {
@@ -1513,7 +1513,13 @@ module.exports = function(idHandler) {
      * @returns All listeners for the given element.
      */
     function getListeners(element) {
-        return eventListeners[idHandler.get(element)] || [];
+        var id = idHandler.get(element);
+
+        if (id === undefined) {
+            return [];
+        }
+
+        return eventListeners[id] || [];
     }
 
     /**
@@ -1543,7 +1549,7 @@ module.exports = function(idHandler) {
     }
 
     function removeAllListeners(element) {
-      var listeners = eventListeners[idHandler.get(element)];
+      var listeners = getListeners(element);
       if (!listeners) { return; }
       listeners.length = 0;
     }
