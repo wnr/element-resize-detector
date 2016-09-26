@@ -844,6 +844,58 @@ function removalTest(strategy) {
             }, 50);
         });
 
+        it("should be able to call uninstall in callOnAdd callback", function (done) {
+            var error = false;
+
+            // Ugly hack to catch async errors.
+            window.onerror = function () {
+                error = true;
+            };
+
+            var erd = elementResizeDetectorMaker({
+                strategy: strategy,
+                callOnAdd: true
+            });
+
+            erd.listenTo($("#test"), function () {
+                expect(erd.uninstall.bind(null, ($("#test")))).not.toThrow();
+            });
+
+            setTimeout(function () {
+                expect(error).toBe(false);
+                done();
+                window.error = null;
+            }, 50);
+        });
+
+        it("should be able to call uninstall in callOnAdd callback with multiple elements", function (done) {
+            var error = false;
+
+            // Ugly hack to catch async errors.
+            window.onerror = function () {
+                error = true;
+            };
+
+            var erd = elementResizeDetectorMaker({
+                strategy: strategy,
+                callOnAdd: true
+            });
+
+            var listener = jasmine.createSpy("listener");
+
+            erd.listenTo($("#test, #test2"), function () {
+                expect(erd.uninstall.bind(null, ($("#test, #test2")))).not.toThrow();
+                listener();
+            });
+
+            setTimeout(function () {
+                expect(listener.calls.count()).toBe(1);
+                expect(error).toBe(false);
+                done();
+                window.error = null;
+            }, 50);
+        });
+
         it("should be able to call uninstall on non-erd elements", function () {
             var erd = elementResizeDetectorMaker({
                 strategy: strategy

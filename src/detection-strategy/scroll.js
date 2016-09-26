@@ -271,9 +271,15 @@ module.exports = function(options) {
                 addAnimationClass(container);
                 element.appendChild(container);
 
-                addEvent(container, "animationstart", function onAnimationStart () {
+                var onAnimationStart = function () {
                     getState(element).onRendered && getState(element).onRendered();
-                });
+                };
+
+                addEvent(container, "animationstart", onAnimationStart);
+
+                // Store the event handler here so that they may be removed when uninstall is called.
+                // See uninstall function for an explanation why it is needed.
+                getState(element).onAnimationStart = onAnimationStart;
             }
 
             return container;
@@ -388,7 +394,7 @@ module.exports = function(options) {
             addEvent(shrink, "scroll", onShrinkScroll);
 
             // Store the event handlers here so that they may be removed when uninstall is called.
-            // Se uninstall function for an explanation why it is needed.
+            // See uninstall function for an explanation why it is needed.
             getState(element).onExpandScroll = onExpandScroll;
             getState(element).onShrinkScroll = onShrinkScroll;
         }
@@ -593,18 +599,18 @@ module.exports = function(options) {
             return;
         }
 
-        if (state.busy) {
-            // Uninstall has been called while the element is being prepared.
-            // Right between the sync code and async batch.
-            // So no elements have been injected, and no event handlers have been registered.
-            return;
-        }
+        // Uninstall may have been called in the following scenarios:
+        // (1) Right between the sync code and async batch (here state.busy = true, but nothing have been registered or injected).
+        // (2) In the ready callback of the last level of the batch by another element (here, state.busy = true, but all the stuff has been injected).
+        // (3) After the installation process (here, state.busy = false and all the stuff has been injected).
+        // So to be on the safe side, let's check for each thing before removing.
 
         // We need to remove the event listeners, because otherwise the event might fire on an uninstall element which results in an error when trying to get the state of the element.
-        removeEvent(getExpandElement(element), "scroll", state.onExpandScroll);
-        removeEvent(getShrinkElement(element), "scroll", state.onShrinkScroll);
+        state.onExpandScroll && removeEvent(getExpandElement(element), "scroll", state.onExpandScroll);
+        state.onShrinkScroll && removeEvent(getShrinkElement(element), "scroll", state.onShrinkScroll);
+        state.onAnimationStart && removeEvent(state.container, "animationstart", state.onAnimationStart);
 
-        element.removeChild(state.container);
+        state.container && element.removeChild(state.container);
     }
 
     return {

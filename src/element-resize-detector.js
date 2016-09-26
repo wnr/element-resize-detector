@@ -132,7 +132,7 @@ module.exports = function(options) {
         throw new Error("Invalid strategy name: " + desiredStrategy);
     }
 
-    //Calls can be made to listenTo with elements that are still are being installed.
+    //Calls can be made to listenTo with elements that are still being installed.
     //Also, same elements can occur in the elements list in the listenTo function.
     //With this map, the ready callbacks can be synchronized between the calls
     //so that the ready callback can always be called when an element is ready - even if
@@ -238,10 +238,12 @@ module.exports = function(options) {
                         // Since the element size might have changed since the call to "listenTo", we need to check for this change,
                         // so that a resize event may be emitted.
                         // Having the startSize object is optional (since it does not make sense in some cases such as unrendered elements), so check for its existance before.
-                        if (stateHandler.getState(element).startSize) {
+                        // Also, check the state existance before since the element may have been uninstalled in the installation process.
+                        var state = stateHandler.getState(element);
+                        if (state && state.startSize) {
                             var width = element.offsetWidth;
                             var height = element.offsetHeight;
-                            if (stateHandler.getState(element).startSize.width !== width || stateHandler.getState(element).startSize.height !== height) {
+                            if (state.startSize.width !== width || state.startSize.height !== height) {
                                 onResizeCallback(element);
                             }
                         }
