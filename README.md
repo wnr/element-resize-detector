@@ -68,6 +68,10 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.1.9
+
+* Fixed uninstall issue when `callOnAdd` being true. Also now removing `onAnimationStart` listener when uninstalling. See #49.
+
 #### 1.1.8
 
 * Fixed a compatability issue with `options.idHandler.get`.
