@@ -151,6 +151,7 @@ module.exports = function(options) {
                 //Add an object element as a child to the target element that will be listened to for resize events.
                 var object = document.createElement("object");
                 object.style.cssText = OBJECT_STYLE;
+                object.tabIndex = -1;
                 object.type = "text/html";
                 object.onload = onObjectLoad;
 
