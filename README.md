@@ -70,7 +70,7 @@ Please note that both approaches have been heavily reworked for better performan
 
 #### 1.1.10
 
-* Fixed so that injected scroll elements are `flex: 0`. See #64.
+* Fixed so that injected scroll elements are `flex: none`. See #64.
 * Fixed so that injected object element is not focusable. See #67.
 
 #### 1.1.9
