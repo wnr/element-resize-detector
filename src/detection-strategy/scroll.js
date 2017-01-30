@@ -176,7 +176,7 @@ module.exports = function(options) {
         function getStyle() {
             // Some browsers only force layouts when actually reading the style properties of the style object, so make sure that they are all read here,
             // so that the user of the function can be sure that it will perform the layout here, instead of later (important for batching).
-            var elementStyle            = getComputedStyle(element);
+            var elementStyle            = getComputedStyle(element) || {};
             var style                   = {};
             style.position              = elementStyle.position;
             style.width                 = element.offsetWidth;
