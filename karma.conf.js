@@ -18,7 +18,7 @@ module.exports = function(config) {
         files: [
             "node_modules/jquery/dist/jquery.min.js",
             { pattern: "node_modules/jquery/dist/jquery.min.map", watched: false, included: false, served: true },
-            "node_modules/lodash/index.js",
+            "node_modules/lodash/lodash.min.js",
             "build/element-resize-detector.js",
             "js/*_test.js",
             "test/*_test.js"

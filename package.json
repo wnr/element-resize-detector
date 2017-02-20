@@ -30,7 +30,7 @@
     "karma-safari-launcher": "^0.1.1",
     "karma-sauce-launcher": "^0.2.10",
     "load-grunt-tasks": "^3.0.0",
-    "lodash": "^3.3.1",
+    "lodash": "^4.17.4",
     "sauce-connect-launcher": "^0.10.1"
   },
   "scripts": {
