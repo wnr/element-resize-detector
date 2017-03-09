@@ -844,6 +844,41 @@ function removalTest(strategy) {
             }, 50);
         });
 
+        it("should be able to call uninstall and then install in the middle of a resize (issue #61)", function (done) {
+            var erd = elementResizeDetectorMaker({
+                strategy: strategy
+            });
+
+            var $testElem = $("#test");
+            var testElem = $testElem[0];
+            var listener = jasmine.createSpy("listener");
+
+            erd.listenTo(testElem, listener);
+            setTimeout(function () {
+                // We want the uninstall to happen exactly when a scroll event occured before the delayed batched is going to be processed.
+                // So we intercept the erd shrink/expand functions in the state so that we may call uninstall after the handling of the event.
+                var uninstalled = false;
+                function wrapOnScrollEvent(oldFn) {
+                    return function () {
+                        oldFn();
+                        if (!uninstalled) {
+                            expect(erd.uninstall.bind(erd, testElem)).not.toThrow();
+                            uninstalled = true;
+                            expect(erd.listenTo.bind(erd, testElem, listener)).not.toThrow();
+                            setTimeout(function () {
+                                expect(listener).not.toHaveBeenCalled();
+                                done();
+                            }, 0);
+                        }
+                    };
+                }
+                var state = testElem._erd;
+                state.onExpand = wrapOnScrollEvent(state.onExpand);
+                state.onShrink = wrapOnScrollEvent(state.onShrink);
+                $("#test").width(300);
+            }, 50);
+        });
+
         it("should be able to call uninstall in callOnAdd callback", function (done) {
             var error = false;
 
