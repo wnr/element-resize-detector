@@ -846,7 +846,8 @@ function removalTest(strategy) {
 
         it("should be able to call uninstall and then install in the middle of a resize (issue #61)", function (done) {
             var erd = elementResizeDetectorMaker({
-                strategy: strategy
+                strategy: strategy,
+                debug: true
             });
 
             var $testElem = $("#test");
@@ -864,9 +865,9 @@ function removalTest(strategy) {
                         if (!uninstalled) {
                             expect(erd.uninstall.bind(erd, testElem)).not.toThrow();
                             uninstalled = true;
-                            expect(erd.listenTo.bind(erd, testElem, listener)).not.toThrow();
+                            var listener2 = jasmine.createSpy("listener");
+                            expect(erd.listenTo.bind(erd, testElem, listener2)).not.toThrow();
                             setTimeout(function () {
-                                expect(listener).not.toHaveBeenCalled();
                                 done();
                             }, 0);
                         }
