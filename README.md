@@ -68,6 +68,12 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.1.11
+
+* Cleaned up the development build tools.
+* Updated dev dependencies.
+* Fixed an issue when uninstalling an element, and then calling listenTo in the middle of an old resize event. See #61.
+
 #### 1.1.10
 
 * Fixed so that injected scroll elements are `flex: none`. See #64.
