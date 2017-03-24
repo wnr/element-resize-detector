@@ -60,7 +60,7 @@ Completely removes the detector and all listeners.
 2. A hidden element will be injected as a direct child to the element.
 
 ## Credits
-Big thanks to [https://www.evry.com/](Evry) sponsoring this project.
+Big thanks to [Evry](https://www.evry.com/) sponsoring this project.
 
 This library is using the two approaches (scroll and object) as first described at [http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/).
 
