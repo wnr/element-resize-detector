@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 1.1.11
+ * element-resize-detector 1.1.12
  * Copyright (c) 2016 Lucas Wiener
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
@@ -607,7 +607,17 @@ module.exports = function(options) {
             function isInDocument(element) {
                 return element === element.ownerDocument.body || element.ownerDocument.body.contains(element);
             }
-            return !isInDocument(element);
+
+            if (!isInDocument(element)) {
+                return true;
+            }
+
+            // FireFox returns null style in hidden iframes. See https://github.com/wnr/element-resize-detector/issues/68 and https://bugzilla.mozilla.org/show_bug.cgi?id=795520
+            if (getComputedStyle(element) === null) {
+                return true;
+            }
+
+            return false;
         }
 
         function isUnrendered(element) {
