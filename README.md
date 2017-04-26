@@ -70,6 +70,11 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.1.12
+
+* Fixed an issue with embedded WebView's on Android and iOS (when getComputedStyle.width = null). See #74.
+* Fixed an issue with unrendered iframe in FireFox. See #68.
+
 #### 1.1.11
 
 * Cleaned up the development build tools.
