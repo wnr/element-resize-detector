@@ -1,5 +1,5 @@
 # element-resize-detector
-Super-optimized cross-browser resize listener for elements. Up to 37x faster than related approaches (read section 5 of the [article](http://arxiv.org/pdf/1511.01223v1.pdf)).
+Optimized cross-browser resize listener for elements. Up to 37x faster than related approaches (read section 5 of the [article](http://arxiv.org/pdf/1511.01223v1.pdf)).
 
 ```
 npm install element-resize-detector
@@ -60,6 +60,8 @@ Completely removes the detector and all listeners.
 2. A hidden element will be injected as a direct child to the element.
 
 ## Credits
+Big thanks to [Evry](https://www.evry.com/) sponsoring this project.
+
 This library is using the two approaches (scroll and object) as first described at [http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/).
 
 The scroll based approach implementation was based on Marc J's implementation [https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js](https://github.com/marcj/css-element-queries/blob/master/src/ResizeSensor.js).
