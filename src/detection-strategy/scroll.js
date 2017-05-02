@@ -277,7 +277,7 @@ module.exports = function(options) {
             if (!container) {
                 container                   = document.createElement("div");
                 container.className         = detectionContainerClass;
-                container.style.cssText     = "visibility: hidden; display: inline; width: 0px; height: 0px; z-index: -1; overflow: hidden; margin: 0; padding: 0;";
+                container.style.cssText     = "visibility: hidden; display: block; width: 0px; height: 0px; z-index: -1; overflow: hidden; margin: 0; padding: 0;";
                 getState(element).container = container;
                 addAnimationClass(container);
                 element.appendChild(container);
