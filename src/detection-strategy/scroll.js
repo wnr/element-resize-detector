@@ -326,10 +326,10 @@ module.exports = function(options) {
             }
 
             function getLeftTopBottomRightCssText(left, top, bottom, right) {
-                left = (!left ? "0" : (left + "px"));
-                top = (!top ? "0" : (top + "px"));
-                bottom = (!bottom ? "0" : (bottom + "px"));
-                right = (!right ? "0" : (right + "px"));
+                left = (!left ? "0" : (left + "px !important"));
+                top = (!top ? "0" : (top + "px !important"));
+                bottom = (!bottom ? "0" : (bottom + "px !important"));
+                right = (!right ? "0" : (right + "px !important"));
 
                 return "left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + ";";
             }
@@ -359,12 +359,12 @@ module.exports = function(options) {
 
             var scrollbarWidth          = scrollbarSizes.width;
             var scrollbarHeight         = scrollbarSizes.height;
-            var containerContainerStyle = "position: absolute; flex: none; overflow: hidden; z-index: -1; visibility: hidden; width: 100%; height: 100%; left: 0px; top: 0px;";
-            var containerStyle          = "position: absolute; flex: none; overflow: hidden; z-index: -1; visibility: hidden; " + getLeftTopBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
-            var expandStyle             = "position: absolute; flex: none; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%;";
-            var shrinkStyle             = "position: absolute; flex: none; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%;";
-            var expandChildStyle        = "position: absolute; left: 0; top: 0;";
-            var shrinkChildStyle        = "position: absolute; width: 200%; height: 200%;";
+            var containerContainerStyle = "position: absolute !important; flex: none !important; overflow: hidden !important; z-index: -1 !important; visibility: hidden !important; width: 100% !important; height: 100% !important; left: 0px !important; top: 0px !important;";
+            var containerStyle          = "position: absolute !important; flex: none !important; overflow: hidden !important; z-index: -1 !important; visibility: hidden !important; " + getLeftTopBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
+            var expandStyle             = "position: absolute !important; flex: none !important; overflow: scroll !important; z-index: -1 !important; visibility: hidden !important; width: 100% !important; height: 100% !important;";
+            var shrinkStyle             = "position: absolute !important; flex: none !important; overflow: scroll !important; z-index: -1 !important; visibility: hidden !important; width: 100% !important; height: 100% !important;";
+            var expandChildStyle        = "position: absolute !important; left: 0 !important; top: 0 !important;";
+            var shrinkChildStyle        = "position: absolute !important; width: 200% !important; height: 200% !important;";
 
             var containerContainer      = document.createElement("div");
             var container               = document.createElement("div");
