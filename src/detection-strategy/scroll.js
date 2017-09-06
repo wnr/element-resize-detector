@@ -326,12 +326,12 @@ module.exports = function(options) {
             }
 
             function getLeftTopBottomRightCssText(left, top, bottom, right) {
-                left = (!left ? "0" : (left + "px !important"));
-                top = (!top ? "0" : (top + "px !important"));
-                bottom = (!bottom ? "0" : (bottom + "px !important"));
-                right = (!right ? "0" : (right + "px !important"));
+                left = (!left ? "0" : (left + "px"));
+                top = (!top ? "0" : (top + "px"));
+                bottom = (!bottom ? "0" : (bottom + "px"));
+                right = (!right ? "0" : (right + "px"));
 
-                return "left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + ";";
+                return "left: " + left + "!important; top: " + top + "!important; right: " + right + "!important; bottom: " + bottom + "!important;";
             }
 
             debug("Injecting elements");
