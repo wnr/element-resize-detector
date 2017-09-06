@@ -415,8 +415,8 @@ module.exports = function(options) {
                 var expandChild             = getExpandChildElement(element);
                 var expandWidth             = getExpandWidth(width);
                 var expandHeight            = getExpandHeight(height);
-                expandChild.style.width     = expandWidth + "px";
-                expandChild.style.height    = expandHeight + "px";
+                expandChild.style.width     = expandWidth + "px !important";
+                expandChild.style.height    = expandHeight + "px !important";
             }
 
             function updateDetectorElements(done) {
