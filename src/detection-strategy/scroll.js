@@ -74,10 +74,10 @@ module.exports = function(options) {
             var containerAnimationClass = containerClass + "_animation";
             var containerAnimationActiveClass = containerClass + "_animation_active";
             var style = "/* Created by the element-resize-detector library. */\n";
-            style += "." + containerClass + " > div::-webkit-scrollbar { display: none; }\n\n";
-            style += "." + containerAnimationActiveClass + " { -webkit-animation-duration: 0.1s; animation-duration: 0.1s; -webkit-animation-name: " + containerAnimationClass + "; animation-name: " + containerAnimationClass + "; }\n";
-            style += "@-webkit-keyframes " + containerAnimationClass +  " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }\n";
-            style += "@keyframes " + containerAnimationClass +          " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }";
+            style += "." + containerClass + " > div::-webkit-scrollbar { display: none !important; }\n\n";
+            style += "." + containerAnimationActiveClass + " { -webkit-animation-duration: 0.1s !important; animation-duration: 0.1s !important; -webkit-animation-name: " + containerAnimationClass + " !important; animation-name: " + containerAnimationClass + " !important; }\n";
+            style += "@-webkit-keyframes " + containerAnimationClass +  " { 0% { opacity: 1 !important; } 50% { opacity: 0 !important; } 100% { opacity: 1 !important; } }\n";
+            style += "@keyframes " + containerAnimationClass +          " { 0% { opacity: 1 !important; } 50% { opacity: 0 !important; } 100% { opacity: 1 !important; } }";
             injectStyle(style);
         }
     }
