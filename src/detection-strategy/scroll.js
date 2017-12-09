@@ -107,11 +107,21 @@ module.exports = function(options) {
     }
 
     function getExpandElement(element) {
-        return getState(element).container.childNodes[0].childNodes[0].childNodes[0];
+        var state = getState(element);
+        return state && state.container &&
+            state.container.childNodes &&
+            state.container.childNodes[0] &&
+            state.container.childNodes[0].childNodes &&
+            state.container.childNodes[0].childNodes[0];
     }
 
     function getShrinkElement(element) {
-        return getState(element).container.childNodes[0].childNodes[0].childNodes[1];
+        var state = getState(element);
+        return state && state.container &&
+            state.container.childNodes &&
+            state.container.childNodes[0] &&
+            state.container.childNodes[0].childNodes &&
+            state.container.childNodes[0].childNodes[1];
     }
 
     /**
@@ -231,7 +241,8 @@ module.exports = function(options) {
         }
 
         function getExpandChildElement(element) {
-            return getExpandElement(element).childNodes[0];
+            var element = getExpandElement(element);
+            return element && element.childNodes && element.childNodes[0];
         }
 
         function getWidthOffset() {
@@ -265,10 +276,14 @@ module.exports = function(options) {
             var expandHeight    = getExpandHeight(height);
             var shrinkWidth     = getShrinkWidth(width);
             var shrinkHeight    = getShrinkHeight(height);
-            expand.scrollLeft   = expandWidth;
-            expand.scrollTop    = expandHeight;
-            shrink.scrollLeft   = shrinkWidth;
-            shrink.scrollTop    = shrinkHeight;
+            if (expand) {
+                expand.scrollLeft   = expandWidth;
+                expand.scrollTop    = expandHeight;
+            }
+            if (shrink) {
+                shrink.scrollLeft   = shrinkWidth;
+                shrink.scrollTop    = shrinkHeight;
+            }
         }
 
         function injectContainerElement() {
@@ -415,8 +430,10 @@ module.exports = function(options) {
                 var expandChild             = getExpandChildElement(element);
                 var expandWidth             = getExpandWidth(width);
                 var expandHeight            = getExpandHeight(height);
-                expandChild.style.width     = expandWidth + "px";
-                expandChild.style.height    = expandHeight + "px";
+                if (expandChild) {
+                    expandChild.style.width     = expandWidth + "px";
+                    expandChild.style.height    = expandHeight + "px";
+                }
             }
 
             function updateDetectorElements(done) {
@@ -529,7 +546,7 @@ module.exports = function(options) {
                 debug("Element rendered.");
                 var expand = getExpandElement(element);
                 var shrink = getShrinkElement(element);
-                if (expand.scrollLeft === 0 || expand.scrollTop === 0 || shrink.scrollLeft === 0 || shrink.scrollTop === 0) {
+                if (expand && shrink && expand.scrollLeft === 0 || expand.scrollTop === 0 || shrink.scrollLeft === 0 || shrink.scrollTop === 0) {
                     debug("Scrollbars out of sync. Updating detector elements...");
                     updateDetectorElements(notifyListenersIfNeeded);
                 }
@@ -632,8 +649,10 @@ module.exports = function(options) {
         // So to be on the safe side, let's check for each thing before removing.
 
         // We need to remove the event listeners, because otherwise the event might fire on an uninstall element which results in an error when trying to get the state of the element.
-        state.onExpandScroll && removeEvent(getExpandElement(element), "scroll", state.onExpandScroll);
-        state.onShrinkScroll && removeEvent(getShrinkElement(element), "scroll", state.onShrinkScroll);
+        var expandElement = getExpandElement(element);
+        var shrinkElement = getShrinkElement(element);
+        state.onExpandScroll && expandElement && removeEvent(expandElement, "scroll", state.onExpandScroll);
+        state.onShrinkScroll && shrinkElement && removeEvent(shrinkElement, "scroll", state.onShrinkScroll);
         state.onAnimationStart && removeEvent(state.container, "animationstart", state.onAnimationStart);
 
         state.container && element.removeChild(state.container);
