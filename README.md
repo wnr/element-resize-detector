@@ -70,6 +70,10 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.1.14
+
+* Explicit use of window.getComputedStyle everywhere.
+
 #### 1.1.13
 
 * Only notify listeners when actual size change happened (in the rare case when multiple scroll events happens for the same resize). See #86.
