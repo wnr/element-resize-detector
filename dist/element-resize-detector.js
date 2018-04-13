@@ -1,11 +1,11 @@
 /*!
- * element-resize-detector 1.1.12
+ * element-resize-detector 1.1.14
  * Copyright (c) 2016 Lucas Wiener
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
  */
 
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.elementResizeDetectorMaker = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.elementResizeDetectorMaker = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 
 var utils = require("./utils");
@@ -200,7 +200,7 @@ detector.isIE = function(version) {
 };
 
 detector.isLegacyOpera = function() {
-    return !!window.opera;
+    return window ? !!window.opera : false;
 };
 
 },{}],4:[function(require,module,exports){
@@ -298,7 +298,7 @@ module.exports = function(options) {
 
             // The element may not yet be attached to the DOM, and therefore the style object may be empty in some browsers.
             // Since the style object is a reference, it will be updated as soon as the element is attached to the DOM.
-            var style = window.getComputedStyle(element);
+            var style = window ? window.getComputedStyle(element) : undefined;
             var width = element.offsetWidth;
             var height = element.offsetHeight;
 
@@ -613,7 +613,7 @@ module.exports = function(options) {
             }
 
             // FireFox returns null style in hidden iframes. See https://github.com/wnr/element-resize-detector/issues/68 and https://bugzilla.mozilla.org/show_bug.cgi?id=795520
-            if (getComputedStyle(element) === null) {
+            if (window && window.getComputedStyle(element) === null) {
                 return true;
             }
 
@@ -623,14 +623,14 @@ module.exports = function(options) {
         function isUnrendered(element) {
             // Check the absolute positioned container since the top level container is display: inline.
             var container = getState(element).container.childNodes[0];
-            var style = getComputedStyle(container);
+            var style = window ? window.getComputedStyle(container) : undefined;
             return !style.width || style.width.indexOf("px") === -1; //Can only compute pixel value when rendered.
         }
 
         function getStyle() {
             // Some browsers only force layouts when actually reading the style properties of the style object, so make sure that they are all read here,
             // so that the user of the function can be sure that it will perform the layout here, instead of later (important for batching).
-            var elementStyle            = getComputedStyle(element);
+            var elementStyle            = window ? window.getComputedStyle(element) : undefined;
             var style                   = {};
             style.position              = elementStyle.position;
             style.width                 = element.offsetWidth;
@@ -990,7 +990,7 @@ module.exports = function(options) {
                 var width = element.offsetWidth;
                 var height = element.offsetHeight;
 
-                if (width !== element.lastWidth || height !== element.lastHeight) {
+                if (width !== getState(element).lastWidth || height !== getState(element).lastHeight) {
                     debug("Element size changed.");
                     updateDetectorElements(notifyListenersIfNeeded);
                 } else {
@@ -1618,7 +1618,7 @@ module.exports = function(quiet) {
         error: noop
     };
 
-    if(!quiet && window.console) {
+    if(!quiet && window && window.console) {
         var attachFunction = function(reporter, name) {
             //The proxy is needed to be able to call the method with the console context,
             //since we cannot use bind.
