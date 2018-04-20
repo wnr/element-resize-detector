@@ -394,11 +394,11 @@ module.exports = function(options) {
             rootContainer.appendChild(containerContainer);
 
             function onExpandScroll() {
-                getState(element).onExpand && getState(element).onExpand();
+                getState(element) && getState(element).onExpand && getState(element).onExpand();
             }
 
             function onShrinkScroll() {
-                getState(element).onShrink && getState(element).onShrink();
+                getState(element) && getState(element).onShrink && getState(element).onShrink();
             }
 
             addEvent(expand, "scroll", onExpandScroll);
