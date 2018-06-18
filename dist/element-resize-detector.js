@@ -750,7 +750,7 @@ module.exports = function(options) {
                 var style = getState(element).style;
 
                 if(style.position === "static") {
-                    element.style.setProperty('position', 'relative', options.important ? 'important' : '');
+                    element.style.setProperty('position', 'relative', getOption(options, 'important', false) ? 'important' : '');
 
                     var removeRelativeStyles = function(reporter, element, style, property) {
                         function getNumericalValue(value) {
@@ -864,8 +864,8 @@ module.exports = function(options) {
                 var expandChild             = getExpandChildElement(element);
                 var expandWidth             = getExpandWidth(width);
                 var expandHeight            = getExpandHeight(height);
-                expandChild.style.setProperty('width', expandWidth + 'px', options.important ? 'important' : '');
-                expandChild.style.setProperty('height', expandHeight + 'px', options.important ? 'important' : '');
+                expandChild.style.setProperty('width', expandWidth + 'px', getOption(options, 'important', false) ? 'important' : '');
+                expandChild.style.setProperty('height', expandHeight + 'px', getOption(options, 'important', false) ? 'important' : '');
             }
 
             function updateDetectorElements(done) {
