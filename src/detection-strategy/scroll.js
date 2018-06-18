@@ -33,7 +33,7 @@ module.exports = function(options) {
     injectScrollStyle(styleId, detectionContainerClass);
 
     function buildCssTextString(rules) {
-        var seperator = options.important ? ' !important; ' : '; ';
+        var seperator = getOption(options, "important", false) ? ' !important; ' : '; ';
 
         return (rules.join(seperator) + seperator).trim();
     }
