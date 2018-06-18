@@ -32,15 +32,21 @@ module.exports = function(options) {
     var detectionContainerClass = "erd_scroll_detection_container";
     injectScrollStyle(styleId, detectionContainerClass);
 
+    function buildCssTextString(rules) {
+        var seperator = options.important ? ' !important; ' : '; ';
+
+        return (rules.join(seperator) + seperator).trim();
+    }
+
     function getScrollbarSizes() {
         var width = 500;
         var height = 500;
 
         var child = document.createElement("div");
-        child.style.cssText = "position: absolute !important; width: " + width*2 + "px !important; height: " + height*2 + "px !important; visibility: hidden !important; margin: 0 !important; padding: 0 !important;";
+        child.style.cssText = buildCssTextString(['position: absolute', 'width: ' + width*2 + 'px', 'height: ' + height*2 + 'px', 'visibility: hidden', 'margin: 0', 'padding: 0']);
 
         var container = document.createElement("div");
-        container.style.cssText = "position: absolute !important; width: " + width + "px !important; height: " + height + "px !important; overflow: scroll !important; visibility: none !important; top: " + -width*3 + "px !important; left: " + -height*3 + "px !important; visibility: hidden !important; margin: 0 !important; padding: 0 !important;";
+        container.style.cssText = buildCssTextString["position: absolute", "width: " + width + "px", "height: " + height + "px", "overflow: scroll", "visibility: none", "top: " + -width*3 + "px", "left: " + -height*3 + "px", "visibility: hidden", "margin: 0", "padding: 0"];
 
         container.appendChild(child);
 
@@ -74,10 +80,10 @@ module.exports = function(options) {
             var containerAnimationClass = containerClass + "_animation";
             var containerAnimationActiveClass = containerClass + "_animation_active";
             var style = "/* Created by the element-resize-detector library. */\n";
-            style += "." + containerClass + " > div::-webkit-scrollbar { display: none !important; }\n\n";
-            style += "." + containerAnimationActiveClass + " { -webkit-animation-duration: 0.1s !important; animation-duration: 0.1s !important; -webkit-animation-name: " + containerAnimationClass + " !important; animation-name: " + containerAnimationClass + " !important; }\n";
-            style += "@-webkit-keyframes " + containerAnimationClass +  " { 0% { opacity: 1 !important; } 50% { opacity: 0 !important; } 100% { opacity: 1 !important; } }\n";
-            style += "@keyframes " + containerAnimationClass +          " { 0% { opacity: 1 !important; } 50% { opacity: 0 !important; } 100% { opacity: 1 !important; } }";
+            style += "." + containerClass + " > div::-webkit-scrollbar { " + buildCssTextString(['display: none']) + " }\n\n";
+            style += "." + containerAnimationActiveClass + " { " + buildCssTextString(['-webkit-animation-duration: 0.1s', 'animation-duration: 0.1s', '-webkit-animation-name: ' + containerAnimationClass, 'animation-name: ' + containerAnimationClass]) + " }\n";
+            style += "@-webkit-keyframes " + containerAnimationClass +  " { 0% { " + buildCssTextString(['opacity: 1']) + " } 50% { " + buildCssTextString(['opacity: 0']) + " } 100% { " + buildCssTextString(['opacity: 1']) + " } }\n";
+            style += "@keyframes " + containerAnimationClass +          " { 0% { " + buildCssTextString(['opacity: 1']) + " } 50% { " + buildCssTextString(['opacity: 0']) + " } 100% { " + buildCssTextString(['opacity: 1']) + " } }";
             injectStyle(style);
         }
     }
@@ -277,7 +283,7 @@ module.exports = function(options) {
             if (!container) {
                 container                   = document.createElement("div");
                 container.className         = detectionContainerClass;
-                container.style.cssText     = "visibility: hidden !important; display: inline !important; width: 0px !important; height: 0px !important; z-index: -1 !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important;";
+                container.style.cssText     = buildCssTextString(["visibility: hidden", "display: inline", "width: 0px", "height: 0px", "z-index: -1", "overflow: hidden", "margin: 0", "padding: 0"]);
                 getState(element).container = container;
                 addAnimationClass(container);
                 element.appendChild(container);
@@ -301,7 +307,7 @@ module.exports = function(options) {
                 var style = getState(element).style;
 
                 if(style.position === "static") {
-                    element.style.setProperty('position', 'relative', 'important');
+                    element.style.setProperty('position', 'relative', options.important ? 'important' : '');
 
                     var removeRelativeStyles = function(reporter, element, style, property) {
                         function getNumericalValue(value) {
@@ -331,7 +337,7 @@ module.exports = function(options) {
                 bottom = (!bottom ? "0" : (bottom + "px"));
                 right = (!right ? "0" : (right + "px"));
 
-                return "left: " + left + "!important; top: " + top + "!important; right: " + right + "!important; bottom: " + bottom + "!important;";
+                return buildCssTextString(['left' + left, 'top: ' + top, 'right: ' + right, 'bottom: ' + bottom]);
             }
 
             debug("Injecting elements");
@@ -359,12 +365,12 @@ module.exports = function(options) {
 
             var scrollbarWidth          = scrollbarSizes.width;
             var scrollbarHeight         = scrollbarSizes.height;
-            var containerContainerStyle = "position: absolute !important; flex: none !important; overflow: hidden !important; z-index: -1 !important; visibility: hidden !important; width: 100% !important; height: 100% !important; left: 0px !important; top: 0px !important;";
-            var containerStyle          = "position: absolute !important; flex: none !important; overflow: hidden !important; z-index: -1 !important; visibility: hidden !important; " + getLeftTopBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
-            var expandStyle             = "position: absolute !important; flex: none !important; overflow: scroll !important; z-index: -1 !important; visibility: hidden !important; width: 100% !important; height: 100% !important;";
-            var shrinkStyle             = "position: absolute !important; flex: none !important; overflow: scroll !important; z-index: -1 !important; visibility: hidden !important; width: 100% !important; height: 100% !important;";
-            var expandChildStyle        = "position: absolute !important; left: 0 !important; top: 0 !important;";
-            var shrinkChildStyle        = "position: absolute !important; width: 200% !important; height: 200% !important;";
+            var containerContainerStyle = buildCssTextString(["position: absolute", "flex: none", "overflow: hidden", "z-index: -1", "visibility: hidden", "width: 100%", "height: 100%", "left: 0px", "top: 0px"]);
+            var containerStyle          = buildCssTextString(["position: absolute", "flex: none", "overflow: hidden", "z-index: -1", "visibility: hidden"].concat(getLeftTopBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth)));
+            var expandStyle             = buildCssTextString(["position: absolute", "flex: none", "overflow: scroll", "z-index: -1", "visibility: hidden", "width: 100%", "height: 100%"]);
+            var shrinkStyle             = buildCssTextString(["position: absolute", "flex: none", "overflow: scroll", "z-index: -1", "visibility: hidden", "width: 100%", "height: 100%"]);
+            var expandChildStyle        = buildCssTextString(["position: absolute", "left: 0", "top: 0"]);
+            var shrinkChildStyle        = buildCssTextString(["position: absolute", "width: 200%", "height: 200%"]);
 
             var containerContainer      = document.createElement("div");
             var container               = document.createElement("div");
@@ -415,8 +421,8 @@ module.exports = function(options) {
                 var expandChild             = getExpandChildElement(element);
                 var expandWidth             = getExpandWidth(width);
                 var expandHeight            = getExpandHeight(height);
-                expandChild.style.setProperty('width', `${expandWidth}px`, 'important');
-                expandChild.style.setProperty('height', `${expandHeight}px`, 'important');
+                expandChild.style.setProperty('width', expandWidth + 'px', options.important ? 'important' : '');
+                expandChild.style.setProperty('height', expandHeight + 'px', options.important ? 'important' : '');
             }
 
             function updateDetectorElements(done) {
