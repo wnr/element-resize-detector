@@ -107,11 +107,13 @@ module.exports = function(options) {
     //The detection strategy to be used.
     var detectionStrategy;
     var desiredStrategy = getOption(options, "strategy", "object");
+    var importantCssRules = getOption(options, "important", false);
     var strategyOptions = {
         reporter: reporter,
         batchProcessor: batchProcessor,
         stateHandler: stateHandler,
-        idHandler: idHandler
+        idHandler: idHandler,
+        important: importantCssRules
     };
 
     if(desiredStrategy === "scroll") {
