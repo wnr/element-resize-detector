@@ -82,8 +82,8 @@ module.exports = function(options) {
             var style = "/* Created by the element-resize-detector library. */\n";
             style += "." + containerClass + " > div::-webkit-scrollbar { " + buildCssTextString(['display: none']) + " }\n\n";
             style += "." + containerAnimationActiveClass + " { " + buildCssTextString(['-webkit-animation-duration: 0.1s', 'animation-duration: 0.1s', '-webkit-animation-name: ' + containerAnimationClass, 'animation-name: ' + containerAnimationClass]) + " }\n";
-            style += "@-webkit-keyframes " + containerAnimationClass +  " { 0% { " + buildCssTextString(['opacity: 1']) + " } 50% { " + buildCssTextString(['opacity: 0']) + " } 100% { " + buildCssTextString(['opacity: 1']) + " } }\n";
-            style += "@keyframes " + containerAnimationClass +          " { 0% { " + buildCssTextString(['opacity: 1']) + " } 50% { " + buildCssTextString(['opacity: 0']) + " } 100% { " + buildCssTextString(['opacity: 1']) + " } }";
+            style += "@-webkit-keyframes " + containerAnimationClass +  " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }\n";
+            style += "@keyframes " + containerAnimationClass +          " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }";
             injectStyle(style);
         }
     }
