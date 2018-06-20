@@ -489,7 +489,7 @@ module.exports = function(options) {
         child.style.cssText = buildCssTextString(['position: absolute', 'width: ' + width*2 + 'px', 'height: ' + height*2 + 'px', 'visibility: hidden', 'margin: 0', 'padding: 0']);
 
         var container = document.createElement("div");
-        container.style.cssText = buildCssTextString["position: absolute", "width: " + width + "px", "height: " + height + "px", "overflow: scroll", "visibility: none", "top: " + -width*3 + "px", "left: " + -height*3 + "px", "visibility: hidden", "margin: 0", "padding: 0"];
+        container.style.cssText = buildCssTextString(["position: absolute", "width: " + width + "px", "height: " + height + "px", "overflow: scroll", "visibility: none", "top: " + -width*3 + "px", "left: " + -height*3 + "px", "visibility: hidden", "margin: 0", "padding: 0"]);
 
         container.appendChild(child);
 
