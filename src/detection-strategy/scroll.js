@@ -337,7 +337,7 @@ module.exports = function(options) {
                 bottom = (!bottom ? "0" : (bottom + "px"));
                 right = (!right ? "0" : (right + "px"));
 
-                return buildCssTextString(['left' + left, 'top: ' + top, 'right: ' + right, 'bottom: ' + bottom]);
+                return ['left' + left, 'top: ' + top, 'right: ' + right, 'bottom: ' + bottom];
             }
 
             debug("Injecting elements");
