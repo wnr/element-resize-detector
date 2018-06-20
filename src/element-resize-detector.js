@@ -228,7 +228,7 @@ module.exports = function(options) {
                 debug && reporter.log(id, "Making detectable...");
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
                 elementUtils.markBusy(element, true);
-                return detectionStrategy.makeDetectable({ debug: debug }, element, function onElementDetectable(element) {
+                return detectionStrategy.makeDetectable({ debug: debug, important: importantCssRules }, element, function onElementDetectable(element) {
                     debug && reporter.log(id, "onElementDetectable");
 
                     if (stateHandler.getState(element)) {
