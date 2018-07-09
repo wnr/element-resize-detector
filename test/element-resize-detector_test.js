@@ -949,6 +949,37 @@ function removalTest(strategy) {
     });
 }
 
+function importantRuleTest(strategy) {
+    describe("[" + strategy + "] resizeDetector.important", function() {
+        it("should add all rules with important", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: true,
+                strategy: strategy,
+                important: true
+            });
+
+            var testElem = $("#test");
+            var listenerCall    = jasmine.createSpy("listener");
+
+            erd.listenTo(testElem[0], listenerCall);
+
+            setTimeout(function() {
+                expect(testElem[0].style.cssText).toMatch(/!important;$/);
+
+                testElem.find("*").toArray().forEach(function(element) {
+                    var rules = element.style.cssText.split(";").filter(function(rule) { return !!rule; });
+    
+                    rules.forEach(function(rule) {
+                        expect(rule).toMatch(/!important$/);
+                    });
+                });
+                
+                done();
+            }, 400);
+        });
+    });
+}
+
 describe("element-resize-detector", function() {
     beforeEach(function() {
         //This messed with tests in IE8.
@@ -981,4 +1012,6 @@ describe("element-resize-detector", function() {
 
     listenToTest("scroll");
     removalTest("scroll");
+    importantRuleTest("scroll");
+    importantRuleTest("object");
 });

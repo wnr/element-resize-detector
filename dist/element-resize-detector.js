@@ -271,6 +271,12 @@ module.exports = function(options) {
         }
     }
 
+    function buildCssTextString(rules) {
+        var seperator = options.important ? " !important; " : "; ";
+
+        return (rules.join(seperator) + seperator).trim();
+    }
+
     /**
      * Makes an element detectable and ready to be listened for resize events. Will call the callback when the element is ready to be listened for resize changes.
      * @private
@@ -289,7 +295,7 @@ module.exports = function(options) {
         var debug = options.debug;
 
         function injectObject(element, callback) {
-            var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
+            var OBJECT_STYLE = buildCssTextString(["display: block", "position: absolute", "top: 0", "left: 0", "width: 100%", "height: 100%", "border: none", "padding: 0", "margin: 0", "opacity: 0", "z-index: -1000", "pointer-events: none"]);
 
             //The target element needs to be positioned (everything except static) so the absolute positioned object will be positioned relative to the target element.
 
@@ -310,7 +316,7 @@ module.exports = function(options) {
             function mutateDom() {
                 function alterPositionStyles() {
                     if(style.position === "static") {
-                        element.style.position = "relative";
+                        element.style.setProperty("position", "relative", options.important ? "important" : "");
 
                         var removeRelativeStyles = function(reporter, element, style, property) {
                             function getNumericalValue(value) {
@@ -321,7 +327,7 @@ module.exports = function(options) {
 
                             if(value !== "auto" && getNumericalValue(value) !== "0") {
                                 reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
-                                element.style[property] = 0;
+                                element.style.setProperty(property, "0", options.important ? "important" : "");
                             }
                         };
 
@@ -476,7 +482,7 @@ module.exports = function(options) {
     injectScrollStyle(styleId, detectionContainerClass);
 
     function buildCssTextString(rules) {
-        var seperator = options.important ? ' !important; ' : '; ';
+        var seperator = options.important ? " !important; " : "; ";
 
         return (rules.join(seperator) + seperator).trim();
     }
@@ -486,7 +492,7 @@ module.exports = function(options) {
         var height = 500;
 
         var child = document.createElement("div");
-        child.style.cssText = buildCssTextString(['position: absolute', 'width: ' + width*2 + 'px', 'height: ' + height*2 + 'px', 'visibility: hidden', 'margin: 0', 'padding: 0']);
+        child.style.cssText = buildCssTextString(["position: absolute", "width: " + width*2 + "px", "height: " + height*2 + "px", "visibility: hidden", "margin: 0", "padding: 0"]);
 
         var container = document.createElement("div");
         container.style.cssText = buildCssTextString(["position: absolute", "width: " + width + "px", "height: " + height + "px", "overflow: scroll", "visibility: none", "top: " + -width*3 + "px", "left: " + -height*3 + "px", "visibility: hidden", "margin: 0", "padding: 0"]);
@@ -523,8 +529,8 @@ module.exports = function(options) {
             var containerAnimationClass = containerClass + "_animation";
             var containerAnimationActiveClass = containerClass + "_animation_active";
             var style = "/* Created by the element-resize-detector library. */\n";
-            style += "." + containerClass + " > div::-webkit-scrollbar { " + buildCssTextString(['display: none']) + " }\n\n";
-            style += "." + containerAnimationActiveClass + " { " + buildCssTextString(['-webkit-animation-duration: 0.1s', 'animation-duration: 0.1s', '-webkit-animation-name: ' + containerAnimationClass, 'animation-name: ' + containerAnimationClass]) + " }\n";
+            style += "." + containerClass + " > div::-webkit-scrollbar { " + buildCssTextString(["display: none"]) + " }\n\n";
+            style += "." + containerAnimationActiveClass + " { " + buildCssTextString(["-webkit-animation-duration: 0.1s", "animation-duration: 0.1s", "-webkit-animation-name: " + containerAnimationClass, "animation-name: " + containerAnimationClass]) + " }\n";
             style += "@-webkit-keyframes " + containerAnimationClass +  " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }\n";
             style += "@keyframes " + containerAnimationClass +          " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }";
             injectStyle(style);
@@ -750,7 +756,7 @@ module.exports = function(options) {
                 var style = getState(element).style;
 
                 if(style.position === "static") {
-                    element.style.setProperty('position', 'relative',options.important ? 'important' : '');
+                    element.style.setProperty("position", "relative",options.important ? "important" : "");
 
                     var removeRelativeStyles = function(reporter, element, style, property) {
                         function getNumericalValue(value) {
@@ -780,7 +786,7 @@ module.exports = function(options) {
                 bottom = (!bottom ? "0" : (bottom + "px"));
                 right = (!right ? "0" : (right + "px"));
 
-                return ['left: ' + left, 'top: ' + top, 'right: ' + right, 'bottom: ' + bottom];
+                return ["left: " + left, "top: " + top, "right: " + right, "bottom: " + bottom];
             }
 
             debug("Injecting elements");
@@ -864,8 +870,8 @@ module.exports = function(options) {
                 var expandChild             = getExpandChildElement(element);
                 var expandWidth             = getExpandWidth(width);
                 var expandHeight            = getExpandHeight(height);
-                expandChild.style.setProperty('width', expandWidth + 'px', options.important ? 'important' : '');
-                expandChild.style.setProperty('height', expandHeight + 'px', options.important ? 'important' : '');
+                expandChild.style.setProperty("width", expandWidth + "px", options.important ? "important" : "");
+                expandChild.style.setProperty("height", expandHeight + "px", options.important ? "important" : "");
             }
 
             function updateDetectorElements(done) {
