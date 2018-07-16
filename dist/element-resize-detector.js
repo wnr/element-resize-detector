@@ -5,7 +5,7 @@
  * Licensed under MIT
  */
 
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.elementResizeDetectorMaker = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.elementResizeDetectorMaker = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 
 var utils = require("./utils");
@@ -271,6 +271,12 @@ module.exports = function(options) {
         }
     }
 
+    function buildCssTextString(rules) {
+        var seperator = options.important ? " !important; " : "; ";
+
+        return (rules.join(seperator) + seperator).trim();
+    }
+
     /**
      * Makes an element detectable and ready to be listened for resize events. Will call the callback when the element is ready to be listened for resize changes.
      * @private
@@ -289,7 +295,7 @@ module.exports = function(options) {
         var debug = options.debug;
 
         function injectObject(element, callback) {
-            var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
+            var OBJECT_STYLE = buildCssTextString(["display: block", "position: absolute", "top: 0", "left: 0", "width: 100%", "height: 100%", "border: none", "padding: 0", "margin: 0", "opacity: 0", "z-index: -1000", "pointer-events: none"]);
 
             //The target element needs to be positioned (everything except static) so the absolute positioned object will be positioned relative to the target element.
 
@@ -310,7 +316,7 @@ module.exports = function(options) {
             function mutateDom() {
                 function alterPositionStyles() {
                     if(style.position === "static") {
-                        element.style.position = "relative";
+                        element.style.setProperty("position", "relative", options.important ? "important" : "");
 
                         var removeRelativeStyles = function(reporter, element, style, property) {
                             function getNumericalValue(value) {
@@ -321,7 +327,7 @@ module.exports = function(options) {
 
                             if(value !== "auto" && getNumericalValue(value) !== "0") {
                                 reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
-                                element.style[property] = 0;
+                                element.style.setProperty(property, "0", options.important ? "important" : "");
                             }
                         };
 
@@ -475,15 +481,21 @@ module.exports = function(options) {
     var detectionContainerClass = "erd_scroll_detection_container";
     injectScrollStyle(styleId, detectionContainerClass);
 
+    function buildCssTextString(rules) {
+        var seperator = options.important ? " !important; " : "; ";
+
+        return (rules.join(seperator) + seperator).trim();
+    }
+
     function getScrollbarSizes() {
         var width = 500;
         var height = 500;
 
         var child = document.createElement("div");
-        child.style.cssText = "position: absolute; width: " + width*2 + "px; height: " + height*2 + "px; visibility: hidden; margin: 0; padding: 0;";
+        child.style.cssText = buildCssTextString(["position: absolute", "width: " + width*2 + "px", "height: " + height*2 + "px", "visibility: hidden", "margin: 0", "padding: 0"]);
 
         var container = document.createElement("div");
-        container.style.cssText = "position: absolute; width: " + width + "px; height: " + height + "px; overflow: scroll; visibility: none; top: " + -width*3 + "px; left: " + -height*3 + "px; visibility: hidden; margin: 0; padding: 0;";
+        container.style.cssText = buildCssTextString(["position: absolute", "width: " + width + "px", "height: " + height + "px", "overflow: scroll", "visibility: none", "top: " + -width*3 + "px", "left: " + -height*3 + "px", "visibility: hidden", "margin: 0", "padding: 0"]);
 
         container.appendChild(child);
 
@@ -517,8 +529,8 @@ module.exports = function(options) {
             var containerAnimationClass = containerClass + "_animation";
             var containerAnimationActiveClass = containerClass + "_animation_active";
             var style = "/* Created by the element-resize-detector library. */\n";
-            style += "." + containerClass + " > div::-webkit-scrollbar { display: none; }\n\n";
-            style += "." + containerAnimationActiveClass + " { -webkit-animation-duration: 0.1s; animation-duration: 0.1s; -webkit-animation-name: " + containerAnimationClass + "; animation-name: " + containerAnimationClass + "; }\n";
+            style += "." + containerClass + " > div::-webkit-scrollbar { " + buildCssTextString(["display: none"]) + " }\n\n";
+            style += "." + containerAnimationActiveClass + " { " + buildCssTextString(["-webkit-animation-duration: 0.1s", "animation-duration: 0.1s", "-webkit-animation-name: " + containerAnimationClass, "animation-name: " + containerAnimationClass]) + " }\n";
             style += "@-webkit-keyframes " + containerAnimationClass +  " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }\n";
             style += "@keyframes " + containerAnimationClass +          " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }";
             injectStyle(style);
@@ -720,7 +732,7 @@ module.exports = function(options) {
             if (!container) {
                 container                   = document.createElement("div");
                 container.className         = detectionContainerClass;
-                container.style.cssText     = "visibility: hidden; display: inline; width: 0px; height: 0px; z-index: -1; overflow: hidden; margin: 0; padding: 0;";
+                container.style.cssText     = buildCssTextString(["visibility: hidden", "display: inline", "width: 0px", "height: 0px", "z-index: -1", "overflow: hidden", "margin: 0", "padding: 0"]);
                 getState(element).container = container;
                 addAnimationClass(container);
                 element.appendChild(container);
@@ -744,7 +756,7 @@ module.exports = function(options) {
                 var style = getState(element).style;
 
                 if(style.position === "static") {
-                    element.style.position = "relative";
+                    element.style.setProperty("position", "relative",options.important ? "important" : "");
 
                     var removeRelativeStyles = function(reporter, element, style, property) {
                         function getNumericalValue(value) {
@@ -774,7 +786,7 @@ module.exports = function(options) {
                 bottom = (!bottom ? "0" : (bottom + "px"));
                 right = (!right ? "0" : (right + "px"));
 
-                return "left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom + ";";
+                return ["left: " + left, "top: " + top, "right: " + right, "bottom: " + bottom];
             }
 
             debug("Injecting elements");
@@ -802,12 +814,12 @@ module.exports = function(options) {
 
             var scrollbarWidth          = scrollbarSizes.width;
             var scrollbarHeight         = scrollbarSizes.height;
-            var containerContainerStyle = "position: absolute; flex: none; overflow: hidden; z-index: -1; visibility: hidden; width: 100%; height: 100%; left: 0px; top: 0px;";
-            var containerStyle          = "position: absolute; flex: none; overflow: hidden; z-index: -1; visibility: hidden; " + getLeftTopBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth);
-            var expandStyle             = "position: absolute; flex: none; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%;";
-            var shrinkStyle             = "position: absolute; flex: none; overflow: scroll; z-index: -1; visibility: hidden; width: 100%; height: 100%;";
-            var expandChildStyle        = "position: absolute; left: 0; top: 0;";
-            var shrinkChildStyle        = "position: absolute; width: 200%; height: 200%;";
+            var containerContainerStyle = buildCssTextString(["position: absolute", "flex: none", "overflow: hidden", "z-index: -1", "visibility: hidden", "width: 100%", "height: 100%", "left: 0px", "top: 0px"]);
+            var containerStyle          = buildCssTextString(["position: absolute", "flex: none", "overflow: hidden", "z-index: -1", "visibility: hidden"].concat(getLeftTopBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth)));
+            var expandStyle             = buildCssTextString(["position: absolute", "flex: none", "overflow: scroll", "z-index: -1", "visibility: hidden", "width: 100%", "height: 100%"]);
+            var shrinkStyle             = buildCssTextString(["position: absolute", "flex: none", "overflow: scroll", "z-index: -1", "visibility: hidden", "width: 100%", "height: 100%"]);
+            var expandChildStyle        = buildCssTextString(["position: absolute", "left: 0", "top: 0"]);
+            var shrinkChildStyle        = buildCssTextString(["position: absolute", "width: 200%", "height: 200%"]);
 
             var containerContainer      = document.createElement("div");
             var container               = document.createElement("div");
@@ -858,8 +870,8 @@ module.exports = function(options) {
                 var expandChild             = getExpandChildElement(element);
                 var expandWidth             = getExpandWidth(width);
                 var expandHeight            = getExpandHeight(height);
-                expandChild.style.width     = expandWidth + "px";
-                expandChild.style.height    = expandHeight + "px";
+                expandChild.style.setProperty("width", expandWidth + "px", options.important ? "important" : "");
+                expandChild.style.setProperty("height", expandHeight + "px", options.important ? "important" : "");
             }
 
             function updateDetectorElements(done) {
@@ -1199,11 +1211,13 @@ module.exports = function(options) {
     //The detection strategy to be used.
     var detectionStrategy;
     var desiredStrategy = getOption(options, "strategy", "object");
+    var importantCssRules = getOption(options, "important", false);
     var strategyOptions = {
         reporter: reporter,
         batchProcessor: batchProcessor,
         stateHandler: stateHandler,
-        idHandler: idHandler
+        idHandler: idHandler,
+        important: importantCssRules
     };
 
     if(desiredStrategy === "scroll") {
@@ -1318,7 +1332,7 @@ module.exports = function(options) {
                 debug && reporter.log(id, "Making detectable...");
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
                 elementUtils.markBusy(element, true);
-                return detectionStrategy.makeDetectable({ debug: debug }, element, function onElementDetectable(element) {
+                return detectionStrategy.makeDetectable({ debug: debug, important: importantCssRules }, element, function onElementDetectable(element) {
                     debug && reporter.log(id, "onElementDetectable");
 
                     if (stateHandler.getState(element)) {

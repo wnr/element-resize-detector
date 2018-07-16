@@ -44,6 +44,12 @@ module.exports = function(options) {
         }
     }
 
+    function buildCssTextString(rules) {
+        var seperator = options.important ? " !important; " : "; ";
+
+        return (rules.join(seperator) + seperator).trim();
+    }
+
     /**
      * Makes an element detectable and ready to be listened for resize events. Will call the callback when the element is ready to be listened for resize changes.
      * @private
@@ -62,7 +68,7 @@ module.exports = function(options) {
         var debug = options.debug;
 
         function injectObject(element, callback) {
-            var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
+            var OBJECT_STYLE = buildCssTextString(["display: block", "position: absolute", "top: 0", "left: 0", "width: 100%", "height: 100%", "border: none", "padding: 0", "margin: 0", "opacity: 0", "z-index: -1000", "pointer-events: none"]);
 
             //The target element needs to be positioned (everything except static) so the absolute positioned object will be positioned relative to the target element.
 
@@ -83,7 +89,7 @@ module.exports = function(options) {
             function mutateDom() {
                 function alterPositionStyles() {
                     if(style.position === "static") {
-                        element.style.position = "relative";
+                        element.style.setProperty("position", "relative", options.important ? "important" : "");
 
                         var removeRelativeStyles = function(reporter, element, style, property) {
                             function getNumericalValue(value) {
@@ -94,7 +100,7 @@ module.exports = function(options) {
 
                             if(value !== "auto" && getNumericalValue(value) !== "0") {
                                 reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
-                                element.style[property] = 0;
+                                element.style.setProperty(property, "0", options.important ? "important" : "");
                             }
                         };
 
