@@ -70,6 +70,11 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.2.0
+
+* Add a new optional option that adds `important!` to most style properties, to avoid CSS overriding. Disabled by default.
+* Fix an issue with the object approach in IE8. See #95.
+
 #### 1.1.14
 
 * Explicit use of window.getComputedStyle everywhere.
