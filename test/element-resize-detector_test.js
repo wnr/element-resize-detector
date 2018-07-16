@@ -959,23 +959,50 @@ function importantRuleTest(strategy) {
             });
 
             var testElem = $("#test");
-            var listenerCall    = jasmine.createSpy("listener");
+            var listenerCall = jasmine.createSpy("listener");
 
             erd.listenTo(testElem[0], listenerCall);
 
             setTimeout(function() {
-                expect(testElem[0].style.cssText).toMatch(/!important;$/);
+                if(strategy === "scroll") {
+                    expect(testElem[0].style.cssText).toMatch(/!important;$/);
+                }
 
                 testElem.find("*").toArray().forEach(function(element) {
                     var rules = element.style.cssText.split(";").filter(function(rule) { return !!rule; });
-    
+
                     rules.forEach(function(rule) {
                         expect(rule).toMatch(/!important$/);
                     });
                 });
-                
+
                 done();
-            }, 400);
+            }, 50);
+        });
+
+        it("Overrides important CSS", function(done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                strategy: strategy,
+                important: true
+            });
+
+            var listener = jasmine.createSpy("listener");
+            var testElem = $("#test");
+            var style = document.createElement('style');
+            style.appendChild(document.createTextNode("#test { position: static !important; }"));
+            document.head.appendChild(style);
+
+            erd.listenTo(testElem[0], listener);
+
+            setTimeout(function () {
+                $("#test").width(300);
+            }, 100);
+
+            setTimeout(function() {
+                expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                done();
+            }, 200);
         });
     });
 }
