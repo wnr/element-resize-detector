@@ -24,10 +24,6 @@ module.exports = function(options) {
      * @param {function} listener The listener callback to be called for each resize event of the element. The element will be given as a parameter to the listener callback.
      */
     function addListener(element, listener) {
-        if(!getObject(element)) {
-            throw new Error("Element is not detectable by this strategy.");
-        }
-
         function listenerProxy() {
             listener(element);
         }
@@ -40,6 +36,11 @@ module.exports = function(options) {
             element.attachEvent("onresize", listenerProxy);
         } else {
             var object = getObject(element);
+
+            if(!object) {
+                throw new Error("Element is not detectable by this strategy.");
+            }
+
             object.contentDocument.defaultView.addEventListener("resize", listenerProxy);
         }
     }
