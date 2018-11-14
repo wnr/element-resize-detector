@@ -989,7 +989,7 @@ function importantRuleTest(strategy) {
 
             var listener = jasmine.createSpy("listener");
             var testElem = $("#test");
-            var style = document.createElement('style');
+            var style = document.createElement("style");
             style.appendChild(document.createTextNode("#test { position: static !important; }"));
             document.head.appendChild(style);
 
