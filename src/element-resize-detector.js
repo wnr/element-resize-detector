@@ -304,11 +304,16 @@ module.exports = function(options) {
         });
     }
 
+    function initDocument(targetDocument) {
+        detectionStrategy.initDocument && detectionStrategy.initDocument(targetDocument);
+    }
+
     return {
         listenTo: listenTo,
         removeListener: eventListenerHandler.removeListener,
         removeAllListeners: eventListenerHandler.removeAllListeners,
-        uninstall: uninstall
+        uninstall: uninstall,
+        initDocument: initDocument
     };
 };
 

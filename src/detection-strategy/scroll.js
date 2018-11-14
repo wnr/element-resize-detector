@@ -26,11 +26,16 @@ module.exports = function(options) {
     //TODO: Could this perhaps be done at installation time?
     var scrollbarSizes = getScrollbarSizes();
 
-    // Inject the scrollbar styling that prevents them from appearing sometimes in Chrome.
-    // The injected container needs to have a class, so that it may be styled with CSS (pseudo elements).
     var styleId = "erd_scroll_detection_scrollbar_style";
     var detectionContainerClass = "erd_scroll_detection_container";
-    injectScrollStyle(styleId, detectionContainerClass);
+
+    function initDocument(targetDocument) {
+        // Inject the scrollbar styling that prevents them from appearing sometimes in Chrome.
+        // The injected container needs to have a class, so that it may be styled with CSS (pseudo elements).
+        injectScrollStyle(targetDocument, styleId, detectionContainerClass);
+    }
+
+    initDocument(window.document);
 
     function buildCssTextString(rules) {
         var seperator = options.important ? " !important; " : "; ";
@@ -63,20 +68,20 @@ module.exports = function(options) {
         };
     }
 
-    function injectScrollStyle(styleId, containerClass) {
+    function injectScrollStyle(targetDocument, styleId, containerClass) {
         function injectStyle(style, method) {
             method = method || function (element) {
-                document.head.appendChild(element);
+                targetDocument.head.appendChild(element);
             };
 
-            var styleElement = document.createElement("style");
+            var styleElement = targetDocument.createElement("style");
             styleElement.innerHTML = style;
             styleElement.id = styleId;
             method(styleElement);
             return styleElement;
         }
 
-        if (!document.getElementById(styleId)) {
+        if (!targetDocument.getElementById(styleId)) {
             var containerAnimationClass = containerClass + "_animation";
             var containerAnimationActiveClass = containerClass + "_animation_active";
             var style = "/* Created by the element-resize-detector library. */\n";
@@ -648,6 +653,7 @@ module.exports = function(options) {
     return {
         makeDetectable: makeDetectable,
         addListener: addListener,
-        uninstall: uninstall
+        uninstall: uninstall,
+        initDocument: initDocument
     };
 };
