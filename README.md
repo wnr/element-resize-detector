@@ -20,11 +20,10 @@ var elementResizeDetectorMaker = require("element-resize-detector");
 ### Create instance
 ```js
 // With default options (will use the object-based approach).
-// The object-based approach is deprecated, and will be removed in v2.
 var erd = elementResizeDetectorMaker();
 
 // With the ultra fast scroll-based approach.
-// This will be the default in v2.
+// This is the recommended strategy.
 var erdUltraFast = elementResizeDetectorMaker({
   strategy: "scroll" //<- For ultra performance.
 });
