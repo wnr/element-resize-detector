@@ -198,10 +198,13 @@ module.exports = function(options) {
     }
 
     function uninstall(element) {
+        var object = getObject(element);
         if(browserDetector.isIE(8)) {
-            element.detachEvent("onresize", getState(element).object.proxy);
+            element.detachEvent("onresize", object.proxy);
         } else {
-            element.removeChild(getObject(element));
+            if(object) {
+              element.removeChild(object);
+            }
         }
         delete getState(element).object;
     }
