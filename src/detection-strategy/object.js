@@ -168,6 +168,11 @@ module.exports = function(options) {
                     object.data = "about:blank";
                 }
 
+                if (!getState(element)) {
+                    // The element has been uninstalled before the actual loading happened.
+                    return;
+                }
+
                 element.appendChild(object);
                 getState(element).object = object;
 
@@ -205,13 +210,20 @@ module.exports = function(options) {
     }
 
     function uninstall(element) {
+        if (!getState(element)) {
+            return;
+        }
+
         var object = getObject(element);
-        if(browserDetector.isIE(8)) {
+
+        if (!object) {
+            return;
+        }
+
+        if (browserDetector.isIE(8)) {
             element.detachEvent("onresize", object.proxy);
         } else {
-            if(object) {
-              element.removeChild(object);
-            }
+            element.removeChild(object);
         }
         delete getState(element).object;
     }
