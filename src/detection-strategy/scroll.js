@@ -434,6 +434,9 @@ module.exports = function(options) {
                 var width           = element.offsetWidth;
                 var height          = element.offsetHeight;
 
+                // Check whether the size has actually changed since last time the algorithm ran. If not, some steps may be skipped.
+                var sizeChanged = width !== getState(element).lastWidth || height !== getState(element).lastHeight;
+
                 debug("Storing current size", width, height);
 
                 // Store the size of the element sync here, so that multiple scroll events may be ignored in the event listeners.
@@ -444,6 +447,10 @@ module.exports = function(options) {
                 // Since there is no way to cancel the fn executions, we need to add an uninstall guard to all fns of the batch.
 
                 batchProcessor.add(0, function performUpdateChildSizes() {
+                    if (!sizeChanged) {
+                        return;
+                    }
+
                     if (!getState(element)) {
                         debug("Aborting because element has been uninstalled");
                         return;
@@ -467,6 +474,9 @@ module.exports = function(options) {
                 });
 
                 batchProcessor.add(1, function updateScrollbars() {
+                    // This function needs to be invoked event though the size is unchanged. The element could have been resized very quickly and then
+                    // been restored to the original size, which will have changed the scrollbar positions.
+
                     if (!getState(element)) {
                         debug("Aborting because element has been uninstalled");
                         return;
@@ -480,7 +490,7 @@ module.exports = function(options) {
                     positionScrollbars(element, width, height);
                 });
 
-                if (done) {
+                if (sizeChanged && done) {
                     batchProcessor.add(2, function () {
                         if (!getState(element)) {
                             debug("Aborting because element has been uninstalled");
@@ -510,7 +520,7 @@ module.exports = function(options) {
 
                 var state = getState(element);
 
-                // Don't notify the if the current size is the start size, and this is the first notification.
+                // Don't notify if the current size is the start size, and this is the first notification.
                 if (isFirstNotify() && state.lastWidth === state.startSize.width && state.lastHeight === state.startSize.height) {
                     return debug("Not notifying: Size is the same as the start size, and there has been no notification yet.");
                 }
@@ -555,15 +565,7 @@ module.exports = function(options) {
                     return;
                 }
 
-                var width = element.offsetWidth;
-                var height = element.offsetHeight;
-
-                if (width !== getState(element).lastWidth || height !== getState(element).lastHeight) {
-                    debug("Element size changed.");
-                    updateDetectorElements(notifyListenersIfNeeded);
-                } else {
-                    debug("Element size has not changed (" + width + "x" + height + ").");
-                }
+                updateDetectorElements(notifyListenersIfNeeded);
             }
 
             debug("registerListenersAndPositionElements invoked.");

@@ -706,6 +706,53 @@ function listenToTest(strategy) {
                 done();
             }, 400);
         });
+
+        it("should handle fast consecutive resizes", function (done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                strategy: strategy,
+                reporter: reporter
+            });
+
+            var listener = jasmine.createSpy("listener");
+
+            $("#test").width(100);
+            erd.listenTo($("#test")[0], listener);
+
+            setTimeout(function () {
+                $("#test").width(300);
+            }, 50);
+
+            setTimeout(function () {
+                expect(listener.calls.count()).toEqual(1);
+                $("#test").width(500);
+                setTimeout(function () {
+                    $("#test").width(300);
+                }, 0);
+            }, 100);
+
+            // Some browsers skip the 300 -> 500 -> 300 resize, and some actually processes it.
+            // So the resize events may be 1 or 3 at this point.
+
+            setTimeout(function () {
+                var count = listener.calls.count();
+                expect(count === 1 || count === 3).toEqual(true);
+            }, 150);
+
+
+            setTimeout(function () {
+                var count = listener.calls.count();
+                expect(count === 1 || count === 3).toEqual(true);
+                $("#test").width(800);
+            }, 200);
+
+            setTimeout(function () {
+                var count = listener.calls.count();
+                expect(count === 2 || count === 4).toEqual(true);
+                done();
+            }, 250);
+        });
+
     });
 }
 
