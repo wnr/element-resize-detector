@@ -5,7 +5,7 @@
  * Licensed under MIT
  */
 
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.elementResizeDetectorMaker = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.elementResizeDetectorMaker = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 
 var utils = require("./utils");
@@ -395,6 +395,11 @@ module.exports = function(options) {
                     object.data = "about:blank";
                 }
 
+                if (!getState(element)) {
+                    // The element has been uninstalled before the actual loading happened.
+                    return;
+                }
+
                 element.appendChild(object);
                 getState(element).object = object;
 
@@ -432,10 +437,20 @@ module.exports = function(options) {
     }
 
     function uninstall(element) {
-        if(browserDetector.isIE(8)) {
-            element.detachEvent("onresize", getState(element).object.proxy);
+        if (!getState(element)) {
+            return;
+        }
+
+        var object = getObject(element);
+
+        if (!object) {
+            return;
+        }
+
+        if (browserDetector.isIE(8)) {
+            element.detachEvent("onresize", object.proxy);
         } else {
-            element.removeChild(getObject(element));
+            element.removeChild(object);
         }
         delete getState(element).object;
     }
@@ -884,6 +899,9 @@ module.exports = function(options) {
                 var width           = element.offsetWidth;
                 var height          = element.offsetHeight;
 
+                // Check whether the size has actually changed since last time the algorithm ran. If not, some steps may be skipped.
+                var sizeChanged = width !== getState(element).lastWidth || height !== getState(element).lastHeight;
+
                 debug("Storing current size", width, height);
 
                 // Store the size of the element sync here, so that multiple scroll events may be ignored in the event listeners.
@@ -894,6 +912,10 @@ module.exports = function(options) {
                 // Since there is no way to cancel the fn executions, we need to add an uninstall guard to all fns of the batch.
 
                 batchProcessor.add(0, function performUpdateChildSizes() {
+                    if (!sizeChanged) {
+                        return;
+                    }
+
                     if (!getState(element)) {
                         debug("Aborting because element has been uninstalled");
                         return;
@@ -917,6 +939,9 @@ module.exports = function(options) {
                 });
 
                 batchProcessor.add(1, function updateScrollbars() {
+                    // This function needs to be invoked event though the size is unchanged. The element could have been resized very quickly and then
+                    // been restored to the original size, which will have changed the scrollbar positions.
+
                     if (!getState(element)) {
                         debug("Aborting because element has been uninstalled");
                         return;
@@ -930,7 +955,7 @@ module.exports = function(options) {
                     positionScrollbars(element, width, height);
                 });
 
-                if (done) {
+                if (sizeChanged && done) {
                     batchProcessor.add(2, function () {
                         if (!getState(element)) {
                             debug("Aborting because element has been uninstalled");
@@ -960,7 +985,7 @@ module.exports = function(options) {
 
                 var state = getState(element);
 
-                // Don't notify the if the current size is the start size, and this is the first notification.
+                // Don't notify if the current size is the start size, and this is the first notification.
                 if (isFirstNotify() && state.lastWidth === state.startSize.width && state.lastHeight === state.startSize.height) {
                     return debug("Not notifying: Size is the same as the start size, and there has been no notification yet.");
                 }
@@ -1005,15 +1030,7 @@ module.exports = function(options) {
                     return;
                 }
 
-                var width = element.offsetWidth;
-                var height = element.offsetHeight;
-
-                if (width !== getState(element).lastWidth || height !== getState(element).lastHeight) {
-                    debug("Element size changed.");
-                    updateDetectorElements(notifyListenersIfNeeded);
-                } else {
-                    debug("Element size has not changed (" + width + "x" + height + ").");
-                }
+                updateDetectorElements(notifyListenersIfNeeded);
             }
 
             debug("registerListenersAndPositionElements invoked.");
