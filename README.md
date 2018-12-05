@@ -78,6 +78,8 @@ Please note that both approaches have been heavily reworked for better performan
 * Add new method ``initDocument(document)`` which is needed when listening to detached elements in other documents, such as iframes.
 * Add a new optional option that adds `important!` to most style properties, to avoid CSS overriding. Disabled by default.
 * Fix an issue with the object approach in IE8. See #95.
+* Fix uninstall issue with object approach. See #102.
+* Fixed errornous optimization that prevented scrollbar repositioning for really fast x -> y -> x resizes.
 
 #### 1.1.14
 
