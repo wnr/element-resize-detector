@@ -153,6 +153,7 @@ module.exports = function(options) {
                 object.style.cssText = OBJECT_STYLE;
                 object.tabIndex = -1;
                 object.type = "text/html";
+                object.setAttribute("aria-hidden", "true");
                 object.onload = onObjectLoad;
 
                 //Safari: This must occur before adding the object to the DOM.
