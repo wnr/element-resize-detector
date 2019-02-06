@@ -7,6 +7,8 @@
 
 var forEach = require("../collection-utils").forEach;
 
+var scrollbarSizes = null;
+
 module.exports = function(options) {
     options             = options || {};
     var reporter        = options.reporter;
@@ -23,8 +25,9 @@ module.exports = function(options) {
         throw new Error("Missing required dependency: reporter.");
     }
 
-    //TODO: Could this perhaps be done at installation time?
-    var scrollbarSizes = getScrollbarSizes();
+    if (!scrollbarSizes) {
+        scrollbarSizes = getScrollbarSizes();
+    }
 
     // Inject the scrollbar styling that prevents them from appearing sometimes in Chrome.
     // The injected container needs to have a class, so that it may be styled with CSS (pseudo elements).
