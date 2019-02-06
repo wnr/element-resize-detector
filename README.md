@@ -69,6 +69,10 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.1.15
+
+* ADA compliance fix for object approach. See #105.
+
 #### 1.1.14
 
 * Explicit use of window.getComputedStyle everywhere.
