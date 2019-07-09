@@ -29,10 +29,12 @@ var erdUltraFast = elementResizeDetectorMaker({
 });
 ```
 
+There is also an `callOnAdd` option, which determines if listeners should be called when they are getting added. Default is true. If true, the listener is guaranteed to be called when it has been added. If false, the listener will not be guarenteed to be called when it has been added (does not prevent it from being called).
+
 ## API
 
-### listenTo(element, listener)
-Listens to the element for resize events and calls the listener function with the element as argument on resize events.
+### listenTo(element, listener) or listenTo(options, element, listener)
+Listens to the element for resize events and calls the listener function with the element as argument on resize events. Options passed to the function will override the instance options.
 
 **Example usage:**
 
