@@ -552,6 +552,12 @@ module.exports = function(options) {
                     updateDetectorElements(notifyListenersIfNeeded);
                 } else {
                     debug("Element size has not changed (" + width + "x" + height + ").");
+                    var expand = getExpandElement(element);
+                    var shrink = getShrinkElement(element);
+                    if (expand.scrollLeft === 0 || expand.scrollTop === 0 || shrink.scrollLeft === 0 || shrink.scrollTop === 0) {
+                        debug("Scrollbars out of sync. Updating detector elements...");
+                        updateDetectorElements(notifyListenersIfNeeded);
+                    }
                 }
             }
 
