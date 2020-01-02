@@ -120,7 +120,12 @@ module.exports = function(options) {
                         //So if it is not present, poll it with an timeout until it is present.
                         //TODO: Could maybe be handled better with object.onreadystatechange or similar.
                         if(!element.contentDocument) {
-                            setTimeout(function checkForObjectDocument() {
+                            var state = getState(element);
+                            if (state.checkForObjectDocumentTimeoutId) {
+                                window.clearTimeout(state.checkForObjectDocumentTimeoutId);
+                            }
+                            state.checkForObjectDocumentTimeoutId = setTimeout(function checkForObjectDocument() {
+                                state.checkForObjectDocumentTimeoutId = 0;
                                 getDocument(element, callback);
                             }, 100);
 
@@ -204,6 +209,11 @@ module.exports = function(options) {
         } else {
             element.removeChild(getObject(element));
         }
+
+        if (getState(element).checkForObjectDocumentTimeoutId) {
+            window.clearTimeout(getState(element).checkForObjectDocumentTimeoutId);
+        }
+
         delete getState(element).object;
     }
 
