@@ -71,6 +71,10 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.1.16
+
+* Fix bug that could happen during uninstall when waiting for unrendered objects. See #117.
+
 #### 1.1.15
 
 * ADA compliance fix for object approach. See #105.

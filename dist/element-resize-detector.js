@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 1.1.15
+ * element-resize-detector 1.1.16
  * Copyright (c) 2016 Lucas Wiener
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
