@@ -24,10 +24,6 @@ module.exports = function(options) {
      * @param {function} listener The listener callback to be called for each resize event of the element. The element will be given as a parameter to the listener callback.
      */
     function addListener(element, listener) {
-        if(!getObject(element)) {
-            throw new Error("Element is not detectable by this strategy.");
-        }
-
         function listenerProxy() {
             listener(element);
         }
@@ -40,8 +36,19 @@ module.exports = function(options) {
             element.attachEvent("onresize", listenerProxy);
         } else {
             var object = getObject(element);
+
+            if(!object) {
+                throw new Error("Element is not detectable by this strategy.");
+            }
+
             object.contentDocument.defaultView.addEventListener("resize", listenerProxy);
         }
+    }
+
+    function buildCssTextString(rules) {
+        var seperator = options.important ? " !important; " : "; ";
+
+        return (rules.join(seperator) + seperator).trim();
     }
 
     /**
@@ -62,7 +69,7 @@ module.exports = function(options) {
         var debug = options.debug;
 
         function injectObject(element, callback) {
-            var OBJECT_STYLE = "display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; padding: 0; margin: 0; opacity: 0; z-index: -1000; pointer-events: none;";
+            var OBJECT_STYLE = buildCssTextString(["display: block", "position: absolute", "top: 0", "left: 0", "width: 100%", "height: 100%", "border: none", "padding: 0", "margin: 0", "opacity: 0", "z-index: -1000", "pointer-events: none"]);
 
             //The target element needs to be positioned (everything except static) so the absolute positioned object will be positioned relative to the target element.
 
@@ -83,7 +90,7 @@ module.exports = function(options) {
             function mutateDom() {
                 function alterPositionStyles() {
                     if(style.position === "static") {
-                        element.style.position = "relative";
+                        element.style.setProperty("position", "relative", options.important ? "important" : "");
 
                         var removeRelativeStyles = function(reporter, element, style, property) {
                             function getNumericalValue(value) {
@@ -94,7 +101,7 @@ module.exports = function(options) {
 
                             if(value !== "auto" && getNumericalValue(value) !== "0") {
                                 reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
-                                element.style[property] = 0;
+                                element.style.setProperty(property, "0", options.important ? "important" : "");
                             }
                         };
 
@@ -167,6 +174,11 @@ module.exports = function(options) {
                     object.data = "about:blank";
                 }
 
+                if (!getState(element)) {
+                    // The element has been uninstalled before the actual loading happened.
+                    return;
+                }
+
                 element.appendChild(object);
                 getState(element).object = object;
 
@@ -204,10 +216,20 @@ module.exports = function(options) {
     }
 
     function uninstall(element) {
-        if(browserDetector.isIE(8)) {
-            element.detachEvent("onresize", getState(element).object.proxy);
+        if (!getState(element)) {
+            return;
+        }
+
+        var object = getObject(element);
+
+        if (!object) {
+            return;
+        }
+
+        if (browserDetector.isIE(8)) {
+            element.detachEvent("onresize", object.proxy);
         } else {
-            element.removeChild(getObject(element));
+            element.removeChild(object);
         }
 
         if (getState(element).checkForObjectDocumentTimeoutId) {

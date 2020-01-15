@@ -55,6 +55,9 @@ Removes all listeners from the element, but does not completely remove the detec
 ### uninstall(element)
 Completely removes the detector and all listeners.
 
+### initDocument(document)
+If you need to listen to elements inside another document (such as an iframe), you need to init that document with this function. Otherwise the library won't be able to detect when elements are attached to the document. So for an iframe, simpy invoke ``erd.initDocument(iframe.contentDocument);`` when the iframe is mounted on the DOM for the first time. The document from which the element resize detector instance is created will be initialized automatically. Notice that a new document is created when an iframe loads its content. So for iframes, be sure you invoke this function for each `onLoad` iframe event.
+
 ## Caveats
 
 1. If the element has `position: static` it will be changed to `position: relative`. Any unintentional `top/right/bottom/left/z-index` styles will therefore be applied and absolute positioned children will be positioned relative to the element.
@@ -70,6 +73,18 @@ The scroll based approach implementation was based on Marc J's implementation [h
 Please note that both approaches have been heavily reworked for better performance and robustness.
 
 ## Changelog
+
+#### 1.2.1
+
+A release that includes 1.1.15 and 1.1.16 with 1.2.0.
+
+#### 1.2.0
+
+* Add new method ``initDocument(document)`` which is needed when listening to detached elements in other documents, such as iframes.
+* Add a new optional option that adds `important!` to most style properties, to avoid CSS overriding. Disabled by default.
+* Fix an issue with the object approach in IE8. See #95.
+* Fix uninstall issue with object approach. See #102.
+* Fixed errornous optimization that prevented scrollbar repositioning for really fast x -> y -> x resizes.
 
 #### 1.1.16
 

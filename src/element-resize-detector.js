@@ -107,11 +107,13 @@ module.exports = function(options) {
     //The detection strategy to be used.
     var detectionStrategy;
     var desiredStrategy = getOption(options, "strategy", "object");
+    var importantCssRules = getOption(options, "important", false);
     var strategyOptions = {
         reporter: reporter,
         batchProcessor: batchProcessor,
         stateHandler: stateHandler,
-        idHandler: idHandler
+        idHandler: idHandler,
+        important: importantCssRules
     };
 
     if(desiredStrategy === "scroll") {
@@ -226,7 +228,7 @@ module.exports = function(options) {
                 debug && reporter.log(id, "Making detectable...");
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
                 elementUtils.markBusy(element, true);
-                return detectionStrategy.makeDetectable({ debug: debug }, element, function onElementDetectable(element) {
+                return detectionStrategy.makeDetectable({ debug: debug, important: importantCssRules }, element, function onElementDetectable(element) {
                     debug && reporter.log(id, "onElementDetectable");
 
                     if (stateHandler.getState(element)) {
@@ -302,11 +304,16 @@ module.exports = function(options) {
         });
     }
 
+    function initDocument(targetDocument) {
+        detectionStrategy.initDocument && detectionStrategy.initDocument(targetDocument);
+    }
+
     return {
         listenTo: listenTo,
         removeListener: eventListenerHandler.removeListener,
         removeAllListeners: eventListenerHandler.removeAllListeners,
-        uninstall: uninstall
+        uninstall: uninstall,
+        initDocument: initDocument
     };
 };
 

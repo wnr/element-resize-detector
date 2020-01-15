@@ -8,17 +8,17 @@ function ensureMapEqual(before, after, ignore) {
 
     var unionKeys = _.union(beforeKeys, afterKeys);
 
-    var diffValueKeys = _.filter(unionKeys, function(key) {
+    var diffValueKeys = _.filter(unionKeys, function (key) {
         var beforeValue = before[key];
         var afterValue = after[key];
         return !ignore(key, beforeValue, afterValue) && beforeValue !== afterValue;
     });
 
-    if(diffValueKeys.length) {
+    if (diffValueKeys.length) {
         var beforeDiffObject = {};
         var afterDiffObject = {};
 
-        _.forEach(diffValueKeys, function(key) {
+        _.forEach(diffValueKeys, function (key) {
             beforeDiffObject[key] = before[key];
             afterDiffObject[key] = after[key];
         });
@@ -30,11 +30,11 @@ function ensureMapEqual(before, after, ignore) {
 function getStyle(element) {
     function clone(styleObject) {
         var clonedTarget = {};
-        _.forEach(styleObject.cssText.split(";").slice(0, -1), function(declaration){
+        _.forEach(styleObject.cssText.split(";").slice(0, -1), function (declaration) {
             var colonPos = declaration.indexOf(":");
             var attr = declaration.slice(0, colonPos).trim();
-            if(attr.indexOf("-") === -1){ // Remove attributes like "background-image", leaving "backgroundImage"
-                clonedTarget[attr] = declaration.slice(colonPos+2);
+            if (attr.indexOf("-") === -1) { // Remove attributes like "background-image", leaving "backgroundImage"
+                clonedTarget[attr] = declaration.slice(colonPos + 2);
             }
         });
         return clonedTarget;
@@ -46,7 +46,7 @@ function getStyle(element) {
 
 function getAttributes(element) {
     var attrs = {};
-    _.forEach(element.attributes, function(attr) {
+    _.forEach(element.attributes, function (attr) {
         attrs[attr.nodeName] = attr.value;
     });
     return attrs;
@@ -55,13 +55,13 @@ function getAttributes(element) {
 var ensureAttributes = ensureMapEqual;
 
 var reporter = {
-    log: function() {
+    log: function () {
         throw new Error("Reporter.log should not be called");
     },
-    warn: function() {
+    warn: function () {
         throw new Error("Reporter.warn should not be called");
     },
-    error: function() {
+    error: function () {
         throw new Error("Reporter.error should not be called");
     }
 };
@@ -69,8 +69,8 @@ var reporter = {
 $("body").prepend("<div id=fixtures></div>");
 
 function listenToTest(strategy) {
-    describe("[" + strategy + "] listenTo", function() {
-        it("should be able to attach a listener to an element", function(done) {
+    describe("[" + strategy + "] listenTo", function () {
+        it("should be able to attach a listener to an element", function (done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
                 reporter: reporter,
@@ -81,17 +81,17 @@ function listenToTest(strategy) {
 
             erd.listenTo($("#test")[0], listener);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 $("#test").width(300);
             }, 200);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener).toHaveBeenCalledWith($("#test")[0]);
                 done();
             }, 400);
         });
 
-        it("should throw on invalid parameters", function() {
+        it("should throw on invalid parameters", function () {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
                 reporter: reporter,
@@ -103,8 +103,8 @@ function listenToTest(strategy) {
             expect(_.partial(erd.listenTo, $("#test")[0])).toThrow();
         });
 
-        describe("option.onReady", function() {
-            it("should be called when installing a listener to an element", function(done) {
+        describe("option.onReady", function () {
+            it("should be called when installing a listener to an element", function (done) {
                 var erd = elementResizeDetectorMaker({
                     callOnAdd: false,
                     reporter: reporter,
@@ -114,9 +114,9 @@ function listenToTest(strategy) {
                 var listener = jasmine.createSpy("listener");
 
                 erd.listenTo({
-                    onReady: function() {
+                    onReady: function () {
                         $("#test").width(200);
-                        setTimeout(function() {
+                        setTimeout(function () {
                             expect(listener).toHaveBeenCalledWith($("#test")[0]);
                             done();
                         }, 200);
@@ -124,7 +124,7 @@ function listenToTest(strategy) {
                 }, $("#test")[0], listener);
             });
 
-            it("should be called when all elements are ready", function(done) {
+            it("should be called when all elements are ready", function (done) {
                 var erd = elementResizeDetectorMaker({
                     callOnAdd: false,
                     reporter: reporter,
@@ -134,10 +134,10 @@ function listenToTest(strategy) {
                 var listener = jasmine.createSpy("listener");
 
                 erd.listenTo({
-                    onReady: function() {
+                    onReady: function () {
                         $("#test").width(200);
                         $("#test2").width(300);
-                        setTimeout(function() {
+                        setTimeout(function () {
                             expect(listener).toHaveBeenCalledWith($("#test")[0]);
                             expect(listener).toHaveBeenCalledWith($("#test2")[0]);
                             done();
@@ -146,7 +146,7 @@ function listenToTest(strategy) {
                 }, $("#test, #test2"), listener);
             });
 
-            it("should be able to handle listeners for the same element but different calls", function(done) {
+            it("should be able to handle listeners for the same element but different calls", function (done) {
                 var erd = elementResizeDetectorMaker({
                     callOnAdd: false,
                     reporter: reporter,
@@ -158,19 +158,21 @@ function listenToTest(strategy) {
 
                 erd.listenTo({
                     onReady: onReady1
-                }, $("#test"), function noop() {});
+                }, $("#test"), function noop() {
+                });
                 erd.listenTo({
                     onReady: onReady2
-                }, $("#test"), function noop() {});
+                }, $("#test"), function noop() {
+                });
 
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(onReady1.calls.count()).toBe(1);
                     expect(onReady2.calls.count()).toBe(1);
                     done();
                 }, 300);
             });
 
-            it("should be able to handle when elements occur multiple times in the same call (and other calls)", function(done) {
+            it("should be able to handle when elements occur multiple times in the same call (and other calls)", function (done) {
                 var erd = elementResizeDetectorMaker({
                     callOnAdd: false,
                     reporter: reporter,
@@ -182,12 +184,14 @@ function listenToTest(strategy) {
 
                 erd.listenTo({
                     onReady: onReady1
-                }, [$("#test")[0], $("#test")[0]], function noop() {});
+                }, [$("#test")[0], $("#test")[0]], function noop() {
+                });
                 erd.listenTo({
                     onReady: onReady2
-                }, $("#test"), function noop() {});
+                }, $("#test"), function noop() {
+                });
 
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(onReady1.calls.count()).toBe(1);
                     expect(onReady2.calls.count()).toBe(1);
                     done();
@@ -195,7 +199,7 @@ function listenToTest(strategy) {
             });
         });
 
-        it("should be able to attach multiple listeners to an element", function(done) {
+        it("should be able to attach multiple listeners to an element", function (done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
                 reporter: reporter,
@@ -208,18 +212,18 @@ function listenToTest(strategy) {
             erd.listenTo($("#test")[0], listener1);
             erd.listenTo($("#test")[0], listener2);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 $("#test").width(300);
             }, 200);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener1).toHaveBeenCalledWith($("#test")[0]);
                 expect(listener2).toHaveBeenCalledWith($("#test")[0]);
                 done();
             }, 400);
         });
 
-        it("should be able to attach a listener to an element multiple times within the same call", function(done) {
+        it("should be able to attach a listener to an element multiple times within the same call", function (done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
                 reporter: reporter,
@@ -230,18 +234,18 @@ function listenToTest(strategy) {
 
             erd.listenTo([$("#test")[0], $("#test")[0]], listener1);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 $("#test").width(300);
             }, 200);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener1).toHaveBeenCalledWith($("#test")[0]);
                 expect(listener1.calls.count()).toBe(2);
                 done();
             }, 400);
         });
 
-        it("should be able to attach listeners to multiple elements", function(done) {
+        it("should be able to attach listeners to multiple elements", function (done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
                 reporter: reporter,
@@ -252,28 +256,28 @@ function listenToTest(strategy) {
 
             erd.listenTo($("#test, #test2"), listener1);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 $("#test").width(200);
             }, 200);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener1).toHaveBeenCalledWith($("#test")[0]);
             }, 400);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 $("#test2").width(500);
             }, 600);
 
-            setTimeout(function() {
-               expect(listener1).toHaveBeenCalledWith($("#test2")[0]);
-               done();
+            setTimeout(function () {
+                expect(listener1).toHaveBeenCalledWith($("#test2")[0]);
+                done();
             }, 800);
         });
 
         //Only run this test if the browser actually is able to get the computed style of an element.
         //Only IE8 is lacking the getComputedStyle method.
-        if(window.getComputedStyle) {
-            it("should keep the style of the element intact", function(done) {
+        if (window.getComputedStyle) {
+            it("should keep the style of the element intact", function (done) {
                 var erd = elementResizeDetectorMaker({
                     callOnAdd: false,
                     reporter: reporter,
@@ -281,8 +285,8 @@ function listenToTest(strategy) {
                 });
 
                 function ignoreStyleChange(key, before, after) {
-                    return  (key === "position" && before === "static" && after === "relative") ||
-                            (/^(top|right|bottom|left)$/.test(key) && before === "auto" && after === "0px");
+                    return (key === "position" && before === "static" && after === "relative") ||
+                        (/^(top|right|bottom|left)$/.test(key) && before === "auto" && after === "0px");
                 }
 
                 var beforeComputedStyle = getStyle($("#test")[0]);
@@ -291,7 +295,7 @@ function listenToTest(strategy) {
                 ensureMapEqual(beforeComputedStyle, afterComputedStyle, ignoreStyleChange);
 
                 //Test styles async since making an element listenable is async.
-                setTimeout(function() {
+                setTimeout(function () {
                     var afterComputedStyleAsync = getStyle($("#test")[0]);
                     ensureMapEqual(beforeComputedStyle, afterComputedStyleAsync, ignoreStyleChange);
                     expect(true).toEqual(true); // Needed so that jasmine does not warn about no expects in the test (the actual expects are in the ensureMapEqual).
@@ -300,8 +304,8 @@ function listenToTest(strategy) {
             });
         }
 
-        describe("options.callOnAdd", function() {
-            it("should be true default and call all functions when listenTo succeeds", function(done) {
+        describe("options.callOnAdd", function () {
+            it("should be true default and call all functions when listenTo succeeds", function (done) {
                 var erd = elementResizeDetectorMaker({
                     reporter: reporter,
                     strategy: strategy
@@ -313,7 +317,7 @@ function listenToTest(strategy) {
                 erd.listenTo($("#test")[0], listener);
                 erd.listenTo($("#test")[0], listener2);
 
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(listener).toHaveBeenCalledWith($("#test")[0]);
                     expect(listener2).toHaveBeenCalledWith($("#test")[0]);
                     listener.calls.reset();
@@ -321,14 +325,14 @@ function listenToTest(strategy) {
                     $("#test").width(300);
                 }, 200);
 
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(listener).toHaveBeenCalledWith($("#test")[0]);
                     expect(listener2).toHaveBeenCalledWith($("#test")[0]);
                     done();
                 }, 400);
             });
 
-            it("should call listener multiple times when listening to multiple elements", function(done) {
+            it("should call listener multiple times when listening to multiple elements", function (done) {
                 var erd = elementResizeDetectorMaker({
                     reporter: reporter,
                     strategy: strategy
@@ -337,7 +341,7 @@ function listenToTest(strategy) {
                 var listener1 = jasmine.createSpy("listener1");
                 erd.listenTo($("#test, #test2"), listener1);
 
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(listener1).toHaveBeenCalledWith($("#test")[0]);
                     expect(listener1).toHaveBeenCalledWith($("#test2")[0]);
                     done();
@@ -345,7 +349,7 @@ function listenToTest(strategy) {
             });
         });
 
-        it("should call listener if the element is changed synchronously after listenTo", function(done) {
+        it("should call listener if the element is changed synchronously after listenTo", function (done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
                 reporter: reporter,
@@ -356,7 +360,7 @@ function listenToTest(strategy) {
             erd.listenTo($("#test"), listener1);
             $("#test").width(200);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener1).toHaveBeenCalledWith($("#test")[0]);
                 done();
             }, 200);
@@ -372,7 +376,7 @@ function listenToTest(strategy) {
             var listener1 = jasmine.createSpy("listener1");
             erd.listenTo($("#test"), listener1);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener1).not.toHaveBeenCalledWith($("#test")[0]);
                 done();
             }, 200);
@@ -389,30 +393,30 @@ function listenToTest(strategy) {
             $("#test").width(200);
             erd.listenTo($("#test"), listener);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener).not.toHaveBeenCalledWith($("#test")[0]);
                 listener.calls.reset();
                 $("#test").width(100);
             }, 200);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener).toHaveBeenCalledWith($("#test")[0]);
                 listener.calls.reset();
                 $("#test").width(200);
             }, 400);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener).toHaveBeenCalledWith($("#test")[0]);
                 done();
             }, 600);
         });
 
-        it("should use the option.idHandler if present", function(done) {
+        it("should use the option.idHandler if present", function (done) {
             var ID_ATTR = "some-fancy-id-attr";
 
             var idHandler = {
-                get: function(element, readonly) {
-                    if(element[ID_ATTR] === undefined) {
+                get: function (element, readonly) {
+                    if (element[ID_ATTR] === undefined) {
                         if (readonly) {
                             return null;
                         }
@@ -425,9 +429,9 @@ function listenToTest(strategy) {
                 set: function (element) {
                     var id;
 
-                    if($(element).attr("id") === "test") {
+                    if ($(element).attr("id") === "test") {
                         id = "test+1";
-                    } else if($(element).attr("id") === "test2") {
+                    } else if ($(element).attr("id") === "test2") {
                         id = "test2+2";
                     }
 
@@ -456,7 +460,7 @@ function listenToTest(strategy) {
             var attrsAfterTest = getAttributes($("#test")[0]);
             var attrsAfterTest2 = getAttributes($("#test2")[0]);
 
-            var ignoreValidIdAttrAndStyle = function(key) {
+            var ignoreValidIdAttrAndStyle = function (key) {
                 return key === ID_ATTR || key === "style";
             };
 
@@ -466,20 +470,20 @@ function listenToTest(strategy) {
             expect($("#test").attr(ID_ATTR)).toEqual("test+1");
             expect($("#test2").attr(ID_ATTR)).toEqual("test2+2");
 
-            setTimeout(function() {
+            setTimeout(function () {
                 $("#test").width(300);
                 $("#test2").width(500);
             }, 200);
 
-            setTimeout(function() {
-               expect(listener1).toHaveBeenCalledWith($("#test")[0]);
-               expect(listener2).toHaveBeenCalledWith($("#test")[0]);
-               expect(listener2).toHaveBeenCalledWith($("#test2")[0]);
-               done();
+            setTimeout(function () {
+                expect(listener1).toHaveBeenCalledWith($("#test")[0]);
+                expect(listener2).toHaveBeenCalledWith($("#test")[0]);
+                expect(listener2).toHaveBeenCalledWith($("#test2")[0]);
+                done();
             }, 600);
         });
 
-        it("should be able to install into elements that are detached from the DOM", function(done) {
+        it("should be able to install into elements that are detached from the DOM", function (done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
                 reporter: reporter,
@@ -500,10 +504,44 @@ function listenToTest(strategy) {
                 $("#test").width(200);
             }, 400);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener1).toHaveBeenCalledWith(div);
                 done();
             }, 600);
+        });
+
+        it("should handle iframes, by using initDocument", function (done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                strategy: strategy,
+                reporter: reporter
+            });
+
+            var listener1 = jasmine.createSpy("listener1");
+            var iframe = document.createElement("iframe");
+            $("#test")[0].appendChild(iframe);
+            erd.initDocument(iframe.contentDocument);
+            var div = iframe.contentDocument.createElement("div");
+
+            div.style.width = "100%";
+            div.style.height = "100%";
+            div.id = "target";
+            erd.listenTo(div, listener1);
+
+            setTimeout(function () {
+                // FireFox triggers the onload state of the iframe and wipes its content.
+                iframe.contentDocument.body.appendChild(div);
+                erd.initDocument(iframe.contentDocument);
+            }, 10);
+
+            setTimeout(function () {
+                div.style.width = "100px";
+            }, 200);
+
+            setTimeout(function () {
+                expect(listener1).toHaveBeenCalledWith(div);
+                done();
+            }, 400);
         });
 
         it("should detect resizes caused by padding and font-size changes", function (done) {
@@ -522,13 +560,13 @@ function listenToTest(strategy) {
 
             $("#test").css("padding", "10px");
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener).toHaveBeenCalledWith($("#test")[0]);
                 listener.calls.reset();
                 $("#test").css("font-size", "20px");
             }, 200);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener).toHaveBeenCalledWith($("#test")[0]);
                 done();
             }, 400);
@@ -659,21 +697,68 @@ function listenToTest(strategy) {
             $("#test")[0].dir = "rtl";
             erd.listenTo($("#test")[0], listener);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 $("#test").width(300);
             }, 200);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener).toHaveBeenCalledWith($("#test")[0]);
                 done();
             }, 400);
         });
+
+        it("should handle fast consecutive resizes", function (done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                strategy: strategy,
+                reporter: reporter
+            });
+
+            var listener = jasmine.createSpy("listener");
+
+            $("#test").width(100);
+            erd.listenTo($("#test")[0], listener);
+
+            setTimeout(function () {
+                $("#test").width(300);
+            }, 50);
+
+            setTimeout(function () {
+                expect(listener.calls.count()).toEqual(1);
+                $("#test").width(500);
+                setTimeout(function () {
+                    $("#test").width(300);
+                }, 0);
+            }, 100);
+
+            // Some browsers skip the 300 -> 500 -> 300 resize, and some actually processes it.
+            // So the resize events may be 1 or 3 at this point.
+
+            setTimeout(function () {
+                var count = listener.calls.count();
+                expect(count === 1 || count === 3).toEqual(true);
+            }, 150);
+
+
+            setTimeout(function () {
+                var count = listener.calls.count();
+                expect(count === 1 || count === 3).toEqual(true);
+                $("#test").width(800);
+            }, 200);
+
+            setTimeout(function () {
+                var count = listener.calls.count();
+                expect(count === 2 || count === 4).toEqual(true);
+                done();
+            }, 250);
+        });
+
     });
 }
 
 function removalTest(strategy) {
-    describe("[" + strategy + "] resizeDetector.removeListener", function() {
-        it("should remove listener from element", function(done) {
+    describe("[" + strategy + "] resizeDetector.removeListener", function () {
+        it("should remove listener from element", function (done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
                 strategy: strategy
@@ -681,18 +766,18 @@ function removalTest(strategy) {
 
             var $testElem = $("#test");
 
-            var listenerCall    = jasmine.createSpy("listener");
+            var listenerCall = jasmine.createSpy("listener");
             var listenerNotCall = jasmine.createSpy("listener");
 
             erd.listenTo($testElem[0], listenerCall);
             erd.listenTo($testElem[0], listenerNotCall);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 erd.removeListener($testElem[0], listenerNotCall);
                 $testElem.width(300);
             }, 200);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listenerCall).toHaveBeenCalled();
                 expect(listenerNotCall).not.toHaveBeenCalled();
                 done();
@@ -700,8 +785,8 @@ function removalTest(strategy) {
         });
     });
 
-    describe("[" + strategy + "] resizeDetector.removeAllListeners", function() {
-        it("should remove all listeners from element", function(done) {
+    describe("[" + strategy + "] resizeDetector.removeAllListeners", function () {
+        it("should remove all listeners from element", function (done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
                 strategy: strategy
@@ -715,19 +800,19 @@ function removalTest(strategy) {
             erd.listenTo($testElem[0], listener1);
             erd.listenTo($testElem[0], listener2);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 erd.removeAllListeners($testElem[0]);
                 $testElem.width(300);
             }, 200);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener1).not.toHaveBeenCalled();
                 expect(listener2).not.toHaveBeenCalled();
                 done();
             }, 400);
         });
 
-        it("should work for elements that don't have the detector installed", function() {
+        it("should work for elements that don't have the detector installed", function () {
             var erd = elementResizeDetectorMaker({
                 strategy: strategy
             });
@@ -736,8 +821,81 @@ function removalTest(strategy) {
         });
     });
 
-    describe("[" + strategy + "] resizeDetector.uninstall", function() {
-        it("should completely remove detector from element", function(done) {
+    describe("[scroll] Specific scenarios", function () {
+        it("should be able to call uninstall in the middle of a resize", function (done) {
+            var erd = elementResizeDetectorMaker({
+                strategy: "scroll"
+            });
+
+            var $testElem = $("#test");
+            var testElem = $testElem[0];
+            var listener = jasmine.createSpy("listener");
+
+            erd.listenTo(testElem, listener);
+            setTimeout(function () {
+                // We want the uninstall to happen exactly when a scroll event occured before the delayed batched is going to be processed.
+                // So we intercept the erd shrink/expand functions in the state so that we may call uninstall after the handling of the event.
+                var uninstalled = false;
+
+                function wrapOnScrollEvent(oldFn) {
+                    return function () {
+                        oldFn();
+                        if (!uninstalled) {
+                            expect(erd.uninstall.bind(erd, testElem)).not.toThrow();
+                            uninstalled = true;
+                            done();
+                        }
+                    };
+                }
+
+                var state = testElem._erd;
+                state.onExpand = wrapOnScrollEvent(state.onExpand);
+                state.onShrink = wrapOnScrollEvent(state.onShrink);
+                $("#test").width(300);
+            }, 50);
+        });
+
+        it("should be able to call uninstall and then install in the middle of a resize (issue #61)", function (done) {
+            var erd = elementResizeDetectorMaker({
+                strategy: "scroll",
+                reporter: reporter
+            });
+
+            var $testElem = $("#test");
+            var testElem = $testElem[0];
+            var listener = jasmine.createSpy("listener");
+
+            erd.listenTo(testElem, listener);
+            setTimeout(function () {
+                // We want the uninstall to happen exactly when a scroll event occured before the delayed batched is going to be processed.
+                // So we intercept the erd shrink/expand functions in the state so that we may call uninstall after the handling of the event.
+                var uninstalled = false;
+
+                function wrapOnScrollEvent(oldFn) {
+                    return function () {
+                        oldFn();
+                        if (!uninstalled) {
+                            expect(erd.uninstall.bind(erd, testElem)).not.toThrow();
+                            uninstalled = true;
+                            var listener2 = jasmine.createSpy("listener");
+                            expect(erd.listenTo.bind(erd, testElem, listener2)).not.toThrow();
+                            setTimeout(function () {
+                                done();
+                            }, 0);
+                        }
+                    };
+                }
+
+                var state = testElem._erd;
+                state.onExpand = wrapOnScrollEvent(state.onExpand);
+                state.onShrink = wrapOnScrollEvent(state.onShrink);
+                $("#test").width(300);
+            }, 50);
+        });
+    });
+
+    describe("[" + strategy + "] resizeDetector.uninstall", function () {
+        it("should completely remove detector from element", function (done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
                 strategy: strategy
@@ -749,20 +907,20 @@ function removalTest(strategy) {
 
             erd.listenTo($testElem[0], listener);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 erd.uninstall($testElem[0]);
                 // detector element should be removed
                 expect($testElem[0].childNodes.length).toBe(0);
                 $testElem.width(300);
             }, 200);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener).not.toHaveBeenCalled();
                 done();
             }, 400);
         });
 
-        it("should completely remove detector from multiple elements", function(done) {
+        it("should completely remove detector from multiple elements", function (done) {
             var erd = elementResizeDetectorMaker({
                 callOnAdd: false,
                 strategy: strategy
@@ -772,7 +930,7 @@ function removalTest(strategy) {
 
             erd.listenTo($("#test, #test2"), listener);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 erd.uninstall($("#test, #test2"));
                 // detector element should be removed
                 expect($("#test")[0].childNodes.length).toBe(0);
@@ -780,7 +938,7 @@ function removalTest(strategy) {
                 $("#test, #test2").width(300);
             }, 200);
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(listener).not.toHaveBeenCalled();
                 done();
             }, 400);
@@ -811,73 +969,6 @@ function removalTest(strategy) {
                 expect(erd.uninstall.bind(erd, $testElem[0])).not.toThrow();
                 done();
             }, 0);
-        });
-
-        it("should be able to call uninstall in the middle of a resize", function (done) {
-            var erd = elementResizeDetectorMaker({
-                strategy: strategy
-            });
-
-            var $testElem = $("#test");
-            var testElem = $testElem[0];
-            var listener = jasmine.createSpy("listener");
-
-            erd.listenTo(testElem, listener);
-            setTimeout(function () {
-                // We want the uninstall to happen exactly when a scroll event occured before the delayed batched is going to be processed.
-                // So we intercept the erd shrink/expand functions in the state so that we may call uninstall after the handling of the event.
-                var uninstalled = false;
-                function wrapOnScrollEvent(oldFn) {
-                    return function () {
-                        oldFn();
-                        if (!uninstalled) {
-                            expect(erd.uninstall.bind(erd, testElem)).not.toThrow();
-                            uninstalled = true;
-                            done();
-                        }
-                    };
-                }
-                var state = testElem._erd;
-                state.onExpand = wrapOnScrollEvent(state.onExpand);
-                state.onShrink = wrapOnScrollEvent(state.onShrink);
-                $("#test").width(300);
-            }, 50);
-        });
-
-        it("should be able to call uninstall and then install in the middle of a resize (issue #61)", function (done) {
-            var erd = elementResizeDetectorMaker({
-                strategy: strategy,
-                debug: true
-            });
-
-            var $testElem = $("#test");
-            var testElem = $testElem[0];
-            var listener = jasmine.createSpy("listener");
-
-            erd.listenTo(testElem, listener);
-            setTimeout(function () {
-                // We want the uninstall to happen exactly when a scroll event occured before the delayed batched is going to be processed.
-                // So we intercept the erd shrink/expand functions in the state so that we may call uninstall after the handling of the event.
-                var uninstalled = false;
-                function wrapOnScrollEvent(oldFn) {
-                    return function () {
-                        oldFn();
-                        if (!uninstalled) {
-                            expect(erd.uninstall.bind(erd, testElem)).not.toThrow();
-                            uninstalled = true;
-                            var listener2 = jasmine.createSpy("listener");
-                            expect(erd.listenTo.bind(erd, testElem, listener2)).not.toThrow();
-                            setTimeout(function () {
-                                done();
-                            }, 0);
-                        }
-                    };
-                }
-                var state = testElem._erd;
-                state.onExpand = wrapOnScrollEvent(state.onExpand);
-                state.onShrink = wrapOnScrollEvent(state.onShrink);
-                $("#test").width(300);
-            }, 50);
         });
 
         it("should be able to call uninstall in callOnAdd callback", function (done) {
@@ -949,20 +1040,80 @@ function removalTest(strategy) {
     });
 }
 
-describe("element-resize-detector", function() {
-    beforeEach(function() {
+function importantRuleTest(strategy) {
+    describe("[" + strategy + "] resizeDetector.important", function () {
+        it("should add all rules with important", function (done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: true,
+                strategy: strategy,
+                important: true
+            });
+
+            var testElem = $("#test");
+            var listenerCall = jasmine.createSpy("listener");
+
+            erd.listenTo(testElem[0], listenerCall);
+
+            setTimeout(function () {
+                if (strategy === "scroll") {
+                    expect(testElem[0].style.cssText).toMatch(/!important;$/);
+                }
+
+                testElem.find("*").toArray().forEach(function (element) {
+                    var rules = element.style.cssText.split(";").filter(function (rule) {
+                        return !!rule;
+                    });
+
+                    rules.forEach(function (rule) {
+                        expect(rule).toMatch(/!important$/);
+                    });
+                });
+
+                done();
+            }, 50);
+        });
+
+        it("Overrides important CSS", function (done) {
+            var erd = elementResizeDetectorMaker({
+                callOnAdd: false,
+                strategy: strategy,
+                important: true
+            });
+
+            var listener = jasmine.createSpy("listener");
+            var testElem = $("#test");
+            var style = document.createElement("style");
+            style.appendChild(document.createTextNode("#test { position: static !important; }"));
+            document.head.appendChild(style);
+
+            erd.listenTo(testElem[0], listener);
+
+            setTimeout(function () {
+                $("#test").width(300);
+            }, 100);
+
+            setTimeout(function () {
+                expect(listener).toHaveBeenCalledWith($("#test")[0]);
+                done();
+            }, 200);
+        });
+    });
+}
+
+describe("element-resize-detector", function () {
+    beforeEach(function () {
         //This messed with tests in IE8.
         //TODO: Investigate why, because it would be nice to have instead of the current solution.
         //loadFixtures("element-resize-detector_fixture.html");
         $("#fixtures").html("<div id=test></div><div id=test2></div>");
     });
 
-    describe("elementResizeDetectorMaker", function() {
-        it("should be globally defined", function() {
+    describe("elementResizeDetectorMaker", function () {
+        it("should be globally defined", function () {
             expect(elementResizeDetectorMaker).toBeDefined();
         });
 
-        it("should create an element-resize-detector instance", function() {
+        it("should create an element-resize-detector instance", function () {
             var erd = elementResizeDetectorMaker();
 
             expect(erd).toBeDefined();
@@ -972,13 +1123,8 @@ describe("element-resize-detector", function() {
 
     // listenToTest("object");
     // removalTest("object");
-    //
-    // //Scroll only supported on non-opera browsers.
-    // if(!window.opera) {
-    //     listenToTest("scroll");
-    //     removalTest("scroll");
-    // }
-
+    // importantRuleTest("object");
     listenToTest("scroll");
     removalTest("scroll");
+    importantRuleTest("scroll");
 });
