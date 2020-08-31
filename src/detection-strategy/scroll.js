@@ -7,6 +7,8 @@
 
 var forEach = require("../collection-utils").forEach;
 
+var scrollbarSizes;
+
 module.exports = function(options) {
     options             = options || {};
     var reporter        = options.reporter;
@@ -23,8 +25,9 @@ module.exports = function(options) {
         throw new Error("Missing required dependency: reporter.");
     }
 
-    //TODO: Could this perhaps be done at installation time?
-    var scrollbarSizes = getScrollbarSizes();
+    if (!scrollbarSizes) {
+        scrollbarSizes = getScrollbarSizes();
+    }
 
     var styleId = "erd_scroll_detection_scrollbar_style";
     var detectionContainerClass = "erd_scroll_detection_container";
