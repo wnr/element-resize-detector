@@ -892,6 +892,35 @@ function removalTest(strategy) {
                 $("#test").width(300);
             }, 50);
         });
+
+        // Only run this shadow DOM test for browsers that support the feature
+        if (!!HTMLElement.prototype.attachShadow) {
+            it("should work for elements within an open shadow root (issue #127)", function(done) {
+                var erd = elementResizeDetectorMaker({
+                    callOnAdd: false,
+                    reporter: reporter,
+                    strategy: "scroll"
+                });
+
+                var listener = jasmine.createSpy("listener");
+
+                // Setup shadow root with a child div
+                var shadow = $("#shadowtest")[0].attachShadow({mode: "open"});
+                var shadowChild = document.createElement("div");
+                shadow.appendChild(shadowChild);
+
+                erd.listenTo(shadowChild, listener);
+
+                setTimeout(function () {
+                    $(shadowChild).width(300);
+                }, 200);
+
+                setTimeout(function () {
+                    expect(listener).toHaveBeenCalledWith(shadowChild);
+                    done();
+                }, 400);
+            });
+        }
     });
 
     describe("[" + strategy + "] resizeDetector.uninstall", function () {
@@ -1105,7 +1134,7 @@ describe("element-resize-detector", function () {
         //This messed with tests in IE8.
         //TODO: Investigate why, because it would be nice to have instead of the current solution.
         //loadFixtures("element-resize-detector_fixture.html");
-        $("#fixtures").html("<div id=test></div><div id=test2></div>");
+        $("#fixtures").html("<div id=test></div><div id=test2></div><div id=shadowtest></div>");
     });
 
     describe("elementResizeDetectorMaker", function () {
