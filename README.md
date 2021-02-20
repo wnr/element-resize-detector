@@ -74,6 +74,11 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.2.2
+
+* Fixes scroll strategy to account for elements within shadow root. See #127.
+* Fix potential contenteditable bugs with object approach. See #122.
+
 #### 1.2.1
 
 A release that includes 1.1.15 and 1.1.16 with 1.2.0.
