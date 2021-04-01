@@ -84,11 +84,14 @@ module.exports = function(options) {
         if (!targetDocument.getElementById(styleId)) {
             const containerAnimationClass = `${containerClass}_animation`;
             const containerAnimationActiveClass = `${containerClass}_animation_active`;
-            var style = "/* Created by the element-resize-detector library. */\n";
-            style += `.${containerClass} > div::-webkit-scrollbar { ${buildCssTextString(["display: none"])} }\n\n`;
-            style += `.${containerAnimationActiveClass} { ${buildCssTextString(["-webkit-animation-duration: 0.1s", "animation-duration: 0.1s", `-webkit-animation-name: ${containerAnimationClass}`, `animation-name: ${containerAnimationClass}`])} }\n`;
-            style += `@-webkit-keyframes ${containerAnimationClass} { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }\n`;
-            style += `@keyframes ${containerAnimationClass} { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }`;
+            const style =
+                `/* Created by the element-resize-detector library. */
+                .${containerClass} > div::-webkit-scrollbar { ${buildCssTextString(["display: none"])} }
+
+                .${containerAnimationActiveClass} { ${buildCssTextString(["-webkit-animation-duration: 0.1s", "animation-duration: 0.1s", `-webkit-animation-name: ${containerAnimationClass}`, `animation-name: ${containerAnimationClass}`])} }
+                @-webkit-keyframes ${containerAnimationClass} { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+                @keyframes ${containerAnimationClass} { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+                `;
             injectStyle(style);
         }
     }
