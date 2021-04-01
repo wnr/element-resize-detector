@@ -55,13 +55,13 @@ function getAttributes(element) {
 const ensureAttributes = ensureMapEqual;
 
 const reporter = {
-    log: function () {
+    log() {
         throw new Error("Reporter.log should not be called");
     },
-    warn: function () {
+    warn() {
         throw new Error("Reporter.warn should not be called");
     },
-    error: function () {
+    error() {
         throw new Error("Reporter.error should not be called");
     }
 };
@@ -73,8 +73,8 @@ function listenToTest(strategy) {
         it("should be able to attach a listener to an element", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
+                reporter,
+                strategy
             });
 
             const listener = jasmine.createSpy("listener");
@@ -94,8 +94,8 @@ function listenToTest(strategy) {
         it("should throw on invalid parameters", function () {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
+                reporter,
+                strategy
             });
 
             expect(erd.listenTo).toThrow();
@@ -107,14 +107,14 @@ function listenToTest(strategy) {
             it("should be called when installing a listener to an element", function (done) {
                 const erd = elementResizeDetectorMaker({
                     callOnAdd: false,
-                    reporter: reporter,
-                    strategy: strategy
+                    reporter,
+                    strategy
                 });
 
                 const listener = jasmine.createSpy("listener");
 
                 erd.listenTo({
-                    onReady: function () {
+                    onReady() {
                         $("#test").width(200);
                         setTimeout(function () {
                             expect(listener).toHaveBeenCalledWith($("#test")[0]);
@@ -127,14 +127,14 @@ function listenToTest(strategy) {
             it("should be called when all elements are ready", function (done) {
                 const erd = elementResizeDetectorMaker({
                     callOnAdd: false,
-                    reporter: reporter,
-                    strategy: strategy
+                    reporter,
+                    strategy
                 });
 
                 const listener = jasmine.createSpy("listener");
 
                 erd.listenTo({
-                    onReady: function () {
+                    onReady() {
                         $("#test").width(200);
                         $("#test2").width(300);
                         setTimeout(function () {
@@ -149,8 +149,8 @@ function listenToTest(strategy) {
             it("should be able to handle listeners for the same element but different calls", function (done) {
                 const erd = elementResizeDetectorMaker({
                     callOnAdd: false,
-                    reporter: reporter,
-                    strategy: strategy
+                    reporter,
+                    strategy
                 });
 
                 const onReady1 = jasmine.createSpy("listener");
@@ -175,8 +175,8 @@ function listenToTest(strategy) {
             it("should be able to handle when elements occur multiple times in the same call (and other calls)", function (done) {
                 const erd = elementResizeDetectorMaker({
                     callOnAdd: false,
-                    reporter: reporter,
-                    strategy: strategy
+                    reporter,
+                    strategy
                 });
 
                 const onReady1 = jasmine.createSpy("listener");
@@ -202,8 +202,8 @@ function listenToTest(strategy) {
         it("should be able to attach multiple listeners to an element", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
+                reporter,
+                strategy
             });
 
             const listener1 = jasmine.createSpy("listener1");
@@ -226,8 +226,8 @@ function listenToTest(strategy) {
         it("should be able to attach a listener to an element multiple times within the same call", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
+                reporter,
+                strategy
             });
 
             const listener1 = jasmine.createSpy("listener1");
@@ -248,8 +248,8 @@ function listenToTest(strategy) {
         it("should be able to attach listeners to multiple elements", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
+                reporter,
+                strategy
             });
 
             const listener1 = jasmine.createSpy("listener1");
@@ -280,8 +280,8 @@ function listenToTest(strategy) {
             it("should keep the style of the element intact", function (done) {
                 const erd = elementResizeDetectorMaker({
                     callOnAdd: false,
-                    reporter: reporter,
-                    strategy: strategy
+                    reporter,
+                    strategy
                 });
 
                 function ignoreStyleChange(key, before, after) {
@@ -307,8 +307,8 @@ function listenToTest(strategy) {
         describe("options.callOnAdd", function () {
             it("should be true default and call all functions when listenTo succeeds", function (done) {
                 const erd = elementResizeDetectorMaker({
-                    reporter: reporter,
-                    strategy: strategy
+                    reporter,
+                    strategy
                 });
 
                 const listener = jasmine.createSpy("listener");
@@ -334,8 +334,8 @@ function listenToTest(strategy) {
 
             it("should call listener multiple times when listening to multiple elements", function (done) {
                 const erd = elementResizeDetectorMaker({
-                    reporter: reporter,
-                    strategy: strategy
+                    reporter,
+                    strategy
                 });
 
                 const listener1 = jasmine.createSpy("listener1");
@@ -352,8 +352,8 @@ function listenToTest(strategy) {
         it("should call listener if the element is changed synchronously after listenTo", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
+                reporter,
+                strategy
             });
 
             const listener1 = jasmine.createSpy("listener1");
@@ -369,8 +369,8 @@ function listenToTest(strategy) {
         it("should not emit resize when listenTo is called", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
+                reporter,
+                strategy
             });
 
             const listener1 = jasmine.createSpy("listener1");
@@ -385,8 +385,8 @@ function listenToTest(strategy) {
         it("should not emit resize event even though the element is back to its start size", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
+                reporter,
+                strategy
             });
 
             const listener = jasmine.createSpy("listener1");
@@ -415,7 +415,7 @@ function listenToTest(strategy) {
             const ID_ATTR = "some-fancy-id-attr";
 
             const idHandler = {
-                get: function (element, readonly) {
+                get(element, readonly) {
                     if (element[ID_ATTR] === undefined) {
                         if (readonly) {
                             return null;
@@ -426,7 +426,7 @@ function listenToTest(strategy) {
 
                     return $(element).attr(ID_ATTR);
                 },
-                set: function (element) {
+                set(element) {
                     let id;
 
                     if ($(element).attr("id") === "test") {
@@ -442,10 +442,10 @@ function listenToTest(strategy) {
             };
 
             const erd = elementResizeDetectorMaker({
-                idHandler: idHandler,
+                idHandler,
                 callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
+                reporter,
+                strategy
             });
 
             const listener1 = jasmine.createSpy("listener1");
@@ -486,8 +486,8 @@ function listenToTest(strategy) {
         it("should be able to install into elements that are detached from the DOM", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
+                reporter,
+                strategy
             });
 
             const listener1 = jasmine.createSpy("listener1");
@@ -513,8 +513,8 @@ function listenToTest(strategy) {
         it("should handle iframes, by using initDocument", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                strategy: strategy,
-                reporter: reporter
+                strategy,
+                reporter
             });
 
             const listener1 = jasmine.createSpy("listener1");
@@ -547,8 +547,8 @@ function listenToTest(strategy) {
         it("should detect resizes caused by padding and font-size changes", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
+                reporter,
+                strategy
             });
 
             const listener = jasmine.createSpy("listener");
@@ -576,8 +576,8 @@ function listenToTest(strategy) {
             it("when installing", function (done) {
                 const erd = elementResizeDetectorMaker({
                     callOnAdd: false,
-                    reporter: reporter,
-                    strategy: strategy
+                    reporter,
+                    strategy
                 });
 
                 $("#test").html("<div id=\"inner\"></div>");
@@ -607,8 +607,8 @@ function listenToTest(strategy) {
             it("when element gets unrendered after installation", function (done) {
                 const erd = elementResizeDetectorMaker({
                     callOnAdd: false,
-                    reporter: reporter,
-                    strategy: strategy
+                    reporter,
+                    strategy
                 });
 
                 // The div is rendered to begin with.
@@ -642,8 +642,8 @@ function listenToTest(strategy) {
             it("should be listenable", function (done) {
                 const erd = elementResizeDetectorMaker({
                     callOnAdd: false,
-                    reporter: reporter,
-                    strategy: strategy
+                    reporter,
+                    strategy
                 });
 
                 $("#test").html("<span id=\"inner\">test</span>");
@@ -665,8 +665,8 @@ function listenToTest(strategy) {
             it("should not get altered dimensions", function (done) {
                 const erd = elementResizeDetectorMaker({
                     callOnAdd: false,
-                    reporter: reporter,
-                    strategy: strategy
+                    reporter,
+                    strategy
                 });
 
                 $("#test").html("<span id=\"inner\"></span>");
@@ -688,8 +688,8 @@ function listenToTest(strategy) {
         it("should handle dir=rtl correctly", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                reporter: reporter,
-                strategy: strategy
+                reporter,
+                strategy
             });
 
             const listener = jasmine.createSpy("listener");
@@ -710,8 +710,8 @@ function listenToTest(strategy) {
         it("should handle fast consecutive resizes", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                strategy: strategy,
-                reporter: reporter
+                strategy,
+                reporter
             });
 
             const listener = jasmine.createSpy("listener");
@@ -761,7 +761,7 @@ function removalTest(strategy) {
         it("should remove listener from element", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                strategy: strategy
+                strategy
             });
 
             const $testElem = $("#test");
@@ -789,7 +789,7 @@ function removalTest(strategy) {
         it("should remove all listeners from element", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                strategy: strategy
+                strategy
             });
 
             const $testElem = $("#test");
@@ -814,7 +814,7 @@ function removalTest(strategy) {
 
         it("should work for elements that don't have the detector installed", function () {
             const erd = elementResizeDetectorMaker({
-                strategy: strategy
+                strategy
             });
             const $testElem = $("#test");
             expect(erd.removeAllListeners.bind(erd, $testElem[0])).not.toThrow();
@@ -858,7 +858,7 @@ function removalTest(strategy) {
         it("should be able to call uninstall and then install in the middle of a resize (issue #61)", function (done) {
             const erd = elementResizeDetectorMaker({
                 strategy: "scroll",
-                reporter: reporter
+                reporter
             });
 
             const $testElem = $("#test");
@@ -898,7 +898,7 @@ function removalTest(strategy) {
             it("should work for elements within an open shadow root (issue #127)", function(done) {
                 const erd = elementResizeDetectorMaker({
                     callOnAdd: false,
-                    reporter: reporter,
+                    reporter,
                     strategy: "scroll"
                 });
 
@@ -927,7 +927,7 @@ function removalTest(strategy) {
         it("should completely remove detector from element", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                strategy: strategy
+                strategy
             });
 
             const $testElem = $("#test");
@@ -952,7 +952,7 @@ function removalTest(strategy) {
         it("should completely remove detector from multiple elements", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                strategy: strategy
+                strategy
             });
 
             const listener = jasmine.createSpy("listener");
@@ -975,7 +975,7 @@ function removalTest(strategy) {
 
         it("should be able to call uninstall directly after listenTo", function () {
             const erd = elementResizeDetectorMaker({
-                strategy: strategy
+                strategy
             });
 
             const $testElem = $("#test");
@@ -987,7 +987,7 @@ function removalTest(strategy) {
 
         it("should be able to call uninstall directly async after listenTo", function (done) {
             const erd = elementResizeDetectorMaker({
-                strategy: strategy
+                strategy
             });
 
             const $testElem = $("#test");
@@ -1009,7 +1009,7 @@ function removalTest(strategy) {
             };
 
             const erd = elementResizeDetectorMaker({
-                strategy: strategy,
+                strategy,
                 callOnAdd: true
             });
 
@@ -1033,7 +1033,7 @@ function removalTest(strategy) {
             };
 
             const erd = elementResizeDetectorMaker({
-                strategy: strategy,
+                strategy,
                 callOnAdd: true
             });
 
@@ -1054,7 +1054,7 @@ function removalTest(strategy) {
 
         it("should be able to call uninstall on non-erd elements", function () {
             const erd = elementResizeDetectorMaker({
-                strategy: strategy
+                strategy
             });
 
             const $testElem = $("#test");
@@ -1074,7 +1074,7 @@ function importantRuleTest(strategy) {
         it("should add all rules with important", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: true,
-                strategy: strategy,
+                strategy,
                 important: true
             });
 
@@ -1105,7 +1105,7 @@ function importantRuleTest(strategy) {
         it("Overrides important CSS", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
-                strategy: strategy,
+                strategy,
                 important: true
             });
 
