@@ -1,6 +1,6 @@
 "use strict";
 
-var utils = module.exports = {};
+const utils = module.exports = {};
 
 /**
  * Loops through the collection and calls the callback for each element. if the callback returns truthy, the loop is broken and returns the same value.
@@ -10,8 +10,8 @@ var utils = module.exports = {};
  * @returns {*} The value that a callback has returned (if truthy). Otherwise nothing.
  */
 utils.forEach = function(collection, callback) {
-    for(var i = 0; i < collection.length; i++) {
-        var result = callback(collection[i]);
+    for(let i = 0; i < collection.length; i++) {
+        const result = callback(collection[i]);
         if(result) {
             return result;
         }

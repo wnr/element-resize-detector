@@ -1,6 +1,6 @@
 "use strict";
 
-var prop = "_erd";
+const prop = "_erd";
 
 function initState(element) {
     element[prop] = {};
@@ -16,7 +16,7 @@ function cleanState(element) {
 }
 
 module.exports = {
-    initState: initState,
-    getState: getState,
-    cleanState: cleanState
+    initState,
+    getState,
+    cleanState
 };

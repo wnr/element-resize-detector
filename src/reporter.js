@@ -12,22 +12,22 @@ module.exports = function(quiet) {
         //Does nothing.
     }
 
-    var reporter = {
+    const reporter = {
         log: noop,
         warn: noop,
         error: noop
     };
 
     if(!quiet && window.console) {
-        var attachFunction = function(reporter, name) {
+        const attachFunction = function(reporter, name) {
             //The proxy is needed to be able to call the method with the console context,
             //since we cannot use bind.
             reporter[name] = function reporterProxy() {
-                var f = console[name];
+                const f = console[name];
                 if (f.apply) { //IE9 does not support console.log.apply :)
                     f.apply(console, arguments);
                 } else {
-                    for (var i = 0; i < arguments.length; i++) {
+                    for (let i = 0; i < arguments.length; i++) {
                         f(arguments[i]);
                     }
                 }

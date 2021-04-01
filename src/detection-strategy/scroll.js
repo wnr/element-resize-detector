@@ -5,15 +5,15 @@
 
 "use strict";
 
-var forEach = require("../collection-utils").forEach;
+const forEach = require("../collection-utils").forEach;
 
 module.exports = function(options) {
     options             = options || {};
-    var reporter        = options.reporter;
-    var batchProcessor  = options.batchProcessor;
-    var getState        = options.stateHandler.getState;
-    var hasState        = options.stateHandler.hasState;
-    var idHandler       = options.idHandler;
+    const reporter        = options.reporter;
+    const batchProcessor  = options.batchProcessor;
+    const getState        = options.stateHandler.getState;
+    const hasState        = options.stateHandler.hasState;
+    const idHandler       = options.idHandler;
 
     if (!batchProcessor) {
         throw new Error("Missing required dependency: batchProcessor");
@@ -24,10 +24,10 @@ module.exports = function(options) {
     }
 
     //TODO: Could this perhaps be done at installation time?
-    var scrollbarSizes = getScrollbarSizes();
+    const scrollbarSizes = getScrollbarSizes();
 
-    var styleId = "erd_scroll_detection_scrollbar_style";
-    var detectionContainerClass = "erd_scroll_detection_container";
+    const styleId = "erd_scroll_detection_scrollbar_style";
+    const detectionContainerClass = "erd_scroll_detection_container";
 
     function initDocument(targetDocument) {
         // Inject the scrollbar styling that prevents them from appearing sometimes in Chrome.
@@ -38,27 +38,27 @@ module.exports = function(options) {
     initDocument(window.document);
 
     function buildCssTextString(rules) {
-        var seperator = options.important ? " !important; " : "; ";
+        const seperator = options.important ? " !important; " : "; ";
 
         return (rules.join(seperator) + seperator).trim();
     }
 
     function getScrollbarSizes() {
-        var width = 500;
-        var height = 500;
+        const width = 500;
+        const height = 500;
 
-        var child = document.createElement("div");
-        child.style.cssText = buildCssTextString(["position: absolute", "width: " + width*2 + "px", "height: " + height*2 + "px", "visibility: hidden", "margin: 0", "padding: 0"]);
+        const child = document.createElement("div");
+        child.style.cssText = buildCssTextString(["position: absolute", `width: ${width*2}px`, `height: ${height*2}px`, "visibility: hidden", "margin: 0", "padding: 0"]);
 
-        var container = document.createElement("div");
-        container.style.cssText = buildCssTextString(["position: absolute", "width: " + width + "px", "height: " + height + "px", "overflow: scroll", "visibility: none", "top: " + -width*3 + "px", "left: " + -height*3 + "px", "visibility: hidden", "margin: 0", "padding: 0"]);
+        const container = document.createElement("div");
+        container.style.cssText = buildCssTextString(["position: absolute", `width: ${width}px`, `height: ${height}px`, "overflow: scroll", "visibility: none", `top: ${-width*3}px`, `left: ${-height*3}px`, "visibility: hidden", "margin: 0", "padding: 0"]);
 
         container.appendChild(child);
 
         document.body.insertBefore(container, document.body.firstChild);
 
-        var widthSize = width - container.clientWidth;
-        var heightSize = height - container.clientHeight;
+        const widthSize = width - container.clientWidth;
+        const heightSize = height - container.clientHeight;
 
         document.body.removeChild(container);
 
@@ -74,7 +74,7 @@ module.exports = function(options) {
                 targetDocument.head.appendChild(element);
             };
 
-            var styleElement = targetDocument.createElement("style");
+            const styleElement = targetDocument.createElement("style");
             styleElement.innerHTML = style;
             styleElement.id = styleId;
             method(styleElement);
@@ -82,26 +82,29 @@ module.exports = function(options) {
         }
 
         if (!targetDocument.getElementById(styleId)) {
-            var containerAnimationClass = containerClass + "_animation";
-            var containerAnimationActiveClass = containerClass + "_animation_active";
-            var style = "/* Created by the element-resize-detector library. */\n";
-            style += "." + containerClass + " > div::-webkit-scrollbar { " + buildCssTextString(["display: none"]) + " }\n\n";
-            style += "." + containerAnimationActiveClass + " { " + buildCssTextString(["-webkit-animation-duration: 0.1s", "animation-duration: 0.1s", "-webkit-animation-name: " + containerAnimationClass, "animation-name: " + containerAnimationClass]) + " }\n";
-            style += "@-webkit-keyframes " + containerAnimationClass +  " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }\n";
-            style += "@keyframes " + containerAnimationClass +          " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }";
+            const containerAnimationClass = `${containerClass}_animation`;
+            const containerAnimationActiveClass = `${containerClass}_animation_active`;
+            const style =
+                `/* Created by the element-resize-detector library. */
+                .${containerClass} > div::-webkit-scrollbar { ${buildCssTextString(["display: none"])} }
+
+                .${containerAnimationActiveClass} { ${buildCssTextString(["-webkit-animation-duration: 0.1s", "animation-duration: 0.1s", `-webkit-animation-name: ${containerAnimationClass}`, `animation-name: ${containerAnimationClass}`])} }
+                @-webkit-keyframes ${containerAnimationClass} { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+                @keyframes ${containerAnimationClass} { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+                `;
             injectStyle(style);
         }
     }
 
     function addAnimationClass(element) {
-        element.className += " " + detectionContainerClass + "_animation_active";
+        element.className += ` ${detectionContainerClass}_animation_active`;
     }
 
     function addEvent(el, name, cb) {
         if (el.addEventListener) {
             el.addEventListener(name, cb);
         } else if(el.attachEvent) {
-            el.attachEvent("on" + name, cb);
+            el.attachEvent(`on${name}`, cb);
         } else {
             return reporter.error("[scroll] Don't know how to add event listeners.");
         }
@@ -111,7 +114,7 @@ module.exports = function(options) {
         if (el.removeEventListener) {
             el.removeEventListener(name, cb);
         } else if(el.detachEvent) {
-            el.detachEvent("on" + name, cb);
+            el.detachEvent(`on${name}`, cb);
         } else {
             return reporter.error("[scroll] Don't know how to remove event listeners.");
         }
@@ -132,7 +135,7 @@ module.exports = function(options) {
      * @param {function} listener The listener callback to be called for each resize event of the element. The element will be given as a parameter to the listener callback.
      */
     function addListener(element, listener) {
-        var listeners = getState(element).listeners;
+        const listeners = getState(element).listeners;
 
         if (!listeners.push) {
             throw new Error("Cannot add listener to an element that is not detectable.");
@@ -159,12 +162,12 @@ module.exports = function(options) {
 
         function debug() {
             if (options.debug) {
-                var args = Array.prototype.slice.call(arguments);
+                const args = Array.prototype.slice.call(arguments);
                 args.unshift(idHandler.get(element), "Scroll: ");
                 if (reporter.log.apply) {
                     reporter.log.apply(null, args);
                 } else {
-                    for (var i = 0; i < args.length; i++) {
+                    for (let i = 0; i < args.length; i++) {
                         reporter.log(args[i]);
                     }
                 }
@@ -173,7 +176,7 @@ module.exports = function(options) {
 
         function isDetached(element) {
             function isInDocument(element) {
-                var isInShadowRoot = element.getRootNode && element.getRootNode().contains(element);
+                const isInShadowRoot = element.getRootNode && element.getRootNode().contains(element);
                 return element === element.ownerDocument.body || element.ownerDocument.body.contains(element) || isInShadowRoot;
             }
 
@@ -191,16 +194,16 @@ module.exports = function(options) {
 
         function isUnrendered(element) {
             // Check the absolute positioned container since the top level container is display: inline.
-            var container = getState(element).container.childNodes[0];
-            var style = window.getComputedStyle(container);
+            const container = getState(element).container.childNodes[0];
+            const style = window.getComputedStyle(container);
             return !style.width || style.width.indexOf("px") === -1; //Can only compute pixel value when rendered.
         }
 
         function getStyle() {
             // Some browsers only force layouts when actually reading the style properties of the style object, so make sure that they are all read here,
             // so that the user of the function can be sure that it will perform the layout here, instead of later (important for batching).
-            var elementStyle            = window.getComputedStyle(element);
-            var style                   = {};
+            const elementStyle            = window.getComputedStyle(element);
+            const style                   = {};
             style.position              = elementStyle.position;
             style.width                 = element.offsetWidth;
             style.height                = element.offsetHeight;
@@ -214,7 +217,7 @@ module.exports = function(options) {
         }
 
         function storeStartSize() {
-            var style = getStyle();
+            const style = getStyle();
             getState(element).startSize = {
                 width: style.width,
                 height: style.height
@@ -233,7 +236,7 @@ module.exports = function(options) {
                 return;
             }
 
-            var style = getStyle();
+            const style = getStyle();
             getState(element).style = style;
         }
 
@@ -271,12 +274,12 @@ module.exports = function(options) {
         }
 
         function positionScrollbars(element, width, height) {
-            var expand          = getExpandElement(element);
-            var shrink          = getShrinkElement(element);
-            var expandWidth     = getExpandWidth(width);
-            var expandHeight    = getExpandHeight(height);
-            var shrinkWidth     = getShrinkWidth(width);
-            var shrinkHeight    = getShrinkHeight(height);
+            const expand          = getExpandElement(element);
+            const shrink          = getShrinkElement(element);
+            const expandWidth     = getExpandWidth(width);
+            const expandHeight    = getExpandHeight(height);
+            const shrinkWidth     = getShrinkWidth(width);
+            const shrinkHeight    = getShrinkHeight(height);
             expand.scrollLeft   = expandWidth;
             expand.scrollTop    = expandHeight;
             shrink.scrollLeft   = shrinkWidth;
@@ -284,7 +287,7 @@ module.exports = function(options) {
         }
 
         function injectContainerElement() {
-            var container = getState(element).container;
+            let container = getState(element).container;
 
             if (!container) {
                 container                   = document.createElement("div");
@@ -294,7 +297,7 @@ module.exports = function(options) {
                 addAnimationClass(container);
                 element.appendChild(container);
 
-                var onAnimationStart = function () {
+                const onAnimationStart = function () {
                     getState(element).onRendered && getState(element).onRendered();
                 };
 
@@ -310,12 +313,12 @@ module.exports = function(options) {
 
         function injectScrollElements() {
             function alterPositionStyles() {
-                var style = getState(element).style;
+                const style = getState(element).style;
 
                 if(style.position === "static") {
                     element.style.setProperty("position", "relative",options.important ? "important" : "");
 
-                    var removeRelativeStyles = function(reporter, element, style, property) {
+                    const removeRelativeStyles = function(reporter, element, style, property) {
                         function getNumericalValue(value) {
                             return value.replace(/[^-\d\.]/g, "");
                         }
@@ -323,7 +326,7 @@ module.exports = function(options) {
                         var value = style[property];
 
                         if(value !== "auto" && getNumericalValue(value) !== "0") {
-                            reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
+                            reporter.warn(`An element that is positioned static has style.${property}=${value} which is ignored due to the static positioning. The element will need to be positioned relative, so the style.${property} will be set to 0. Element: `, element);
                             element.style[property] = 0;
                         }
                     };
@@ -338,12 +341,12 @@ module.exports = function(options) {
             }
 
             function getLeftTopBottomRightCssText(left, top, bottom, right) {
-                left = (!left ? "0" : (left + "px"));
-                top = (!top ? "0" : (top + "px"));
-                bottom = (!bottom ? "0" : (bottom + "px"));
-                right = (!right ? "0" : (right + "px"));
+                left = (!left ? "0" : (`${left}px`));
+                top = (!top ? "0" : (`${top}px`));
+                bottom = (!bottom ? "0" : (`${bottom}px`));
+                right = (!right ? "0" : (`${right}px`));
 
-                return ["left: " + left, "top: " + top, "right: " + right, "bottom: " + bottom];
+                return [`left: ${left}`, `top: ${top}`, `right: ${right}`, `bottom: ${bottom}`];
             }
 
             debug("Injecting elements");
@@ -355,7 +358,7 @@ module.exports = function(options) {
 
             alterPositionStyles();
 
-            var rootContainer = getState(element).container;
+            let rootContainer = getState(element).container;
 
             if (!rootContainer) {
                 rootContainer = injectContainerElement();
@@ -369,21 +372,21 @@ module.exports = function(options) {
             // The outer container can occasionally be less wide than the targeted when inside inline elements element in WebKit (see https://bugs.webkit.org/show_bug.cgi?id=152980).
             // This should be no problem since the inner container either way makes sure the injected scroll elements are at least 1x1 px.
 
-            var scrollbarWidth          = scrollbarSizes.width;
-            var scrollbarHeight         = scrollbarSizes.height;
-            var containerContainerStyle = buildCssTextString(["position: absolute", "flex: none", "overflow: hidden", "z-index: -1", "visibility: hidden", "width: 100%", "height: 100%", "left: 0px", "top: 0px"]);
-            var containerStyle          = buildCssTextString(["position: absolute", "flex: none", "overflow: hidden", "z-index: -1", "visibility: hidden"].concat(getLeftTopBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth)));
-            var expandStyle             = buildCssTextString(["position: absolute", "flex: none", "overflow: scroll", "z-index: -1", "visibility: hidden", "width: 100%", "height: 100%"]);
-            var shrinkStyle             = buildCssTextString(["position: absolute", "flex: none", "overflow: scroll", "z-index: -1", "visibility: hidden", "width: 100%", "height: 100%"]);
-            var expandChildStyle        = buildCssTextString(["position: absolute", "left: 0", "top: 0"]);
-            var shrinkChildStyle        = buildCssTextString(["position: absolute", "width: 200%", "height: 200%"]);
+            const scrollbarWidth          = scrollbarSizes.width;
+            const scrollbarHeight         = scrollbarSizes.height;
+            const containerContainerStyle = buildCssTextString(["position: absolute", "flex: none", "overflow: hidden", "z-index: -1", "visibility: hidden", "width: 100%", "height: 100%", "left: 0px", "top: 0px"]);
+            const containerStyle          = buildCssTextString(["position: absolute", "flex: none", "overflow: hidden", "z-index: -1", "visibility: hidden"].concat(getLeftTopBottomRightCssText(-(1 + scrollbarWidth), -(1 + scrollbarHeight), -scrollbarHeight, -scrollbarWidth)));
+            const expandStyle             = buildCssTextString(["position: absolute", "flex: none", "overflow: scroll", "z-index: -1", "visibility: hidden", "width: 100%", "height: 100%"]);
+            const shrinkStyle             = buildCssTextString(["position: absolute", "flex: none", "overflow: scroll", "z-index: -1", "visibility: hidden", "width: 100%", "height: 100%"]);
+            const expandChildStyle        = buildCssTextString(["position: absolute", "left: 0", "top: 0"]);
+            const shrinkChildStyle        = buildCssTextString(["position: absolute", "width: 200%", "height: 200%"]);
 
-            var containerContainer      = document.createElement("div");
+            const containerContainer      = document.createElement("div");
             var container               = document.createElement("div");
-            var expand                  = document.createElement("div");
-            var expandChild             = document.createElement("div");
-            var shrink                  = document.createElement("div");
-            var shrinkChild             = document.createElement("div");
+            const expand                  = document.createElement("div");
+            const expandChild             = document.createElement("div");
+            const shrink                  = document.createElement("div");
+            const shrinkChild             = document.createElement("div");
 
             // Some browsers choke on the resize system being rtl, so force it to ltr. https://github.com/wnr/element-resize-detector/issues/56
             // However, dir should not be set on the top level container as it alters the dimensions of the target element in some browsers.
@@ -424,19 +427,19 @@ module.exports = function(options) {
 
         function registerListenersAndPositionElements() {
             function updateChildSizes(element, width, height) {
-                var expandChild             = getExpandChildElement(element);
-                var expandWidth             = getExpandWidth(width);
-                var expandHeight            = getExpandHeight(height);
-                expandChild.style.setProperty("width", expandWidth + "px", options.important ? "important" : "");
-                expandChild.style.setProperty("height", expandHeight + "px", options.important ? "important" : "");
+                const expandChild             = getExpandChildElement(element);
+                const expandWidth             = getExpandWidth(width);
+                const expandHeight            = getExpandHeight(height);
+                expandChild.style.setProperty("width", `${expandWidth}px`, options.important ? "important" : "");
+                expandChild.style.setProperty("height", `${expandHeight}px`, options.important ? "important" : "");
             }
 
             function updateDetectorElements(done) {
-                var width           = element.offsetWidth;
-                var height          = element.offsetHeight;
+                const width           = element.offsetWidth;
+                const height          = element.offsetHeight;
 
                 // Check whether the size has actually changed since last time the algorithm ran. If not, some steps may be skipped.
-                var sizeChanged = width !== getState(element).lastWidth || height !== getState(element).lastHeight;
+                const sizeChanged = width !== getState(element).lastWidth || height !== getState(element).lastHeight;
 
                 debug("Storing current size", width, height);
 
@@ -463,8 +466,8 @@ module.exports = function(options) {
                     }
 
                     if (options.debug) {
-                        var w = element.offsetWidth;
-                        var h = element.offsetHeight;
+                        const w = element.offsetWidth;
+                        const h = element.offsetHeight;
 
                         if (w !== width || h !== height) {
                             reporter.warn(idHandler.get(element), "Scroll: Size changed before updating detector elements.");
@@ -519,7 +522,7 @@ module.exports = function(options) {
 
                 debug("notifyListenersIfNeeded invoked");
 
-                var state = getState(element);
+                const state = getState(element);
 
                 // Don't notify if the current size is the start size, and this is the first notification.
                 if (isFirstNotify() && state.lastWidth === state.startSize.width && state.lastHeight === state.startSize.height) {
@@ -549,8 +552,8 @@ module.exports = function(options) {
                 }
 
                 debug("Element rendered.");
-                var expand = getExpandElement(element);
-                var shrink = getShrinkElement(element);
+                const expand = getExpandElement(element);
+                const shrink = getShrinkElement(element);
                 if (expand.scrollLeft === 0 || expand.scrollTop === 0 || shrink.scrollLeft === 0 || shrink.scrollTop === 0) {
                     debug("Scrollbars out of sync. Updating detector elements...");
                     updateDetectorElements(notifyListenersIfNeeded);
@@ -592,7 +595,7 @@ module.exports = function(options) {
                 return;
             }
 
-            var style = getState(element).style;
+            const style = getState(element).style;
             storeCurrentSize(element, style.width, style.height);
             positionScrollbars(element, style.width, style.height);
         }
@@ -632,7 +635,7 @@ module.exports = function(options) {
     }
 
     function uninstall(element) {
-        var state = getState(element);
+        const state = getState(element);
 
         if (!state) {
             // Uninstall has been called on a non-erd element.
@@ -654,9 +657,9 @@ module.exports = function(options) {
     }
 
     return {
-        makeDetectable: makeDetectable,
-        addListener: addListener,
-        uninstall: uninstall,
-        initDocument: initDocument
+        makeDetectable,
+        addListener,
+        uninstall,
+        initDocument
     };
 };

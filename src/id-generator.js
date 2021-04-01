@@ -1,7 +1,7 @@
 "use strict";
 
 module.exports = function() {
-    var idCount = 1;
+    let idCount = 1;
 
     /**
      * Generates a new unique id in the context.
@@ -13,6 +13,6 @@ module.exports = function() {
     }
 
     return {
-        generate: generate
+        generate
     };
 };
