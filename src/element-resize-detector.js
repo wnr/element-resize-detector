@@ -70,14 +70,14 @@ module.exports = function(options) {
         // To maintain compatability with idHandler.get(element, readonly), make sure to wrap the given idHandler
         // so that readonly flag always is true when it's used here. This may be removed next major version bump.
         idHandler = {
-            get: function (element) { return options.idHandler.get(element, true); },
+            get(element) { return options.idHandler.get(element, true); },
             set: options.idHandler.set
         };
     } else {
         const idGenerator = idGeneratorMaker();
         const defaultIdHandler = idHandlerMaker({
-            idGenerator: idGenerator,
-            stateHandler: stateHandler
+            idGenerator,
+            stateHandler
         });
         idHandler = defaultIdHandler;
     }
@@ -92,7 +92,7 @@ module.exports = function(options) {
     }
 
     //batchProcessor is currently not an option to the listenTo function, so it should not be added to globalOptions.
-    const batchProcessor = getOption(options, "batchProcessor", batchProcessorMaker({ reporter: reporter }));
+    const batchProcessor = getOption(options, "batchProcessor", batchProcessorMaker({ reporter }));
 
     //Options to be used as default for the listenTo function.
     const globalOptions = {};
@@ -101,7 +101,7 @@ module.exports = function(options) {
 
     const eventListenerHandler    = listenerHandlerMaker(idHandler);
     const elementUtils            = elementUtilsMaker({
-        stateHandler: stateHandler
+        stateHandler
     });
 
     //The detection strategy to be used.
@@ -109,10 +109,10 @@ module.exports = function(options) {
     let desiredStrategy = getOption(options, "strategy", "object");
     const importantCssRules = getOption(options, "important", false);
     const strategyOptions = {
-        reporter: reporter,
-        batchProcessor: batchProcessor,
-        stateHandler: stateHandler,
-        idHandler: idHandler,
+        reporter,
+        batchProcessor,
+        stateHandler,
+        idHandler,
         important: importantCssRules
     };
 
@@ -228,7 +228,7 @@ module.exports = function(options) {
                 debug && reporter.log(id, "Making detectable...");
                 //The element is not prepared to be detectable, so do prepare it and add a listener to it.
                 elementUtils.markBusy(element, true);
-                return detectionStrategy.makeDetectable({ debug: debug, important: importantCssRules }, element, function onElementDetectable(element) {
+                return detectionStrategy.makeDetectable({ debug, important: importantCssRules }, element, function onElementDetectable(element) {
                     debug && reporter.log(id, "onElementDetectable");
 
                     if (stateHandler.getState(element)) {
@@ -309,11 +309,11 @@ module.exports = function(options) {
     }
 
     return {
-        listenTo: listenTo,
+        listenTo,
         removeListener: eventListenerHandler.removeListener,
         removeAllListeners: eventListenerHandler.removeAllListeners,
-        uninstall: uninstall,
-        initDocument: initDocument
+        uninstall,
+        initDocument
     };
 };
 

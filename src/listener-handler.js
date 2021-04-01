@@ -54,7 +54,7 @@ module.exports = function(idHandler) {
     return {
         get: getListeners,
         add: addListener,
-        removeListener: removeListener,
-        removeAllListeners: removeAllListeners
+        removeListener,
+        removeAllListeners
     };
 };

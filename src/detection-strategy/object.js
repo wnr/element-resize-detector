@@ -83,8 +83,8 @@ module.exports = function(options) {
             const height = element.offsetHeight;
 
             getState(element).startSize = {
-                width: width,
-                height: height
+                width,
+                height
             };
 
             function mutateDom() {
@@ -240,8 +240,8 @@ module.exports = function(options) {
     }
 
     return {
-        makeDetectable: makeDetectable,
-        addListener: addListener,
-        uninstall: uninstall
+        makeDetectable,
+        addListener,
+        uninstall
     };
 };

@@ -13,6 +13,6 @@ module.exports = function() {
     }
 
     return {
-        generate: generate
+        generate
     };
 };

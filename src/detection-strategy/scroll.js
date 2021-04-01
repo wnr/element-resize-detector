@@ -654,9 +654,9 @@ module.exports = function(options) {
     }
 
     return {
-        makeDetectable: makeDetectable,
-        addListener: addListener,
-        uninstall: uninstall,
-        initDocument: initDocument
+        makeDetectable,
+        addListener,
+        uninstall,
+        initDocument
     };
 };

@@ -44,9 +44,9 @@ module.exports = function(options) {
     }
 
     return {
-        isDetectable: isDetectable,
-        markAsDetectable: markAsDetectable,
-        isBusy: isBusy,
-        markBusy: markBusy
+        isDetectable,
+        markAsDetectable,
+        isBusy,
+        markBusy
     };
 };

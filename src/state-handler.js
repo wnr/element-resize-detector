@@ -16,7 +16,7 @@ function cleanState(element) {
 }
 
 module.exports = {
-    initState: initState,
-    getState: getState,
-    cleanState: cleanState
+    initState,
+    getState,
+    cleanState
 };
