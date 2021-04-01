@@ -69,7 +69,7 @@ const reporter = {
 $("body").prepend("<div id=fixtures></div>");
 
 function listenToTest(strategy) {
-    describe("[" + strategy + "] listenTo", function () {
+    describe(`[${strategy}] listenTo`, function () {
         it("should be able to attach a listener to an element", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
@@ -757,7 +757,7 @@ function listenToTest(strategy) {
 }
 
 function removalTest(strategy) {
-    describe("[" + strategy + "] resizeDetector.removeListener", function () {
+    describe(`[${strategy}] resizeDetector.removeListener`, function () {
         it("should remove listener from element", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
@@ -785,7 +785,7 @@ function removalTest(strategy) {
         });
     });
 
-    describe("[" + strategy + "] resizeDetector.removeAllListeners", function () {
+    describe(`[${strategy}] resizeDetector.removeAllListeners`, function () {
         it("should remove all listeners from element", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
@@ -923,7 +923,7 @@ function removalTest(strategy) {
         }
     });
 
-    describe("[" + strategy + "] resizeDetector.uninstall", function () {
+    describe(`[${strategy}] resizeDetector.uninstall`, function () {
         it("should completely remove detector from element", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: false,
@@ -1070,7 +1070,7 @@ function removalTest(strategy) {
 }
 
 function importantRuleTest(strategy) {
-    describe("[" + strategy + "] resizeDetector.important", function () {
+    describe(`[${strategy}] resizeDetector.important`, function () {
         it("should add all rules with important", function (done) {
             const erd = elementResizeDetectorMaker({
                 callOnAdd: true,
