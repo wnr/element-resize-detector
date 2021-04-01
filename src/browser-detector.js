@@ -1,10 +1,10 @@
 "use strict";
 
-var detector = module.exports = {};
+const detector = module.exports = {};
 
 detector.isIE = function(version) {
     function isAnyIeVersion() {
-        var agent = navigator.userAgent.toLowerCase();
+        const agent = navigator.userAgent.toLowerCase();
         return agent.indexOf("msie") !== -1 || agent.indexOf("trident") !== -1 || agent.indexOf(" edge/") !== -1;
     }
 
@@ -17,11 +17,8 @@ detector.isIE = function(version) {
     }
 
     //Shamelessly stolen from https://gist.github.com/padolsey/527683
-    var ieVersion = (function(){
-        var undef,
-            v = 3,
-            div = document.createElement("div"),
-            all = div.getElementsByTagName("i");
+    const ieVersion = (function(){
+        let undef, v = 3, div = document.createElement("div"), all = div.getElementsByTagName("i");
 
         do {
             div.innerHTML = "<!--[if gt IE " + (++v) + "]><i></i><![endif]-->";

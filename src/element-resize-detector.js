@@ -1,18 +1,18 @@
 "use strict";
 
-var forEach                 = require("./collection-utils").forEach;
-var elementUtilsMaker       = require("./element-utils");
-var listenerHandlerMaker    = require("./listener-handler");
-var idGeneratorMaker        = require("./id-generator");
-var idHandlerMaker          = require("./id-handler");
-var reporterMaker           = require("./reporter");
-var browserDetector         = require("./browser-detector");
-var batchProcessorMaker     = require("batch-processor");
-var stateHandler            = require("./state-handler");
+const forEach                 = require("./collection-utils").forEach;
+const elementUtilsMaker       = require("./element-utils");
+const listenerHandlerMaker    = require("./listener-handler");
+const idGeneratorMaker        = require("./id-generator");
+const idHandlerMaker          = require("./id-handler");
+const reporterMaker           = require("./reporter");
+const browserDetector         = require("./browser-detector");
+const batchProcessorMaker     = require("batch-processor");
+const stateHandler            = require("./state-handler");
 
 //Detection strategies.
-var objectStrategyMaker     = require("./detection-strategy/object.js");
-var scrollStrategyMaker     = require("./detection-strategy/scroll.js");
+const objectStrategyMaker     = require("./detection-strategy/object.js");
+const scrollStrategyMaker     = require("./detection-strategy/scroll.js");
 
 function isCollection(obj) {
     return Array.isArray(obj) || obj.length !== undefined;
@@ -20,7 +20,7 @@ function isCollection(obj) {
 
 function toArray(collection) {
     if (!Array.isArray(collection)) {
-        var array = [];
+        const array = [];
         forEach(collection, function (obj) {
             array.push(obj);
         });
@@ -64,7 +64,7 @@ module.exports = function(options) {
     options = options || {};
 
     //idHandler is currently not an option to the listenTo function, so it should not be added to globalOptions.
-    var idHandler;
+    let idHandler;
 
     if (options.idHandler) {
         // To maintain compatability with idHandler.get(element, readonly), make sure to wrap the given idHandler
@@ -74,8 +74,8 @@ module.exports = function(options) {
             set: options.idHandler.set
         };
     } else {
-        var idGenerator = idGeneratorMaker();
-        var defaultIdHandler = idHandlerMaker({
+        const idGenerator = idGeneratorMaker();
+        const defaultIdHandler = idHandlerMaker({
             idGenerator: idGenerator,
             stateHandler: stateHandler
         });
@@ -83,32 +83,32 @@ module.exports = function(options) {
     }
 
     //reporter is currently not an option to the listenTo function, so it should not be added to globalOptions.
-    var reporter = options.reporter;
+    let reporter = options.reporter;
 
     if(!reporter) {
         //If options.reporter is false, then the reporter should be quiet.
-        var quiet = reporter === false;
+        const quiet = reporter === false;
         reporter = reporterMaker(quiet);
     }
 
     //batchProcessor is currently not an option to the listenTo function, so it should not be added to globalOptions.
-    var batchProcessor = getOption(options, "batchProcessor", batchProcessorMaker({ reporter: reporter }));
+    const batchProcessor = getOption(options, "batchProcessor", batchProcessorMaker({ reporter: reporter }));
 
     //Options to be used as default for the listenTo function.
-    var globalOptions = {};
+    const globalOptions = {};
     globalOptions.callOnAdd     = !!getOption(options, "callOnAdd", true);
     globalOptions.debug         = !!getOption(options, "debug", false);
 
-    var eventListenerHandler    = listenerHandlerMaker(idHandler);
-    var elementUtils            = elementUtilsMaker({
+    const eventListenerHandler    = listenerHandlerMaker(idHandler);
+    const elementUtils            = elementUtilsMaker({
         stateHandler: stateHandler
     });
 
     //The detection strategy to be used.
-    var detectionStrategy;
-    var desiredStrategy = getOption(options, "strategy", "object");
-    var importantCssRules = getOption(options, "important", false);
-    var strategyOptions = {
+    let detectionStrategy;
+    let desiredStrategy = getOption(options, "strategy", "object");
+    const importantCssRules = getOption(options, "important", false);
+    const strategyOptions = {
         reporter: reporter,
         batchProcessor: batchProcessor,
         stateHandler: stateHandler,
@@ -139,7 +139,7 @@ module.exports = function(options) {
     //With this map, the ready callbacks can be synchronized between the calls
     //so that the ready callback can always be called when an element is ready - even if
     //it wasn't installed from the function itself.
-    var onReadyCallbacks = {};
+    const onReadyCallbacks = {};
 
     /**
      * Makes the given elements resize-detectable and starts listening to resize events on the elements. Calls the event callback for each event for each element.
@@ -150,7 +150,7 @@ module.exports = function(options) {
      */
     function listenTo(options, elements, listener) {
         function onResizeCallback(element) {
-            var listeners = eventListenerHandler.get(element);
+            const listeners = eventListenerHandler.get(element);
             forEach(listeners, function callListenerProxy(listener) {
                 listener(element);
             });
@@ -190,11 +190,11 @@ module.exports = function(options) {
             return reporter.error("Invalid arguments. Must be a DOM element or a collection of DOM elements.");
         }
 
-        var elementsReady = 0;
+        let elementsReady = 0;
 
         var callOnAdd = getOption(options, "callOnAdd", globalOptions.callOnAdd);
-        var onReadyCallback = getOption(options, "onReady", function noop() {});
-        var debug = getOption(options, "debug", globalOptions.debug);
+        const onReadyCallback = getOption(options, "onReady", function noop() {});
+        const debug = getOption(options, "debug", globalOptions.debug);
 
         forEach(elements, function attachListenerToElement(element) {
             if (!stateHandler.getState(element)) {
@@ -202,7 +202,7 @@ module.exports = function(options) {
                 idHandler.set(element);
             }
 
-            var id = idHandler.get(element);
+            const id = idHandler.get(element);
 
             debug && reporter.log("Attaching listener to element", id, element);
 
@@ -241,10 +241,10 @@ module.exports = function(options) {
                         // so that a resize event may be emitted.
                         // Having the startSize object is optional (since it does not make sense in some cases such as unrendered elements), so check for its existance before.
                         // Also, check the state existance before since the element may have been uninstalled in the installation process.
-                        var state = stateHandler.getState(element);
+                        const state = stateHandler.getState(element);
                         if (state && state.startSize) {
-                            var width = element.offsetWidth;
-                            var height = element.offsetHeight;
+                            const width = element.offsetWidth;
+                            const height = element.offsetHeight;
                             if (state.startSize.width !== width || state.startSize.height !== height) {
                                 onResizeCallback(element);
                             }
@@ -318,7 +318,7 @@ module.exports = function(options) {
 };
 
 function getOption(options, name, defaultValue) {
-    var value = options[name];
+    const value = options[name];
 
     if((value === undefined || value === null) && defaultValue !== undefined) {
         return defaultValue;

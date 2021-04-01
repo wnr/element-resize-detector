@@ -1,7 +1,7 @@
 "use strict";
 
 module.exports = function(idHandler) {
-    var eventListeners = {};
+    const eventListeners = {};
 
     /**
      * Gets all listeners for the given element.
@@ -10,7 +10,7 @@ module.exports = function(idHandler) {
      * @returns All listeners for the given element.
      */
     function getListeners(element) {
-        var id = idHandler.get(element);
+        const id = idHandler.get(element);
 
         if (id === undefined) {
             return [];
@@ -26,7 +26,7 @@ module.exports = function(idHandler) {
      * @param {function} listener The callback that the element has added.
      */
     function addListener(element, listener) {
-        var id = idHandler.get(element);
+        const id = idHandler.get(element);
 
         if(!eventListeners[id]) {
             eventListeners[id] = [];
@@ -36,8 +36,8 @@ module.exports = function(idHandler) {
     }
 
     function removeListener(element, listener) {
-        var listeners = getListeners(element);
-        for (var i = 0, len = listeners.length; i < len; ++i) {
+        const listeners = getListeners(element);
+        for (let i = 0, len = listeners.length; i < len; ++i) {
             if (listeners[i] === listener) {
               listeners.splice(i, 1);
               break;
@@ -46,7 +46,7 @@ module.exports = function(idHandler) {
     }
 
     function removeAllListeners(element) {
-      var listeners = getListeners(element);
+      const listeners = getListeners(element);
       if (!listeners) { return; }
       listeners.length = 0;
     }

@@ -5,13 +5,13 @@
 
 "use strict";
 
-var browserDetector = require("../browser-detector");
+const browserDetector = require("../browser-detector");
 
 module.exports = function(options) {
     options             = options || {};
-    var reporter        = options.reporter;
-    var batchProcessor  = options.batchProcessor;
-    var getState        = options.stateHandler.getState;
+    const reporter        = options.reporter;
+    const batchProcessor  = options.batchProcessor;
+    const getState        = options.stateHandler.getState;
 
     if(!reporter) {
         throw new Error("Missing required dependency: reporter.");
@@ -46,7 +46,7 @@ module.exports = function(options) {
     }
 
     function buildCssTextString(rules) {
-        var seperator = options.important ? " !important; " : "; ";
+        const seperator = options.important ? " !important; " : "; ";
 
         return (rules.join(seperator) + seperator).trim();
     }
@@ -66,21 +66,21 @@ module.exports = function(options) {
         }
 
         options = options || {};
-        var debug = options.debug;
+        const debug = options.debug;
 
         function injectObject(element, callback) {
-            var OBJECT_STYLE = buildCssTextString(["display: block", "position: absolute", "top: 0", "left: 0", "width: 100%", "height: 100%", "border: none", "padding: 0", "margin: 0", "opacity: 0", "z-index: -1000", "pointer-events: none", "visibility: hidden"]);
+            const OBJECT_STYLE = buildCssTextString(["display: block", "position: absolute", "top: 0", "left: 0", "width: 100%", "height: 100%", "border: none", "padding: 0", "margin: 0", "opacity: 0", "z-index: -1000", "pointer-events: none", "visibility: hidden"]);
 
             //The target element needs to be positioned (everything except static) so the absolute positioned object will be positioned relative to the target element.
 
             // Position altering may be performed directly or on object load, depending on if style resolution is possible directly or not.
-            var positionCheckPerformed = false;
+            let positionCheckPerformed = false;
 
             // The element may not yet be attached to the DOM, and therefore the style object may be empty in some browsers.
             // Since the style object is a reference, it will be updated as soon as the element is attached to the DOM.
-            var style = window.getComputedStyle(element);
-            var width = element.offsetWidth;
-            var height = element.offsetHeight;
+            const style = window.getComputedStyle(element);
+            const width = element.offsetWidth;
+            const height = element.offsetHeight;
 
             getState(element).startSize = {
                 width: width,
@@ -92,7 +92,7 @@ module.exports = function(options) {
                     if(style.position === "static") {
                         element.style.setProperty("position", "relative", options.important ? "important" : "");
 
-                        var removeRelativeStyles = function(reporter, element, style, property) {
+                        const removeRelativeStyles = function(reporter, element, style, property) {
                             function getNumericalValue(value) {
                                 return value.replace(/[^-\d\.]/g, "");
                             }
@@ -127,7 +127,7 @@ module.exports = function(options) {
                         //So if it is not present, poll it with an timeout until it is present.
                         //TODO: Could maybe be handled better with object.onreadystatechange or similar.
                         if(!element.contentDocument) {
-                            var state = getState(element);
+                            const state = getState(element);
                             if (state.checkForObjectDocumentTimeoutId) {
                                 window.clearTimeout(state.checkForObjectDocumentTimeoutId);
                             }
@@ -144,7 +144,7 @@ module.exports = function(options) {
 
                     //Mutating the object element here seems to fire another load event.
                     //Mutating the inner document of the object element is fine though.
-                    var objectElement = this;
+                    const objectElement = this;
 
                     //Create the style element to be added to the object.
                     getDocument(objectElement, function onObjectDocumentReady(objectDocument) {
@@ -161,7 +161,7 @@ module.exports = function(options) {
                 }
 
                 //Add an object element as a child to the target element that will be listened to for resize events.
-                var object = document.createElement("object");
+                const object = document.createElement("object");
                 object.style.cssText = OBJECT_STYLE;
                 object.tabIndex = -1;
                 object.type = "text/html";
@@ -220,7 +220,7 @@ module.exports = function(options) {
             return;
         }
 
-        var object = getObject(element);
+        const object = getObject(element);
 
         if (!object) {
             return;

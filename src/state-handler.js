@@ -1,6 +1,6 @@
 "use strict";
 
-var prop = "_erd";
+const prop = "_erd";
 
 function initState(element) {
     element[prop] = {};

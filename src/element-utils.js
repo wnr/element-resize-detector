@@ -1,7 +1,7 @@
 "use strict";
 
 module.exports = function(options) {
-    var getState = options.stateHandler.getState;
+    const getState = options.stateHandler.getState;
 
     /**
      * Tells if the element has been made detectable and ready to be listened for resize events.
@@ -10,7 +10,7 @@ module.exports = function(options) {
      * @returns {boolean} True or false depending on if the element is detectable or not.
      */
     function isDetectable(element) {
-        var state = getState(element);
+        const state = getState(element);
         return state && !!state.isDetectable;
     }
 
