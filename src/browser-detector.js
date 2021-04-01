@@ -21,7 +21,7 @@ detector.isIE = function(version) {
         let undef, v = 3, div = document.createElement("div"), all = div.getElementsByTagName("i");
 
         do {
-            div.innerHTML = "<!--[if gt IE " + (++v) + "]><i></i><![endif]-->";
+            div.innerHTML = `<!--[if gt IE ${++v}]><i></i><![endif]-->`;
         }
         while (all[0]);
 

@@ -131,7 +131,7 @@ module.exports = function(options) {
     } else if(desiredStrategy === "object") {
         detectionStrategy = objectStrategyMaker(strategyOptions);
     } else {
-        throw new Error("Invalid strategy name: " + desiredStrategy);
+        throw new Error(`Invalid strategy name: ${desiredStrategy}`);
     }
 
     //Calls can be made to listenTo with elements that are still being installed.

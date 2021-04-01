@@ -48,10 +48,10 @@ module.exports = function(options) {
         const height = 500;
 
         const child = document.createElement("div");
-        child.style.cssText = buildCssTextString(["position: absolute", "width: " + width*2 + "px", "height: " + height*2 + "px", "visibility: hidden", "margin: 0", "padding: 0"]);
+        child.style.cssText = buildCssTextString(["position: absolute", `width: ${width*2}px`, `height: ${height*2}px`, "visibility: hidden", "margin: 0", "padding: 0"]);
 
         const container = document.createElement("div");
-        container.style.cssText = buildCssTextString(["position: absolute", "width: " + width + "px", "height: " + height + "px", "overflow: scroll", "visibility: none", "top: " + -width*3 + "px", "left: " + -height*3 + "px", "visibility: hidden", "margin: 0", "padding: 0"]);
+        container.style.cssText = buildCssTextString(["position: absolute", `width: ${width}px`, `height: ${height}px`, "overflow: scroll", "visibility: none", `top: ${-width*3}px`, `left: ${-height*3}px`, "visibility: hidden", "margin: 0", "padding: 0"]);
 
         container.appendChild(child);
 
@@ -82,26 +82,26 @@ module.exports = function(options) {
         }
 
         if (!targetDocument.getElementById(styleId)) {
-            const containerAnimationClass = containerClass + "_animation";
-            const containerAnimationActiveClass = containerClass + "_animation_active";
+            const containerAnimationClass = `${containerClass}_animation`;
+            const containerAnimationActiveClass = `${containerClass}_animation_active`;
             var style = "/* Created by the element-resize-detector library. */\n";
-            style += "." + containerClass + " > div::-webkit-scrollbar { " + buildCssTextString(["display: none"]) + " }\n\n";
-            style += "." + containerAnimationActiveClass + " { " + buildCssTextString(["-webkit-animation-duration: 0.1s", "animation-duration: 0.1s", "-webkit-animation-name: " + containerAnimationClass, "animation-name: " + containerAnimationClass]) + " }\n";
-            style += "@-webkit-keyframes " + containerAnimationClass +  " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }\n";
-            style += "@keyframes " + containerAnimationClass +          " { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }";
+            style += `.${containerClass} > div::-webkit-scrollbar { ${buildCssTextString(["display: none"])} }\n\n`;
+            style += `.${containerAnimationActiveClass} { ${buildCssTextString(["-webkit-animation-duration: 0.1s", "animation-duration: 0.1s", `-webkit-animation-name: ${containerAnimationClass}`, `animation-name: ${containerAnimationClass}`])} }\n`;
+            style += `@-webkit-keyframes ${containerAnimationClass} { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }\n`;
+            style += `@keyframes ${containerAnimationClass} { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }`;
             injectStyle(style);
         }
     }
 
     function addAnimationClass(element) {
-        element.className += " " + detectionContainerClass + "_animation_active";
+        element.className += ` ${detectionContainerClass}_animation_active`;
     }
 
     function addEvent(el, name, cb) {
         if (el.addEventListener) {
             el.addEventListener(name, cb);
         } else if(el.attachEvent) {
-            el.attachEvent("on" + name, cb);
+            el.attachEvent(`on${name}`, cb);
         } else {
             return reporter.error("[scroll] Don't know how to add event listeners.");
         }
@@ -111,7 +111,7 @@ module.exports = function(options) {
         if (el.removeEventListener) {
             el.removeEventListener(name, cb);
         } else if(el.detachEvent) {
-            el.detachEvent("on" + name, cb);
+            el.detachEvent(`on${name}`, cb);
         } else {
             return reporter.error("[scroll] Don't know how to remove event listeners.");
         }
@@ -323,7 +323,7 @@ module.exports = function(options) {
                         var value = style[property];
 
                         if(value !== "auto" && getNumericalValue(value) !== "0") {
-                            reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
+                            reporter.warn(`An element that is positioned static has style.${property}=${value} which is ignored due to the static positioning. The element will need to be positioned relative, so the style.${property} will be set to 0. Element: `, element);
                             element.style[property] = 0;
                         }
                     };
@@ -338,12 +338,12 @@ module.exports = function(options) {
             }
 
             function getLeftTopBottomRightCssText(left, top, bottom, right) {
-                left = (!left ? "0" : (left + "px"));
-                top = (!top ? "0" : (top + "px"));
-                bottom = (!bottom ? "0" : (bottom + "px"));
-                right = (!right ? "0" : (right + "px"));
+                left = (!left ? "0" : (`${left}px`));
+                top = (!top ? "0" : (`${top}px`));
+                bottom = (!bottom ? "0" : (`${bottom}px`));
+                right = (!right ? "0" : (`${right}px`));
 
-                return ["left: " + left, "top: " + top, "right: " + right, "bottom: " + bottom];
+                return [`left: ${left}`, `top: ${top}`, `right: ${right}`, `bottom: ${bottom}`];
             }
 
             debug("Injecting elements");
@@ -427,8 +427,8 @@ module.exports = function(options) {
                 const expandChild             = getExpandChildElement(element);
                 const expandWidth             = getExpandWidth(width);
                 const expandHeight            = getExpandHeight(height);
-                expandChild.style.setProperty("width", expandWidth + "px", options.important ? "important" : "");
-                expandChild.style.setProperty("height", expandHeight + "px", options.important ? "important" : "");
+                expandChild.style.setProperty("width", `${expandWidth}px`, options.important ? "important" : "");
+                expandChild.style.setProperty("height", `${expandHeight}px`, options.important ? "important" : "");
             }
 
             function updateDetectorElements(done) {

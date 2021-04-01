@@ -100,7 +100,7 @@ module.exports = function(options) {
                             var value = style[property];
 
                             if(value !== "auto" && getNumericalValue(value) !== "0") {
-                                reporter.warn("An element that is positioned static has style." + property + "=" + value + " which is ignored due to the static positioning. The element will need to be positioned relative, so the style." + property + " will be set to 0. Element: ", element);
+                                reporter.warn(`An element that is positioned static has style.${property}=${value} which is ignored due to the static positioning. The element will need to be positioned relative, so the style.${property} will be set to 0. Element: `, element);
                                 element.style.setProperty(property, "0", options.important ? "important" : "");
                             }
                         };
