@@ -1,6 +1,6 @@
 {
   "name": "element-resize-detector",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Resize event emitter for elements.",
   "homepage": "https://github.com/wnr/element-resize-detector",
   "repository": {

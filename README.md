@@ -74,6 +74,11 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.2.3
+
+* Fix problems with object approach in FF. Revert #122.
+
+
 #### 1.2.2
 
 * Fixes scroll strategy to account for elements within shadow root. See #127.
