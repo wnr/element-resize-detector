@@ -74,6 +74,11 @@ Please note that both approaches have been heavily reworked for better performan
 
 ## Changelog
 
+#### 1.2.4
+
+* Harden onExpandScroll and onShrinkScroll handlers. See #132
+
+
 #### 1.2.3
 
 * Fix problems with object approach in FF. Revert #122.

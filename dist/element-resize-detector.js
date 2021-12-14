@@ -1,5 +1,5 @@
 /*!
- * element-resize-detector 1.2.3
+ * element-resize-detector 1.2.4
  * Copyright (c) 2016 Lucas Wiener
  * https://github.com/wnr/element-resize-detector
  * Licensed under MIT
@@ -882,11 +882,21 @@ module.exports = function(options) {
             rootContainer.appendChild(containerContainer);
 
             function onExpandScroll() {
-                getState(element).onExpand && getState(element).onExpand();
+                var state = getState(element);
+                if (state && state.onExpand) {
+                    state.onExpand();
+                } else {
+                    debug("Aborting expand scroll handler: element has been uninstalled");
+                }
             }
 
             function onShrinkScroll() {
-                getState(element).onShrink && getState(element).onShrink();
+                var state = getState(element);
+                if (state && state.onShrink) {
+                    state.onShrink();
+                } else {
+                    debug("Aborting shrink scroll handler: element has been uninstalled");
+                }
             }
 
             addEvent(expand, "scroll", onExpandScroll);
