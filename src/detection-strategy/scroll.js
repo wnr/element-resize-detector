@@ -174,7 +174,7 @@ module.exports = function(options) {
         function isDetached(element) {
             function isInDocument(element) {
                 var isInShadowRoot = element.getRootNode && element.getRootNode().contains(element);
-                return element === element.ownerDocument.body || element.ownerDocument.body.contains(element) || isInShadowRoot;
+                return element.ownerDocument.body && (element === element.ownerDocument.body || element.ownerDocument.body.contains(element) || isInShadowRoot);
             }
 
             if (!isInDocument(element)) {
